@@ -22,15 +22,16 @@ entities = list(set(np.concatenate([fb15k_237['train'][:,0],
                 fb15k_237['test'][:,0],
                 fb15k_237['test'][:,2]], axis=0)))
 
-sparql = SPARQLWrapper("https://query.wikidata.org/sparql")
-
 print('Number of entities: ', len(entities))
 
 entity_dict = {}
 seen = []
 missed = []
+
 for str_id in entities:
   
+    sparql = SPARQLWrapper("https://query.wikidata.org/sparql")
+
     query = """
         SELECT ?item ?itemLabel 
         WHERE 
@@ -41,15 +42,13 @@ for str_id in entities:
         """
     sparql.setQuery(query % str_id)
     
+    sparql.setReturnFormat(JSON)
+    results = sparql.query().convert()
+
     try:
-        sparql.setReturnFormat(JSON)
-        results = sparql.query().convert()
-    
-        results_df = pd.io.json.json_normalize(results['results']['bindings'])
-    
-        entity_str = results_df['itemLabel.value'].values[0]
-        
+        entity_str = results['results']['bindings'][0]['itemLabel']['value']
     except:
+        entity_str = None
         missed.append(str_id)
     
     if str_id not in entity_dict:
