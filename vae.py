@@ -3,6 +3,8 @@
 from tensorflow.keras.layers import Lambda, Input, Dense, Layer
 from tensorflow.keras.models import Model
 import random as rn
+import tensorflow as tf
+import numpy as np
 
 rn.seed(123)
 np.random.seed(123)
