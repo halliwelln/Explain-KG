@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 
 import numpy as np
-import tensorflow as tf
 import pandas as pd
 import random as rn
 import os
@@ -9,23 +8,23 @@ import cne
 import maxent
 from scipy import sparse
 from scipy.stats import halfnorm
+import utils
 
 SEED = 123
 os.environ['PYTHONHASHSEED'] = str(SEED)
 os.environ['TF_DETERMINISTIC_OPS'] = '1'
 np.random.seed(SEED)
 rn.seed(SEED)
-tf.random.set_seed(SEED)
 
 triples = [('Eve', 'type', 'Lecturer'),
-           #('Eve', 'type', 'Person'), 
+           ('Eve', 'type', 'Person'), 
            ('Lecturer', 'subClassOf', 'Person'), 
-           #('David', 'type', 'Person'),
+           ('David', 'type', 'Person'),
            ('David', 'type', 'Researcher'),
            ('Researcher', 'subClassOf', 'Person'),
            ('Flora', 'hasSpouse', 'Gaston'),
            ('Gaston', 'type', 'Person'),
-           #('Flora', 'type', 'Person')
+           ('Flora', 'type', 'Person')
           ]
 
 train = np.array(triples)
@@ -42,30 +41,29 @@ rel2idx = dict(zip(relations, range(num_relations)))
 idx2ent = {idx:ent for ent,idx in ent2idx.items()}
 idx2rel = {idx:rel for rel,idx in rel2idx.items()}
 
+train2idx = utils.train2idx(train,ent2idx,rel2idx)
+
 embedding_dim = 10
+s1 = 1
+s2 = 1.5
+learning_rate = .001
+max_iter = 100
+gamma = (1/(s1**2)) - (1/(s2**2))
 
-A = np.zeros(shape=(num_entities,num_entities))
+A = utils.get_adjacency_matrix(train,entities,num_entities)
+indices = utils.get_neighbor_idx(A)
 
-for h,r,t in train:
-    
-    h_idx = entities.index(h)
-    r_idx = relations.index(r)
-    t_idx = entities.index(t)
-    
-    A[h_idx, t_idx] = 1
-
-A_sparse = sparse.csr_matrix(A)  
-prior = maxent.BGDistr(A_sparse) 
+prior = maxent.BGDistr(A) 
 prior.fit()
 
 CNE = cne.ConditionalNetworkEmbedding(
-    A=A_sparse,
+    A=A,
     d=embedding_dim,
-    s1=1,
-    s2=1.5,
+    s1=s1,
+    s2=s2,
     prior_dist=prior
     )
-CNE.fit(lr=.001, max_iter=100)
+CNE.fit(lr=learning_rate, max_iter=max_iter)
 
 X = CNE._ConditionalNetworkEmbedding__emb
 
@@ -80,11 +78,6 @@ def get_pij(i,j,s1,s2,prior, X):
     denom = numerator + (1-p_prior)*normal_s2
     
     return numerator/denom
-
-i=0
-s1 = 1
-s2 = 1.5
-gamma = (1/(s1**2)) - (1/(s2**2))
 
 def get_hessian(i,s1,s2,gamma,X,A,embedding_dim):
     
@@ -103,9 +96,7 @@ def get_hessian(i,s1,s2,gamma,X,A,embedding_dim):
 
             h = (gamma**2) * np.dot(x_diff,x_diff.T) * (prob * (1-prob))
 
-            a = A[i,j]
-
-            p_diff = gamma * (prob - a)[0]
+            p_diff = gamma * (prob - A[i,j])[0]
 
             p_diff_mat = p_diff * np.identity(h.shape[0])
 
@@ -113,26 +104,34 @@ def get_hessian(i,s1,s2,gamma,X,A,embedding_dim):
             
     return hessian
 
-j=1
-k=2
-
-def get_gradient(i,j,k,s1,s2,embedding_dim,gamma,X,A):
+def explaiNE(i,j,k,l,s1,s2,embedding_dim,gamma,X,A):
 
     hessian = get_hessian(i,s1,s2,gamma,X,A,embedding_dim)
     pij = get_pij(i=i,j=j,s1=s1,s2=s2,prior=prior, X=X)
 
-    invert = (-hessian) / (gamma**2 * (pij) * (1-pij))
+    invert = (-hessian) / ((gamma**2 * (pij) * (1-pij)) + .00001)
 
-    hess_inv = np.linalg.inv(-hessian)
+    hess_inv = np.linalg.inv(hessian)
 
     x_i = X[i,:]
     x_j = X[j,:]
     x_k = X[k,:]
+    x_l = X[l,:]
 
     xij_diff = (x_i - x_j).reshape(1,-1)
 
-    xik_diff = (x_i - x_k)
+    xlk_diff = (x_l - x_k)
 
-    return np.dot(np.dot(xij_diff, hess_inv), xik_diff).squeeze()
+    return np.dot(np.dot(xij_diff, hess_inv), xlk_diff).squeeze()
 
-print(get_gradient(i,j,k,s1,s2,embedding_dim,gamma,X,A))
+explanations = []
+
+for i,_,j in train2idx:
+
+    for k,_,l in train2idx:
+
+        if (i != k) and (j != l):
+
+            print(i,j,k,l,explaiNE(i,j,k,l,s1,s2,embedding_dim,gamma,X,A))
+
+#add jaccard score
