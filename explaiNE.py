@@ -9,6 +9,7 @@ import maxent
 from scipy import sparse
 from scipy.stats import halfnorm
 import utils
+import joblib
 
 SEED = 123
 os.environ['PYTHONHASHSEED'] = str(SEED)
@@ -51,7 +52,6 @@ max_iter = 100
 gamma = (1/(s1**2)) - (1/(s2**2))
 
 A = utils.get_adjacency_matrix(train,entities,num_entities)
-indices = utils.get_neighbor_idx(A)
 
 prior = maxent.BGDistr(A) 
 prior.fit()
@@ -100,7 +100,7 @@ def get_hessian(i,s1,s2,gamma,X,A,embedding_dim):
 
             p_diff_mat = p_diff * np.identity(h.shape[0])
 
-            hessian += p_diff_mat - h
+            hessian += (p_diff_mat - h)
             
     return hessian
 
@@ -124,14 +124,51 @@ def explaiNE(i,j,k,l,s1,s2,embedding_dim,gamma,X,A):
 
     return np.dot(np.dot(xij_diff, hess_inv), xlk_diff).squeeze()
 
-explanations = []
 
-for i,_,j in train2idx:
+def get_explanations(i,j,s1,s2,embedding_dim,gamma,X,A,K,data):
 
-    for k,_,l in train2idx:
+    temp = []
 
-        if (i != k) and (j != l):
+    for k,_,l in data:
 
-            print(i,j,k,l,explaiNE(i,j,k,l,s1,s2,embedding_dim,gamma,X,A))
+        if (i,j) != (k,l):
 
-#add jaccard score
+            score = explaiNE(i,j,k,l,s1,s2,embedding_dim,gamma,X,A)
+
+            temp.append(((k,l),score))
+
+    sorted_scores = sorted(temp,key=lambda x:x[1], reverse=True)[0:K]
+
+    explanation_list = [tup for tup,_ in sorted_scores]
+
+    return explanation_list
+
+K = 2
+
+explanations = joblib.Parallel(n_jobs=-2, verbose=20)(
+    joblib.delayed(get_explanations)(i,j,s1,s2,embedding_dim,gamma,X,A,K,train2idx) for i,_,j in train2idx
+    )
+
+# explanations = []
+
+# for i,_,j in train2idx:
+
+#     temp = []
+
+#     for k,_,l in train2idx:
+
+#         if (i,j) != (k,l):
+
+#             score = explaiNE(i,j,k,l,s1,s2,embedding_dim,gamma,X,A)
+
+#             print(i,j,k,l, score)
+
+#             temp.append(((k,l),score))
+
+#     sorted_scores = sorted(temp,key=lambda x:x[1], reverse=True)[0:K]
+
+#     explanation_list = [tup for tup,_ in sorted_scores]
+
+#     explanations.append(explanation_list)
+
+print(utils.jaccard_score(explanations,explanations))

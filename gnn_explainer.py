@@ -96,4 +96,4 @@ unique_explanations = joblib.Parallel(n_jobs=-2,verbose=20)(
     joblib.delayed(get_unique_explanations)(i, explanations) for i in range(len(explanations))
     )
 
-print(utils.jaccard(unique_explanations,unique_explanations))
+print(utils.jaccard_score(unique_explanations,unique_explanations))
