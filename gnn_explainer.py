@@ -71,7 +71,7 @@ for epoch in range(1, 201):
 
 explainer = GNNExplainer(model, epochs=200)
 
-def get_explanations(i,x,y,edge_index):
+def get_explanations(i,x,y,edge_index, explainer):
 
     node_feat_mask, edge_mask = explainer.explain_node(i, x, edge_index)
     _, G = explainer.visualize_subgraph(i, edge_index, edge_mask, y=y)
@@ -79,7 +79,7 @@ def get_explanations(i,x,y,edge_index):
     return list(G.edges)
 
 explanations = joblib.Parallel(n_jobs=-2, verbose=20)(
-    joblib.delayed(get_explanations)(i,x,data.y,edge_index) for i in range(2)
+    joblib.delayed(get_explanations)(i,x,data.y,edge_index, explainer) for i in range(2)
     )
 
 def get_unique_explanations(i, explanations):

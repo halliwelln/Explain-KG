@@ -106,7 +106,11 @@ def get_tup(line_str):
     
     source_tup = []
     for i in line_str:
-        source_tup.append(i.split(':')[-1])
+
+        if 'dbpedia.org/resource' in i:
+            source_tup.append(i.split('/')[-1])
+        else:
+            source_tup.append(i.split(':')[-1])
         
     return tuple(source_tup)
 
@@ -142,18 +146,3 @@ def parse_traces(file_name):
                 assert len(exp_tup) == 3  
                 
     return traces
-
-def get_exp_triples(train, traces):
-
-    exp_triples = []
-    
-    for i in train:
-
-        tup = tuple(i)
-
-        if tup in traces:
-
-            for trip in traces[tup]:
-                exp_triples.append(list(trip))
-                
-    return np.array(exp_triples)
