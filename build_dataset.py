@@ -1,11 +1,9 @@
 #!/usr/bin/env python3
 
 import numpy as np
-import pandas as pd
 import random as rn
 import os
 import utils
-import joblib
 import rdflib
 from sklearn.model_selection import train_test_split
 
@@ -15,9 +13,9 @@ np.random.seed(SEED)
 rn.seed(SEED)
 
 g = rdflib.Graph()
-g.parse("/Users/nhalliwe/Downloads/sparql",format="xml")
+g.parse(os.path.join('.','data','sparql'),format="xml")
 
-traces = utils.parse_traces('/Users/nhalliwe/Desktop/traces/spouse.ttl')
+spouse_traces = utils.parse_traces(os.path.join('.','data','traces','spouse.ttl'))
 
 full_royalty = []
 
@@ -36,9 +34,9 @@ royalty = []
 explanations = []
 
 for k in full_royalty:
-    if traces[k]:
+    if spouse_traces[k]:
         royalty.append(k)
-        explanations.append(traces[k])
+        explanations.append(spouse_traces[k])
 
 royalty = np.array(royalty)
 explanations = np.array(explanations).reshape(-1,3)
@@ -46,9 +44,44 @@ explanations = np.array(explanations).reshape(-1,3)
 print(f"number of total observations {len(full_royalty)}")
 print(f"number of observations with explanations {len(royalty)}")
 
-X_train, X_test, exp_train, exp_test = train_test_split(royalty, explanations, test_size=0.33, random_state=42)
+#####################################
+X_train, X_test, train_exp, test_exp = train_test_split(royalty, explanations, test_size=0.30, random_state=42)
 
-train = np.concatenate([X_train,exp_train], axis=0)
+#remove triples with unseen entities from test set and add to train set
+train_entities = np.unique(np.concatenate((X_train[:,0], X_train[:,2], train_exp[:,0],train_exp[:,2]), axis=0))
+#test_entities = np.unique(np.concatenate((X_test[:,0],X_test[:,2],test_exp[:,0], test_exp[:,2]), axis=0))
 
-np.savez('/Users/nhalliwe/Desktop/Explain-KG/data/royalty.npz',
-    X_train=X_train, X_test=X_test, exp_train=exp_train, exp_test=exp_test,train=train)
+unseen = []
+for h,r,t in X_test:
+    if h not in train_entities or t not in train_entities:
+        unseen.append(True)
+    else:
+        unseen.append(False)
+        
+unseen = np.array(unseen)
+
+X_train = np.concatenate((X_train,X_test[unseen]),axis=0)
+train_exp = np.concatenate((train_exp,test_exp[unseen]), axis=0)
+
+X_test = X_test[~unseen]
+test_exp = test_exp[~unseen]
+
+print(f"Training set size {X_train.shape}")
+print(f"Test set size {X_test.shape}")
+#####################################
+
+entities = np.unique(np.concatenate((royalty[:,0],royalty[:,2],explanations[:,0], explanations[:,2]), axis=0))
+
+relations = np.unique(np.concatenate((royalty[:,1],explanations[:,1]), axis=0))
+
+np.savez(os.path.join('.','data','royalty.npz'),
+    X_train=X_train, X_test=X_test, train_exp=train_exp,
+    test_exp=test_exp,entities=entities,relations=relations)
+
+# np.savez(os.path.join('.','data','royalty.npz'),
+#     triples=royalty,
+#     explanations=explanations,
+#     entities=entities,
+#     relations=relations
+#     )
+
