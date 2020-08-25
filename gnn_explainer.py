@@ -19,14 +19,17 @@ np.random.seed(SEED)
 rn.seed(SEED)
 torch.manual_seed(SEED)
 
-d = np.array([('Sri_Vikrama_Rajasinha_of_Kandy','successor','British_Ceylon'),
-('William_IV_of_the_United_Kingdom','predecessor','George_IV_of_the_United_Kingdom'),
-('Tvrtko_II_of_Bosnia','successor','Ostoja_of_Bosnia'),
-('Alexis_of_Russia','spouse','Maria_Ilyinichna_Miloslavskaya'),
-('Haakon_VII_of_Norway','successor','Olav_V_of_Norway')])
+data = np.load(os.path.join('.','data','royalty.npz'))
 
-entities = list(np.unique(np.concatenate((d[:,0],d[:,2]))))
-relations = list(np.unique(d[:,1]))
+full_train = data['full_train']
+train = data['X_train']
+test = data['X_test']
+
+train_exp = data['train_exp']
+test_exp = data['test_exp']
+
+entities = data['entities'].tolist()
+relations = data['relations'].tolist()
 
 num_entities = len(entities)
 num_relations = len(relations)
@@ -34,13 +37,23 @@ num_relations = len(relations)
 ent2idx = dict(zip(entities, range(num_entities)))
 rel2idx = dict(zip(relations, range(num_relations)))
 
-X = torch.randn((num_entities, 2))
-y = torch.randint(num_relations, (num_entities,))
-a = np.array([(ent2idx[h],ent2idx[t]) for h,_,t in d]).T
-b = np.stack((a[1,:], a[0,:]))
-edge_index = torch.tensor(np.concatenate((a,b), axis=1), dtype=torch.long)
+entity_embeddings = np.load(os.path.join('.','data','transE_embeddings.npz'))['entity_embeddings']
+
+X = torch.tensor([entity_embeddings[ent2idx[h]] for h,_,_ in full_train])
+y = torch.tensor([(rel2idx[r]) for _,r,_ in full_train])
+ents = np.array([(ent2idx[h],ent2idx[t]) for h,_,t in full_train]).T
+ents_flipped = np.stack((ents[1,:], ents[0,:]))
+edge_index = torch.tensor(np.concatenate((ents,ents_flipped), axis=1), dtype=torch.long).contiguous()
 
 data = Data(x=X, y=y, edge_index=edge_index,num_classes=num_relations)
+
+X_test = torch.tensor([entity_embeddings[ent2idx[h]] for h,_,_ in test])
+y_test = torch.tensor([(rel2idx[r]) for _,r,_ in test])
+test_ents = np.array([(ent2idx[h],ent2idx[t]) for h,_,t in test]).T
+#test_ents_flipped = np.stack((test_ents[1,:], test_ents[0,:]))
+#test_edge_index = torch.tensor(np.concatenate((test_ents,test_ents_flipped), axis=1), dtype=torch.long)
+test_edge_index = torch.tensor(test_ents, dtype=torch.long).t().contiguous()
+test_data = Data(x_test=X_test,y_test=y_test,test_edge_index=test_edge_index,num_classes=num_relations)
 
 class Net(torch.nn.Module):
     def __init__(self):
@@ -71,29 +84,33 @@ for epoch in range(1, 201):
 
 explainer = GNNExplainer(model, epochs=200)
 
+x_test,test_y, test_edge_index = test_data.x_test,test_data.y_test,test_data.test_edge_index
+
 def get_explanations(i,x,y,edge_index, explainer):
 
     node_feat_mask, edge_mask = explainer.explain_node(i, x, edge_index)
-    _, G = explainer.visualize_subgraph(i, edge_index, edge_mask, y=y)
-
-    return list(G.edges)
-
-explanations = joblib.Parallel(n_jobs=-2, verbose=20)(
-    joblib.delayed(get_explanations)(i,x,data.y,edge_index, explainer) for i in range(2)
-    )
-
-def get_unique_explanations(i, explanations):
+    _, G = explainer.visualize_subgraph(i, edge_index, edge_mask, y)
 
     temp = []
-
-    for tup in explanations[i]:
+    exp = list(G.edges)
+    for tup in exp:
         sorted_tup = tuple(sorted(tup))
         temp.append(sorted_tup)
 
     return list(set(temp))
 
-unique_explanations = joblib.Parallel(n_jobs=-2,verbose=20)(
-    joblib.delayed(get_unique_explanations)(i, explanations) for i in range(len(explanations))
-    )
+# explanations = joblib.Parallel(n_jobs=-2, verbose=20)(
+#     joblib.delayed(get_explanations)(i,x_test,test_y,test_edge_index, explainer) for i in range(len(x_test[-2:]),
+#         len(x_test))
+#     )
 
-print(utils.jaccard_score(unique_explanations,unique_explanations))
+explanations = []
+
+for i in range(len(x)):
+
+    exp = get_explanations(i,x,data.y,edge_index, explainer)
+
+    explanations.append(exp)
+
+print(explanations)
+#print(utils.jaccard_score(unique_explanations,unique_explanations))

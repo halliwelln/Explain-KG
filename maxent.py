@@ -13,6 +13,7 @@ class BGDistr(object):
 
         self.A = args[0]
         self.row_sum = np.sum(self.A, axis=0)
+        #self.row_sum = self.A.sum(axis=0)
 
         self.row_val, self.row_idx, self.row_freq = np.unique(self.row_sum, axis=1, return_counts=True, return_inverse=True)
 
@@ -34,7 +35,7 @@ class BGDistr(object):
         return np.sum(M, axis=0) - diag_M - self.row_freq*self.row_val
 
 
-    def fit(self, verbose=True, tol=1e-5, iterations=100, **kwargs):
+    def fit(self, verbose=False, tol=1e-5, iterations=100, **kwargs):
         x0 = np.random.randn(self.n)
         res = minimize(self.lagrangian, x0,
                        method='L-BFGS-B',

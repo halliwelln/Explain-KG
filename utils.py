@@ -5,17 +5,25 @@ import tensorflow as tf
 from collections import defaultdict
 from scipy import sparse
 
-def get_negative_triples(head, rel, tail, num_entities, seed):
+def get_negative_triples(head, rel, tail, num_entities, random_state):
     
-    cond = tf.random.uniform(head.shape, 0, 2, dtype=tf.int64, seed=seed) #1 means keep entity
-    rnd = tf.random.uniform(head.shape, 0, num_entities-1, dtype=tf.int64, seed=seed)
+    cond = tf.random.uniform(head.shape, 0, 2, dtype=tf.int64, seed=random_state) #1 means keep entity
+    rnd = tf.random.uniform(head.shape, 0, num_entities-1, dtype=tf.int64, seed=random_state)
     
     neg_head = tf.where(cond == 1, head, rnd)
     neg_tail = tf.where(cond == 1, rnd, tail)   
 
     return neg_head, neg_tail
 
-def train2idx(dataset, ent2idx, rel2idx):
+def get_entity_embeddings(model):
+    '''Embedding matrix for entities'''
+    return model.get_layer('entity_embeddings').get_weights()[0]
+
+def get_relation_embeddings(model):
+    '''Embedding matrix for relations'''
+    return model.get_layer('relation_embeddings').get_weights()[0]
+
+def array2idx(dataset, ent2idx, rel2idx):
 
     '''
     Convert numpy array of strings to indices
