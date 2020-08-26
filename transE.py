@@ -4,6 +4,7 @@ import tensorflow as tf
 from tensorflow.keras.layers import Input, Embedding
 from tensorflow.keras.initializers import RandomUniform
 from tensorflow.keras.models import Model
+import numpy as np
 
 def transE(num_entities,num_relations,embedding_size,random_state=123):
 
@@ -118,8 +119,26 @@ def pred_loss(
 def link_score(head_e, rel_e, tail_e):
     return -np.sum(np.square(head_e + rel_e - tail_e))
 
-def exp_score(head_e, rel_e, tail_e):
-    return -np.sum(np.square(head_e + rel_e - tail_e))
+# def exp_score(head_e, rel_e, tail_e):
+#     return -np.sum(np.square(head_e + rel_e - tail_e))
+
+def exp_score(triple,k,data,entity_embeddings,relation_embeddings):
+    
+    triple_h_e = entity_embeddings[triple[0]]
+    triple_r_e = relation_embeddings[triple[1]]
+    triple_t_e = entity_embeddings[triple[2]]
+    
+    h_e = entity_embeddings[data[:,0]]
+    r_e = relation_embeddings[data[:,1]]
+    t_e = entity_embeddings[data[:,2]]
+
+    squared_diff = np.square(triple_h_e - h_e) + np.square(triple_r_e-r_e) + np.square(triple_t_e-t_e)
+
+    l2_dist = np.sqrt(np.sum(squared_diff,axis=1))
+
+    closest_l2 = np.argsort(l2_dist)[:k]
+    
+    return data[closest_l2]
 
 def predict_link(head_e,tail_e,rel2idx,relations_str,relation_embeddings,score_fun,k=1):
     '''Predicts link between two nodes'''
