@@ -11,7 +11,7 @@ import utils
 import joblib
 # import cupyx.scipy.sparse
 # import cupy as np
-#export PATH=$PATH:/Users/nhalliwe/.local/bin
+
 SEED = 123
 os.environ['PYTHONHASHSEED'] = str(SEED)
 np.random.seed(SEED)
@@ -56,7 +56,7 @@ embedding_dim = 50
 s1 = 1
 s2 = 1.5
 learning_rate = .001
-max_iter = 2
+max_iter = 100
 gamma = (1/(s1**2)) - (1/(s2**2))
 top_k = 1
 
@@ -75,7 +75,7 @@ CNE.fit(lr=learning_rate, max_iter=max_iter)
 
 X = CNE._ConditionalNetworkEmbedding__emb
 
-def get_pij(i,j,s1,s2,prior, X):
+def get_pij(i,j,s1,s2,prior):
     
     p_prior = prior.get_row_probability([i], [j])
     
@@ -87,7 +87,6 @@ def get_pij(i,j,s1,s2,prior, X):
     
     return numerator/denom
 
-@profile
 def get_hessian(i,s1,s2,gamma,X,A,embedding_dim):
     
     hessian = np.zeros(shape=(embedding_dim,embedding_dim))
@@ -101,7 +100,7 @@ def get_hessian(i,s1,s2,gamma,X,A,embedding_dim):
 
             x_diff = (x_i - x_j).reshape(-1,1)  
             
-            prob = get_pij(i,j,s1,s2,prior, X)
+            prob = get_pij(i,j,s1,s2,prior)
 
             h = (gamma**2) * np.dot(x_diff,x_diff.T) * (prob * (1-prob))
 
@@ -110,11 +109,11 @@ def get_hessian(i,s1,s2,gamma,X,A,embedding_dim):
             hessian += (p_diff_mat - h)
             
     return hessian
-@profile
+
 def explaiNE(i,j,k,l,s1,s2,embedding_dim,gamma,X,A):
 
     hessian = get_hessian(i=i,s1=s1,s2=s2,gamma=gamma,X=X,A=A,embedding_dim=embedding_dim)
-    pij = get_pij(i=i,j=j,s1=s1,s2=s2,prior=prior, X=X)
+    pij = get_pij(i=i,j=j,s1=s1,s2=s2,prior=prior)
 
     invert = (-hessian) / ((gamma**2 * (pij) * (1-pij)))
 
@@ -136,7 +135,7 @@ def explaiNE(i,j,k,l,s1,s2,embedding_dim,gamma,X,A):
 #     score = explaiNE(i,j,k,l,s1,s2,embedding_dim,gamma,X,A)
 
 #     return ((k,l),score)
-@profile
+
 def get_explanations(i,j,s1,s2,embedding_dim,gamma,X,A,top_k,train2idx):
 
     row,col = A.nonzero()
@@ -184,16 +183,18 @@ def get_explanations(i,j,s1,s2,embedding_dim,gamma,X,A,top_k,train2idx):
 
     return explanation
 
-# explanations = joblib.Parallel(n_jobs=-2, verbose=20)(
-#     joblib.delayed(get_explanations)(i,j,s1,s2,embedding_dim,gamma,X,A,top_k,train2idx) for i,_,j in test2idx[0:2]
-#     )
+explanations = joblib.Parallel(n_jobs=-2, verbose=20)(
+    joblib.delayed(get_explanations)(i,j,s1,s2,embedding_dim,gamma,X,A,top_k,train2idx) for i,_,j in test2idx[0:1]
+    )
 
-explanations = [get_explanations(i,j,s1,s2,embedding_dim,gamma,X,A,top_k,train2idx) for i,_,j in test2idx[0:2]]
+#explanations = [get_explanations(i,j,s1,s2,embedding_dim,gamma,X,A,top_k,train2idx) for i,_,j in test2idx[0:1]]
 
-# print(explanations[0:5])
-# print(test_exp[0:5])
+print(explanations)
+print(type(explanations[0]))
+print(test_exp[0:1])
+print(type(test_exp[0]))
 
-jaccard = utils.jaccard_score(explanations,test_exp[0:2])
+jaccard = utils.jaccard_score(test_exp[0:2],explanations)
 
 print(f"Jaccard score={jaccard} using:")
 print(f"embedding dimensions={embedding_dim},s1={s1},s2={s2}")

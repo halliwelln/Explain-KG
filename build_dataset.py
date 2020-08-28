@@ -41,8 +41,8 @@ for k in full_royalty:
 royalty = np.array(royalty)
 explanations = np.array(explanations).reshape(-1,3)
 
-print(f"number of total observations {len(full_royalty)}")
-print(f"number of observations with explanations {len(royalty)}")
+print(f"number of total triples {len(full_royalty)}")
+print(f"number of triples with explanations {len(royalty)}")
 
 #####################################
 X_train, X_test, train_exp, test_exp = train_test_split(royalty, explanations, test_size=0.30, random_state=42)
@@ -70,7 +70,8 @@ print(f"Training set size {X_train.shape}")
 print(f"Test set size {X_test.shape}")
 #####################################
 
-entities = np.unique(np.concatenate((royalty[:,0],royalty[:,2],explanations[:,0], explanations[:,2]), axis=0))
+entities = np.unique(np.concatenate((royalty[:,0],royalty[:,2],
+    explanations[:,0], explanations[:,2]), axis=0))
 
 relations = np.unique(np.concatenate((royalty[:,1],explanations[:,1]), axis=0))
 
