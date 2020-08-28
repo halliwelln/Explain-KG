@@ -59,21 +59,52 @@ def idx2train(dataset, idx2ent, idx2rel):
 
     return data
 
-def jaccard_score(ground_truth,generated_explanation):
+def jaccard_score(true_exp,pred_exp):
+
+    assert len(true_exp) == len(pred_exp)
 
     scores = []
 
-    for i in range(len(ground_truth)):
+    for i in range(len(true_exp)):
 
-        true_set = set(ground_truth[i])
-        pred_set = set(generated_explanation[i])
+        pred_i = pred_exp[i]
+        true_i = true_exp[i]
 
-        intersect = len(true_set.intersection(pred_set))
-        union = len(true_set.union(pred_set))
+        num_true_traces = min(true_i.ndim,true_i.shape[0])
 
-        scores.append(intersect/union)
+        if isinstance(pred_i,np.ndarray):
+            num_pred_traces = pred_i.ndim
+        
+        elif isinstance(pred_i,list):
+            num_pred_traces = len(pred_i)
+    
+        bool_array = (pred_i == true_i)
+
+        count = 0
+
+        for row in bool_array:
+            if row.all():
+                count +=1
+
+        score = count / (num_true_traces+num_pred_traces-count)
+
+        scores.append(score)
 
     return np.mean(scores)
+
+    # scores = []
+
+    # for i in range(len(ground_truth)):
+
+    #     true_set = set(ground_truth[i])
+    #     pred_set = set(generated_explanation[i])
+
+    #     intersect = len(true_set.intersection(pred_set))
+    #     union = len(true_set.union(pred_set))
+
+    #     scores.append(intersect/union)
+
+    # return np.mean(scores)
 
 def get_adjacency_matrix(data,entities,num_entities):
 

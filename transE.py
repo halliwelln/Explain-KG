@@ -119,10 +119,9 @@ def pred_loss(
 def link_score(head_e, rel_e, tail_e):
     return -np.sum(np.square(head_e + rel_e - tail_e))
 
-# def exp_score(head_e, rel_e, tail_e):
-#     return -np.sum(np.square(head_e + rel_e - tail_e))
-
 def exp_score(triple,k,data,entity_embeddings,relation_embeddings):
+
+    '''Get k closest L2 triples from <data>'''
     
     triple_h_e = entity_embeddings[triple[0]]
     triple_r_e = relation_embeddings[triple[1]]
@@ -157,5 +156,5 @@ def predict_link(head_e,tail_e,rel2idx,relations_str,relation_embeddings,score_f
     return sorted(scores,key=lambda x:x[2],reverse=True)[:k]
 
 def predict_exp(triple,k):
-    '''Predicts explanations triples of an input triple'''
+    '''Predicts k explanations triples of an input triple'''
     pass
