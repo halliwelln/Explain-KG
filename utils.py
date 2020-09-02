@@ -70,15 +70,19 @@ def jaccard_score(true_exp,pred_exp):
         pred_i = pred_exp[i]
         true_i = true_exp[i]
 
-        num_true_traces = min(true_i.ndim,true_i.shape[0])
+        if isinstance(true_i,np.ndarray):
+            num_true_traces = min(true_i.ndim,true_i.shape[0])
+
+        elif isinstance(true_i,list):
+            num_true_traces = len(true_i)
 
         if isinstance(pred_i,np.ndarray):
-            num_pred_traces = pred_i.ndim
+            num_pred_traces = min(pred_i.ndim,pred_i.shape[0])
         
         elif isinstance(pred_i,list):
             num_pred_traces = len(pred_i)
     
-        bool_array = (pred_i == true_i)
+        bool_array = (pred_i == true_i).reshape(num_true_traces,3)
 
         count = 0
 
@@ -91,20 +95,6 @@ def jaccard_score(true_exp,pred_exp):
         scores.append(score)
 
     return np.mean(scores)
-
-    # scores = []
-
-    # for i in range(len(ground_truth)):
-
-    #     true_set = set(ground_truth[i])
-    #     pred_set = set(generated_explanation[i])
-
-    #     intersect = len(true_set.intersection(pred_set))
-    #     union = len(true_set.union(pred_set))
-
-    #     scores.append(intersect/union)
-
-    # return np.mean(scores)
 
 def get_adjacency_matrix(data,entities,num_entities):
 
@@ -123,22 +113,6 @@ def get_adjacency_matrix(data,entities,num_entities):
 
     return sparse.csr_matrix((adj,(row,col)),shape=(num_entities,num_entities))
 
-def get_neighbor_idx(A):
-
-    A = sparse.coo_matrix(A)
-
-    indices = {}
-
-    for i,j in zip(A.row,A.col):
-
-        if i in indices:
-            indices[i].append(j)
-
-        else:
-            indices[i] = [j]
-
-    return indices
-
 def get_tup(line_str):
     
     line_str = line_str.split()[:-1]
@@ -147,13 +121,13 @@ def get_tup(line_str):
     for i in line_str:
 
         if 'dbpedia.org/resource' in i:
-            source_tup.append(i.split('/')[-1])
+            source_tup.append(i.split('resource/')[-1])
         else:
             source_tup.append(i.split(':')[-1])
         
-    return tuple(source_tup)
+    return list(source_tup)
 
-def parse_traces(file_name):
+def parse_ttl(file_name):
     
     lines = []
 
@@ -161,27 +135,39 @@ def parse_traces(file_name):
         for line in f:
             lines.append(line)
 
-    traces = defaultdict(list)
+    ground_truth = []
+    traces = []
 
-    for idx, line in enumerate(lines):
+    for idx in range(len(lines)):
 
-        if "graph us:construct" in line:
+        if "graph us:construct" in lines[idx]:
 
-            source_tup = get_tup(lines[idx+1])        
+            source_tup = get_tup(lines[idx+1])
 
-            assert len(source_tup) == 3
+        exp_triples = []
 
-            traces[source_tup] = []
+        if 'graph us:where' in lines[idx]:
 
-        if 'graph us:where' in line:
+            while lines[idx+1] != '} \n':
 
-            for sub_line in lines[idx+1:]:
+                exp_tup = get_tup(lines[idx+1])
+                exp_triples.append(exp_tup)
 
-                if sub_line.strip() == '}':      
-                    break
+                idx+=1
 
-                exp_tup = get_tup(sub_line)
-                traces[source_tup].append(exp_tup)
-                assert len(exp_tup) == 3  
-                
-    return traces
+        if len(source_tup) != 0 and len(exp_triples) != 0:
+            
+            no_name_entity = False
+            
+            if ("no_name_entry" in source_tup[0]) or ("no_name_entry" in source_tup[2]):
+                no_name_entity = True
+            
+            for h,r,t in exp_triples:
+                if ("no_name_entry" in h) or ("no_name_entry" in t):
+                    no_name_entity = True
+            
+            if not no_name_entity:
+                ground_truth.append(np.array(source_tup))
+                traces.append(np.array(exp_triples))
+
+    return np.array(ground_truth), np.array(traces)

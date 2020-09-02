@@ -49,8 +49,8 @@ test2idx = utils.array2idx(test,ent2idx,rel2idx)
 #A = cupyx.scipy.sparse.csr_matrix(utils.get_adjacency_matrix(full_train,entities,num_entities))
 A = utils.get_adjacency_matrix(full_train,entities,num_entities)
 
-train_exp = [[(ent2idx[h],ent2idx[t])] for h,_,t in train_exp]
-test_exp = [[(ent2idx[h],ent2idx[t])] for h,_,t in test_exp]
+train_exp = np.array([[(ent2idx[h],ent2idx[t])] for h,_,t in train_exp])
+test_exp = np.array([[(ent2idx[h],ent2idx[t])] for h,_,t in test_exp])
 
 embedding_dim = 50
 s1 = 1
@@ -184,17 +184,17 @@ def get_explanations(i,j,s1,s2,embedding_dim,gamma,X,A,top_k,train2idx):
     return explanation
 
 explanations = joblib.Parallel(n_jobs=-2, verbose=20)(
-    joblib.delayed(get_explanations)(i,j,s1,s2,embedding_dim,gamma,X,A,top_k,train2idx) for i,_,j in test2idx[0:1]
+    joblib.delayed(get_explanations)(i,j,s1,s2,embedding_dim,gamma,X,A,top_k,train2idx) for i,_,j in test2idx
     )
 
 #explanations = [get_explanations(i,j,s1,s2,embedding_dim,gamma,X,A,top_k,train2idx) for i,_,j in test2idx[0:1]]
 
-print(explanations)
-print(type(explanations[0]))
-print(test_exp[0:1])
-print(type(test_exp[0]))
+#print(explanations)
+#print(type(explanations[0]))
+#print(test_exp[0:1])
+#print(type(test_exp[0]))
 
-jaccard = utils.jaccard_score(test_exp[0:2],explanations)
+jaccard = utils.jaccard_score(test_exp,explanations)
 
 print(f"Jaccard score={jaccard} using:")
 print(f"embedding dimensions={embedding_dim},s1={s1},s2={s2}")
