@@ -23,41 +23,63 @@ def get_relation_embeddings(model):
     '''Embedding matrix for relations'''
     return model.get_layer('relation_embeddings').get_weights()[0]
 
-def array2idx(dataset, ent2idx, rel2idx):
+def array2idx(dataset, ent2idx,rel2idx):
+    
+    if dataset.ndim == 2:
+        
+        data = []
+        
+        for head, rel, tail in dataset:
+            
+            head_idx = ent2idx[head]
+            tail_idx = ent2idx[tail]
+            rel_idx = rel2idx[rel]
+            
+            data.append((head_idx, rel_idx, tail_idx))
 
-    '''
-    Convert numpy array of strings to indices
-    '''
+        data = np.array(data)
 
-    data = []
+    elif dataset.ndim == 3:
+        
+        data = []
 
-    for head, rel, tail in dataset:
+        for i in range(len(dataset)):
+            
+            temp_array = []
+        
+            for head,rel,tail in dataset[i,:,:]:
 
-        head_idx = ent2idx[head]
-        tail_idx = ent2idx[tail]
-        rel_idx = rel2idx[rel]
+                if (head == '0.0') or (tail == '0.0') or (rel == '0.0'):
+                    temp_array.append((-1,-1,-1))
+                    continue
 
-        data.append((head_idx, rel_idx, tail_idx))
+                head_idx = ent2idx[head]
+                tail_idx = ent2idx[tail]
+                rel_idx = rel2idx[rel]
 
-    data = np.array(data)
+                temp_array.append((head_idx,rel_idx,tail_idx))
+
+            data.append(temp_array)
+            
+        data = np.array(data).reshape(-1,dataset.shape[1],3)
 
     return data
 
-def idx2train(dataset, idx2ent, idx2rel):
+# def idx2train(dataset, idx2ent, idx2rel):
 
-    data = []
+#     data = []
 
-    for h,r,t in dataset:
+#     for h,r,t in dataset:
 
-        head = idx2ent[h]
-        rel = idx2rel[r]
-        tail = idx2ent[t]
+#         head = idx2ent[h]
+#         rel = idx2rel[r]
+#         tail = idx2ent[t]
 
-        data.append((head,rel,tail))
+#         data.append((head,rel,tail))
 
-    data = np.array(data)
+#     data = np.array(data)
 
-    return data
+#     return data
 
 def jaccard_score(true_exp,pred_exp):
 
@@ -127,7 +149,7 @@ def get_tup(line_str):
         
     return list(source_tup)
 
-def parse_ttl(file_name):
+def parse_ttl(file_name,max_traces):
     
     lines = []
 
@@ -167,6 +189,14 @@ def parse_ttl(file_name):
                     no_name_entity = True
             
             if not no_name_entity:
+
+                if len(exp_triples) < max_traces:
+                    
+                    while len(exp_triples) != max_traces:
+                        
+                        pad = np.zeros((3))
+                        exp_triples.append(pad)
+
                 ground_truth.append(np.array(source_tup))
                 traces.append(np.array(exp_triples))
 
