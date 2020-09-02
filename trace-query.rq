@@ -43,7 +43,6 @@ function us:exportEntailment() {
 function us:format(acons, awhere, ind) {
     let (idcons = concat("us:construct", ind), idwhere = concat("us:where", ind)) {
         concat(
-        st:format("%s us:where %s . \n\n", idcons, idwhere),
         st:format("graph %s {\n%s} \n",   idcons,  us:format(acons)),
         st:format("graph %s {\n%s} \n\n", idwhere, us:format(awhere)))
     }

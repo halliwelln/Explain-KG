@@ -23,10 +23,11 @@
 <rule>
 <body>  
 CONSTRUCT {
-    ?c2 dbo:spouse ?c1 .
+    ?b dbo:spouse ?a .
 }
 WHERE {
-    ?c1 dbo:spouse ?c2 .
+    ?a dbo:spouse ?b .
+    FILTER (!EXISTS {?b dbo:spouse ?a})
 }
 </body>
 </rule>
