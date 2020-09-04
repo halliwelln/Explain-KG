@@ -9,8 +9,6 @@ import maxent
 from scipy.stats import halfnorm
 import utils
 import joblib
-# import cupyx.scipy.sparse
-# import cupy as np
 
 SEED = 123
 os.environ['PYTHONHASHSEED'] = str(SEED)
@@ -19,7 +17,7 @@ rn.seed(SEED)
 
 print(f'CPU count: {joblib.cpu_count()}')
 
-data = np.load(os.path.join('.','data','royalty.npz'))
+data = np.load(os.path.join('.','data','royalty_spouse.npz'))
 
 train = data['X_train']
 test = data['X_test']
@@ -27,7 +25,9 @@ test = data['X_test']
 train_exp = data['train_exp']
 test_exp = data['test_exp']
 
-full_train = np.concatenate((train,train_exp), axis=0)
+full_train = np.concatenate((train,train_exp.reshape(-1,3)), axis=0)
+#full_test = np.concatenate((test,test_exp.reshape(-1,3)), axis=0)
+#full_data = np.concatenate((full_train,full_test), axis=0)
 
 entities = data['entities'].tolist()
 relations = data['relations'].tolist()
@@ -38,19 +38,23 @@ num_relations = len(relations)
 ent2idx = dict(zip(entities, range(num_entities)))
 rel2idx = dict(zip(relations, range(num_relations)))
 
-idx2ent = {idx:ent for ent,idx in ent2idx.items()}
-idx2rel = {idx:rel for rel,idx in rel2idx.items()}
+#idx2ent = {idx:ent for ent,idx in ent2idx.items()}
+#idx2rel = {idx:rel for rel,idx in rel2idx.items()}
 
 train2idx = utils.array2idx(full_train,ent2idx,rel2idx)
 test2idx = utils.array2idx(test,ent2idx,rel2idx)
+
+testexp2idx = utils.array2idx(test_exp,ent2idx,rel2idx)
 
 #adjacency_data = np.concatenate((full_train,test,test_exp), axis=0)
 #adjacency_data = np.concatenate((full_train,test), axis=0)
 #A = cupyx.scipy.sparse.csr_matrix(utils.get_adjacency_matrix(full_train,entities,num_entities))
 A = utils.get_adjacency_matrix(full_train,entities,num_entities)
 
-train_exp = np.array([[(ent2idx[h],ent2idx[t])] for h,_,t in train_exp])
-test_exp = np.array([[(ent2idx[h],ent2idx[t])] for h,_,t in test_exp])
+#train_exp = np.array([[(ent2idx[h],ent2idx[t])] for h,_,t in train_exp])
+#test_exp = np.array([[(ent2idx[h],ent2idx[t])] for h,_,t in test_exp])
+testexp2idx = np.concatenate([testexp2idx[:,:,0],
+    testexp2idx[:,:,2]],axis=1).reshape(-1,1,2)
 
 embedding_dim = 50
 s1 = 1
@@ -179,14 +183,15 @@ def get_explanations(i,j,s1,s2,embedding_dim,gamma,X,A,top_k,train2idx):
 
     sorted_scores = sorted(temp,key=lambda x:x[1], reverse=True)[0:top_k]
 
-    explanation = [tup for tup,_ in sorted_scores]
+    explanation = [np.array(tup) for tup,_ in sorted_scores]
 
-    return explanation
+    return np.array(explanation)
 
 explanations = joblib.Parallel(n_jobs=-2, verbose=20)(
     joblib.delayed(get_explanations)(i,j,s1,s2,embedding_dim,gamma,X,A,top_k,train2idx) for i,_,j in test2idx
     )
 
+explanations = np.array(explanations)
 #explanations = [get_explanations(i,j,s1,s2,embedding_dim,gamma,X,A,top_k,train2idx) for i,_,j in test2idx[0:1]]
 
 #print(explanations)
@@ -194,7 +199,7 @@ explanations = joblib.Parallel(n_jobs=-2, verbose=20)(
 #print(test_exp[0:1])
 #print(type(test_exp[0]))
 
-jaccard = utils.jaccard_score(test_exp,explanations)
+jaccard = utils.jaccard_score(testexp2idx,explanations)
 
 print(f"Jaccard score={jaccard} using:")
 print(f"embedding dimensions={embedding_dim},s1={s1},s2={s2}")

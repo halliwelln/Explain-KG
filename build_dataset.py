@@ -11,11 +11,11 @@ os.environ['PYTHONHASHSEED'] = str(SEED)
 np.random.seed(SEED)
 rn.seed(SEED)
 
-MAX_TRACES = 2
+MAX_PADDING = 1
 
 spouse_triples,spouse_traces = utils.parse_ttl(
     file_name=os.path.join('.','data','traces','spouse.ttl'),
-    max_traces=MAX_TRACES)
+    max_padding=MAX_PADDING)
 
 print(f"number of triples {len(spouse_triples)}")
 
@@ -47,11 +47,10 @@ X_train, X_test, train_exp, test_exp = train_test_split(spouse_triples,
 # print(f"Test set size {X_test.shape}")
 # #####################################
 
-exp_entities = np.array([[spouse_traces[:,i][:,0],spouse_traces[:,i][:,2]] for i in range(max_traces)]).flatten()
-exp_entities = np.array([i for i in exp_entities if i != "0.0"])
+exp_entities = np.array([[spouse_traces[:,i,:][:,0],
+    spouse_traces[:,i,:][:,2]] for i in range(MAX_PADDING)]).flatten()
 
-exp_relations = np.array([spouse_traces[:,i][:,1] for i in range(max_traces)]).flatten()
-exp_relations = np.array([i for i in exp_relations if i != "0.0"])
+exp_relations = np.array([spouse_traces[:,i,:][:,1] for i in range(MAX_PADDING)]).flatten()
 
 entities = np.unique(np.concatenate([spouse_triples[:,0], spouse_triples[:,2], exp_entities],axis=0))
 relations = np.unique(np.concatenate([spouse_triples[:,1], exp_relations],axis=0))

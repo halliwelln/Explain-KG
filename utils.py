@@ -49,9 +49,9 @@ def array2idx(dataset, ent2idx,rel2idx):
         
             for head,rel,tail in dataset[i,:,:]:
 
-                if (head == '0.0') or (tail == '0.0') or (rel == '0.0'):
-                    temp_array.append((-1,-1,-1))
-                    continue
+                # if (head == '0.0') or (tail == '0.0') or (rel == '0.0'):
+                #     temp_array.append((-1,-1,-1))
+                #     continue
 
                 head_idx = ent2idx[head]
                 tail_idx = ent2idx[tail]
@@ -89,33 +89,28 @@ def jaccard_score(true_exp,pred_exp):
 
     for i in range(len(true_exp)):
 
-        pred_i = pred_exp[i]
-        true_i = true_exp[i]
+        true_i = true_exp[i]#[true_exp[i] != np.array([-1, -1, -1])].reshape(-1,3)    
+        pred_i = pred_exp[i]#[pred_exp[i] != np.array([-1, -1, -1])].reshape(-1,3)    
 
-        if isinstance(true_i,np.ndarray):
-            num_true_traces = min(true_i.ndim,true_i.shape[0])
+        num_true_traces = true_i.shape[0]
+        num_pred_traces = pred_i.shape[0]
 
-        elif isinstance(true_i,list):
-            num_true_traces = len(true_i)
+        if num_true_traces < num_pred_traces:
 
-        if isinstance(pred_i,np.ndarray):
-            num_pred_traces = min(pred_i.ndim,pred_i.shape[0])
-        
-        elif isinstance(pred_i,list):
-            num_pred_traces = len(pred_i)
-    
-        bool_array = (pred_i == true_i).reshape(num_true_traces,3)
+            pred_i = pred_i[:num_true_traces]
+            num_pred_traces = pred_i.shape[0]
+
+        bool_array = (pred_i == true_i)
 
         count = 0
-
         for row in bool_array:
             if row.all():
-                count +=1
+                count += 1
 
-        score = count / (num_true_traces+num_pred_traces-count)
+        score = count / (num_true_traces + num_pred_traces-count)
 
         scores.append(score)
-
+        
     return np.mean(scores)
 
 def get_adjacency_matrix(data,entities,num_entities):
@@ -149,7 +144,7 @@ def get_tup(line_str):
         
     return list(source_tup)
 
-def parse_ttl(file_name,max_traces):
+def parse_ttl(file_name,max_padding):
     
     lines = []
 
@@ -190,11 +185,11 @@ def parse_ttl(file_name,max_traces):
             
             if not no_name_entity:
 
-                if len(exp_triples) < max_traces:
+                if len(exp_triples) < max_padding:
                     
-                    while len(exp_triples) != max_traces:
+                    while len(exp_triples) != max_padding:
                         
-                        pad = np.zeros((3))
+                        pad = np.array(['UNK_ENT', 'UNK_REL', 'UNK_ENT'])
                         exp_triples.append(pad)
 
                 ground_truth.append(np.array(source_tup))
