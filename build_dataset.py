@@ -46,6 +46,11 @@ X_train, X_test, train_exp, test_exp = train_test_split(spouse_triples,
 # print(f"Training set size {X_train.shape}")
 # print(f"Test set size {X_test.shape}")
 # #####################################
+#merging dataset for all rules, remember to pad!
+
+
+
+
 
 exp_entities = np.array([[spouse_traces[:,i,:][:,0],
     spouse_traces[:,i,:][:,2]] for i in range(MAX_PADDING)]).flatten()
