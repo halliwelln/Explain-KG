@@ -10,8 +10,8 @@ def get_negative_triples(head, rel, tail, num_entities, random_state=123):
     #cond = tf.random.uniform(head.shape, 0, 2, dtype=tf.int64, seed=random_state) #1 means keep entity
     #rnd = tf.random.uniform(head.shape, 0, num_entities-1, dtype=tf.int64, seed=random_state)
 
-    cond = tf.random.uniform(head.get_shape().as_list(), 0, 2, dtype=tf.int64, seed=random_state)
-    rnd = tf.random.uniform(head.get_shape().as_list(), 0, num_entities-1, dtype=tf.int64, seed=random_state)
+    cond = tf.random.uniform(tf.shape(head), 0, 2, dtype=tf.int64, seed=random_state)
+    rnd = tf.random.uniform(tf.shape(head), 0, num_entities-1, dtype=tf.int64, seed=random_state)
     
     neg_head = tf.where(cond == 1, head, rnd)
     neg_tail = tf.where(cond == 1, rnd, tail)

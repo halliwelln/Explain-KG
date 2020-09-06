@@ -64,8 +64,8 @@ def ExTransE(num_entities,num_relations,embedding_size,margin,random_state=123):
     # rel_e = relation_embeddings(rel_input)
     # exp_rel_e = relation_embeddings(exp_rel_input)
 
-    model = tf.keras.Model(
-    #model = ExTransE_Model(
+    #model = tf.keras.Model(
+    model = ExTransE_Model(
         inputs=[
         head_input,
         rel_input,
