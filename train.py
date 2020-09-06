@@ -9,6 +9,8 @@ import os
 
 SEED = 123
 os.environ['PYTHONHASHSEED'] = str(SEED)
+os.environ['TF_DETERMINISTIC_OPS'] = '1'
+tf.random.set_seed(SEED)
 np.random.seed(SEED)
 rn.seed(SEED)
 
@@ -44,121 +46,109 @@ NUM_EPOCHS = 10
 MARGIN = 2
 LEARNING_RATE = .001
 
-# strategy = tf.distribute.MirroredStrategy()
-# print('Number of devices: {}'.format(strategy.num_replicas_in_sync))
+strategy = tf.distribute.MirroredStrategy()
+print('Number of devices: {}'.format(strategy.num_replicas_in_sync))
 
-# with strategy.scope():
+with strategy.scope():
 
-#     model = transE.ExTransE(
-#         num_entities=NUM_ENTITIES,
-#         num_relations=NUM_RELATIONS,
-#         embedding_size=EMBEDDING_SIZE,
-#         margin=MARGIN,
-#         random_state=SEED)
+    model = transE.ExTransE(
+        num_entities=NUM_ENTITIES,
+        num_relations=NUM_RELATIONS,
+        embedding_size=EMBEDDING_SIZE,
+        margin=MARGIN,
+        random_state=SEED)
 
-#     model.compile(optimizer=tf.keras.optimizers.SGD(learning_rate=LEARNING_RATE))
+    model.compile(optimizer=tf.keras.optimizers.SGD(learning_rate=LEARNING_RATE))
 
-# model.fit(
-#     x=[train2idx[:,0],
-#     train2idx[:,1],
-#     train2idx[:,2],
-#     trainexp2idx[:,:,0].reshape(-1),
-#     trainexp2idx[:,:,1].reshape(-1),
-#     trainexp2idx[:,:,2].reshape(-1)],
-#     epochs=NUM_EPOCHS,
-#     batch_size=BATCH_SIZE
-#     )
+model.fit(
+    x=[train2idx[:,0],
+    train2idx[:,1],
+    train2idx[:,2],
+    trainexp2idx[:,:,0].reshape(-1),
+    trainexp2idx[:,:,1].reshape(-1),
+    trainexp2idx[:,:,2].reshape(-1)],
+    epochs=NUM_EPOCHS,
+    batch_size=BATCH_SIZE
+    )
 
-model = transE.ExTransE(
-    num_entities=NUM_ENTITIES,
-    num_relations=NUM_RELATIONS,
-    embedding_size=EMBEDDING_SIZE,
-    margin=MARGIN,
-    random_state=SEED)
-optimizer=tf.keras.optimizers.SGD(learning_rate=LEARNING_RATE)
-train_data = tf.data.Dataset.from_tensor_slices((train2idx[:,0],train2idx[:,1],train2idx[:,2],
-                                                trainexp2idx[:,:,0].reshape(-1),trainexp2idx[:,:,1].reshape(-1),
-                                                 trainexp2idx[:,:,2].reshape(-1))).batch(BATCH_SIZE)
+# model = transE.ExTransE(
+#     num_entities=NUM_ENTITIES,
+#     num_relations=NUM_RELATIONS,
+#     embedding_size=EMBEDDING_SIZE,
+#     margin=MARGIN,
+#     random_state=SEED)
+# optimizer=tf.keras.optimizers.SGD(learning_rate=LEARNING_RATE)
+# train_data = tf.data.Dataset.from_tensor_slices((train2idx[:,0],train2idx[:,1],train2idx[:,2],
+#                                                 trainexp2idx[:,:,0].reshape(-1),trainexp2idx[:,:,1].reshape(-1),
+#                                                  trainexp2idx[:,:,2].reshape(-1))).batch(BATCH_SIZE)
 
-epoch_loss = []
+# epoch_loss = []
 
-for epoch in range(NUM_EPOCHS):
+# for epoch in range(NUM_EPOCHS):
 
-    for pos_head, pos_rel, pos_tail, pos_head_exp,pos_rel_exp, pos_tail_exp in train_data:
+#     for pos_head, pos_rel, pos_tail, pos_head_exp,pos_rel_exp, pos_tail_exp in train_data:
 
-        neg_head, neg_tail = utils.get_negative_triples(
-            head=pos_head, 
-            rel=pos_rel, 
-            tail=pos_tail,
-            num_entities=NUM_ENTITIES
-            )
+#         neg_head, neg_tail = utils.get_negative_triples(
+#             head=pos_head, 
+#             rel=pos_rel, 
+#             tail=pos_tail,
+#             num_entities=NUM_ENTITIES
+#             )
 
-        neg_head_exp, neg_tail_exp = utils.get_negative_triples(
-            head=pos_head_exp, 
-            rel=pos_rel_exp, 
-            tail=pos_tail_exp,
-            num_entities=NUM_ENTITIES
-            )
+#         neg_head_exp, neg_tail_exp = utils.get_negative_triples(
+#             head=pos_head_exp, 
+#             rel=pos_rel_exp, 
+#             tail=pos_tail_exp,
+#             num_entities=NUM_ENTITIES
+#             )
 
-        with tf.GradientTape() as tape:
+#         with tf.GradientTape() as tape:
 
-            pos_head_e,pos_rel_e,pos_tail_e,pos_head_exp_e,pos_rel_exp_e,pos_tail_exp_e = model([
-                pos_head,
-                pos_rel,
-                pos_tail,
-                pos_head_exp,
-                pos_rel_exp,
-                pos_tail_exp
-                ]
-            )
+#             pos_head_e,pos_rel_e,pos_tail_e,pos_head_exp_e,pos_rel_exp_e,pos_tail_exp_e = model([
+#                 pos_head,
+#                 pos_rel,
+#                 pos_tail,
+#                 pos_head_exp,
+#                 pos_rel_exp,
+#                 pos_tail_exp
+#                 ]
+#             )
 
-            neg_head_e,neg_rel_e,neg_tail_e,neg_head_exp_e,neg_rel_exp_e,neg_tail_exp_e = model([
-                neg_head,
-                pos_rel,#pos_rel is correct, 
-                neg_tail,
-                neg_head_exp,
-                pos_rel_exp,
-                neg_tail_exp
-                ]
-            )
+#             neg_head_e,neg_rel_e,neg_tail_e,neg_head_exp_e,neg_rel_exp_e,neg_tail_exp_e = model([
+#                 neg_head,
+#                 pos_rel,#pos_rel is correct, 
+#                 neg_tail,
+#                 neg_head_exp,
+#                 pos_rel_exp,
+#                 neg_tail_exp
+#                 ]
+#             )
 
-            prediction_loss = transE.pred_loss(
-                pos_head_e,
-                pos_rel_e,
-                pos_tail_e,
-                neg_head_e,
-                neg_rel_e,
-                neg_tail_e,
-                margin=MARGIN
-            )
+#             prediction_loss = transE.pred_loss(
+#                 pos_head_e,
+#                 pos_rel_e,
+#                 pos_tail_e,
+#                 neg_head_e,
+#                 neg_rel_e,
+#                 neg_tail_e,
+#                 margin=MARGIN
+#             )
 
-            explain_loss = transE.exp_loss(
-                pos_head_exp_e,
-                pos_rel_exp_e,
-                pos_tail_exp_e,
-                neg_head_exp_e,
-                neg_rel_exp_e,
-                neg_tail_exp_e,
-                margin=MARGIN
-            )
+#             explain_loss = transE.exp_loss(
+#                 pos_head_exp_e,
+#                 pos_rel_exp_e,
+#                 pos_tail_exp_e,
+#                 neg_head_exp_e,
+#                 neg_rel_exp_e,
+#                 neg_tail_exp_e,
+#                 margin=MARGIN
+#             )
 
-            total_loss = prediction_loss + explain_loss
+#             total_loss = prediction_loss + explain_loss
 
-        grads = tape.gradient(total_loss,model.trainable_variables)
-        optimizer.apply_gradients(zip(grads,model.trainable_variables))
+#         grads = tape.gradient(total_loss,model.trainable_variables)
+#         optimizer.apply_gradients(zip(grads,model.trainable_variables))
 
-    epoch_loss.append(np.round(total_loss.numpy(),5))
+#     epoch_loss.append(np.round(total_loss.numpy(),5))
 
-print(np.mean(epoch_loss))
-
-
-
-
-
-
-
-
-
-
-
-
+# print(np.mean(epoch_loss))
