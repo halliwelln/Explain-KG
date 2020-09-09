@@ -3,7 +3,6 @@ graph us:construct1 {
 } 
 graph us:where1 {
   dbe:Alexandru_Ioan_Cuza dbo:spouse dbe:Elena_Cuza .
-  dbe:Alexandru_Ioan_Cuza dbo:spouse dbe:Elena_Cuza .
 } 
 
 graph us:construct2 {
