@@ -26,9 +26,9 @@ def get_pij(i,j,X,s1,s2,prior,seed):
     
     return numerator/denom
 
-def compute_prob(i,s1,s2,X,A,prior,seed):
+def compute_prob(i,s1,s2,X,num_entities,prior,seed):
     prob = []
-    for j in range(A.shape[0]):
+    for j in range(num_entities):
         prob.append(get_pij(i,j,X,s1,s2,prior,seed))
     return prob
 
@@ -45,7 +45,7 @@ def get_hessian(i,s1,s2,gamma,X,A,embedding_dim,probs,seed):
 
             x_diff = (x_i - x_j).reshape(-1,1)  
             
-            prob = probs[i,j]#get_pij(i,j,s1,s2,prior,seed=seed)
+            prob = probs[i,j]
 
             h = (gamma**2) * np.dot(x_diff,x_diff.T) * (prob * (1-prob))
 
@@ -55,14 +55,11 @@ def get_hessian(i,s1,s2,gamma,X,A,embedding_dim,probs,seed):
             
     return hessian
 
-def explaiNE(i,j,k,l,s1,s2,embedding_dim,gamma,X,A,hessians,probs,seed):
-
-    # hessian = get_hessian(i=i,s1=s1,s2=s2,gamma=gamma,X=X,A=A,
-    #     embedding_dim=embedding_dim,prior=prior)
+def explaiNE(i,j,k,l,s1,s2,embedding_dim,gamma,X,hessians,probs,seed):
 
     hessian = hessians[i]
 
-    pij = probs[i,j]#get_pij(i=i,j=j,s1=s1,s2=s2,prior_probs=prior_probs,seed=seed)
+    pij = probs[i,j]
 
     invert = (-hessian) / ((gamma**2 * (pij) * (1-pij)))
 
@@ -79,17 +76,15 @@ def explaiNE(i,j,k,l,s1,s2,embedding_dim,gamma,X,A,hessians,probs,seed):
 
     return np.dot(np.dot(xij_diff, hess_inv), xlk_diff).squeeze()
 
-def get_explanations(i,j,s1,s2,embedding_dim,gamma,X,A,top_k,iter_data,hessians,probs,seed):
+def get_explanations(i,j,s1,s2,embedding_dim,gamma,X,top_k,iter_data,hessians,probs,seed):
 
     temp = []
 
     for k,l in iter_data:
 
-        if (i,j) != (k,l):
+        score = explaiNE(i,j,k,l,s1,s2,embedding_dim,gamma,X,hessians,probs,seed)
 
-            score = explaiNE(i,j,k,l,s1,s2,embedding_dim,gamma,X,A,hessians,probs,seed)
-
-            temp.append(((k,l),score))
+        temp.append(((k,l),score))
 
     sorted_scores = sorted(temp,key=lambda x:x[1], reverse=True)[0:top_k]
 
@@ -115,8 +110,6 @@ if __name__ == '__main__':
     test_exp = data['test_exp']
 
     full_train = np.concatenate((train,train_exp.reshape(-1,3)), axis=0)
-    #full_test = np.concatenate((test,test_exp.reshape(-1,3)), axis=0)
-    #full_data = np.concatenate((full_train,full_test), axis=0)
 
     entities = data['entities'].tolist()
     relations = data['relations'].tolist()
@@ -127,10 +120,6 @@ if __name__ == '__main__':
     ent2idx = dict(zip(entities, range(NUM_ENTITIES)))
     rel2idx = dict(zip(relations, range(NUM_RELATIONS)))
 
-    #idx2ent = {idx:ent for ent,idx in ent2idx.items()}
-    #idx2rel = {idx:rel for rel,idx in rel2idx.items()}
-
-    #train2idx = utils.array2idx(full_train,ent2idx,rel2idx)
     train2idx = utils.array2idx(train,ent2idx,rel2idx)
     test2idx = utils.array2idx(test,ent2idx,rel2idx)
     
@@ -138,15 +127,12 @@ if __name__ == '__main__':
     testexp2idx = utils.array2idx(test_exp,ent2idx,rel2idx)
 
     adjacency_data = np.concatenate((train,train_exp.reshape(-1,3)), axis=0)
-    #adjacency_data = np.concatenate((adjacency_data,test), axis=0)
 
     A = utils.get_adjacency_matrix(adjacency_data,entities,NUM_ENTITIES)
 
     trainexp2idx = np.concatenate(
         [trainexp2idx[:,:,0],trainexp2idx[:,:,2]],axis=1).reshape(-1,1,2)
 
-    #testexp2idx = np.concatenate(
-        #[testexp2idx[:,:,0],testexp2idx[:,:,2]],axis=1).reshape(-1,1,2)
     testexp2idx = np.concatenate(
         [testexp2idx[:,:,0],testexp2idx[:,:,2]],axis=1).reshape(-1,1,2)
 
@@ -171,11 +157,13 @@ if __name__ == '__main__':
 
     CNE.fit(lr=LEARNING_RATE, max_iter=MAX_ITER)
 
+    A = utils.get_adjacency_matrix(test,entities,NUM_ENTITIES)
+
     X = CNE._ConditionalNetworkEmbedding__emb
 
     probs = joblib.Parallel(n_jobs=-2, verbose=0)(
         joblib.delayed(compute_prob)(
-            i,S1,S2,X,A,prior,seed=SEED
+            i,S1,S2,X,NUM_ENTITIES,prior,SEED
             ) for i in range(NUM_ENTITIES)
         )
 
@@ -189,29 +177,15 @@ if __name__ == '__main__':
 
     HESSIANS = np.array(hessians)
 
-    # hessian_file = np.load(os.path.join('.','data','hessians_spouse.npz'))
-
-    # HESSIANS = hessian_file['hessians']
-    # PROBS = hessian_file['probs']
-    # X = hessian_file['X']
-    # S1 = hessian_file['s1']
-    # S2 = hessian_file['s2']
-    # GAMMA = hessian_file['gamma']
-    # LEARNING_RATE = hessian_file['learning_rate']
-    # EMBEDDING_DIM = hessian_file['embedding_dim']
-    # MAX_ITER = hessian_file['max_iter']
-    # TOP_K = 1
-
     explanations = joblib.Parallel(n_jobs=-2, verbose=0)(
         joblib.delayed(get_explanations)(
-            i,j,S1,S2,EMBEDDING_DIM,GAMMA,X,A,TOP_K,testexp2idx.reshape(-1,2),HESSIANS,PROBS,SEED
+            i,j,S1,S2,EMBEDDING_DIM,GAMMA,X,TOP_K,testexp2idx.reshape(-1,2),HESSIANS,PROBS,SEED
             ) for i,_,j in test2idx
         )
 
     explanations = np.array(explanations)
 
     jaccard = utils.jaccard_score(testexp2idx,explanations)
-    #jaccard = utils.jaccard_score(trainexp2idx,explanations)
 
     print(f"Jaccard score={jaccard} using:")
     print(f"embedding dimensions={EMBEDDING_DIM},s1={S1},s2={S2}")
