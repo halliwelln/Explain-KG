@@ -6,7 +6,7 @@ from tensorflow.keras.initializers import RandomUniform
 import numpy as np
 import utils
 
-def ExTransE(num_entities,num_relations,embedding_size,margin,random_state=123):
+def ExTransE(num_entities,num_relations,embedding_size,random_state=123):
 
     initializer = 6/tf.sqrt(tf.cast(embedding_size, tf.float32))
 
@@ -17,9 +17,6 @@ def ExTransE(num_entities,num_relations,embedding_size,margin,random_state=123):
     exp_head_input = Input(shape=(), name='exp_head_input')
     exp_rel_input = Input(shape=(), name='exp_rel_input')
     exp_tail_input = Input(shape=(), name='exp_tail_input')
-
-    # #neg_head_input = Input(shape=(), name='neg_head_input')
-    # #neg_tail_input = Input(shape=(), name='neg_tail_input')
 
     entity_embeddings = Embedding(
         input_dim=num_entities,
@@ -51,28 +48,14 @@ def ExTransE(num_entities,num_relations,embedding_size,margin,random_state=123):
     exp_rel_e = relation_embeddings(exp_rel_input)
     exp_tail_e = entity_embeddings(exp_tail_input)
 
-    # pos_head_e = entity_embeddings(pos_head_input)
-    # neg_head_e = entity_embeddings(neg_head_input)
-    # pos_tail_e = entity_embeddings(pos_tail_input)
-    # neg_tail_e = entity_embeddings(neg_tail_input)
-    # rel_e = relation_embeddings(relation_input)
-
-    # head_e = entity_embeddings(pos_head_input)
-    # exp_head_e = entity_embeddings(exp_head_input)
-    # tail_e = entity_embeddings(pos_tail_input)
-    # exp_tail_e = entity_embeddings(exp_tail_input)
-    # rel_e = relation_embeddings(rel_input)
-    # exp_rel_e = relation_embeddings(exp_rel_input)
-
-    #model = tf.keras.Model(
     model = ExTransE_Model(
         inputs=[
-        head_input,
-        rel_input,
-        tail_input,
-        exp_head_input,
-        exp_rel_input,
-        exp_tail_input
+            head_input,
+            rel_input,
+            tail_input,
+            exp_head_input,
+            exp_rel_input,
+            exp_tail_input
             ], 
         outputs=[
             head_e,
@@ -81,12 +64,23 @@ def ExTransE(num_entities,num_relations,embedding_size,margin,random_state=123):
             exp_head_e,
             exp_rel_e,
             exp_tail_e
-            ]
+            ],
+        num_entities=num_entities
         )
 
     return model
 
 class ExTransE_Model(tf.keras.Model):
+
+    def __init__(self,num_entities,*args,**kwargs):
+        super(ExTransE_Model,self).__init__(*args, **kwargs)
+        self.num_entities = num_entities
+
+    def compile(self,num_entities,margin,pred_loss,exp_loss,*args,**kwargs):
+        super(ExTransE_Model,self).compile()
+        self.margin = margin
+        self.pred_loss = pred_loss
+        self.exp_loss = exp_loss
 
     def train_step(self,data):
 
@@ -96,14 +90,14 @@ class ExTransE_Model(tf.keras.Model):
             head=pos_head, 
             rel=pos_rel, 
             tail=pos_tail,
-            num_entities=3888
+            num_entities=self.num_entities
             )
 
         neg_head_exp, neg_tail_exp = utils.get_negative_triples(
             head=pos_head_exp, 
             rel=pos_rel_exp, 
             tail=pos_tail_exp,
-            num_entities=3888
+            num_entities=self.num_entities
             )
 
         with tf.GradientTape() as tape:
@@ -128,26 +122,34 @@ class ExTransE_Model(tf.keras.Model):
                 ]
             )
 
-
-            prediction_loss = pred_loss(
+            prediction_loss = self.pred_loss(
                 pos_head_e,
                 pos_rel_e,
                 pos_tail_e,
                 neg_head_e,
                 neg_rel_e,
                 neg_tail_e,
-                margin=2
+                margin=self.margin
             )
 
-            explain_loss = exp_loss(
+            # explain_loss = self.exp_loss(
+            #     pos_head_exp_e,
+            #     pos_rel_exp_e,
+            #     pos_tail_exp_e,
+            #     neg_head_exp_e,
+            #     neg_rel_exp_e,
+            #     neg_tail_exp_e,
+            #     margin=self.margin
+            # )
+
+            explain_loss = self.exp_loss(
+                pos_head_e,
+                pos_rel_e, 
+                pos_tail_e,
                 pos_head_exp_e,
                 pos_rel_exp_e,
-                pos_tail_exp_e,
-                neg_head_exp_e,
-                neg_rel_exp_e,
-                neg_tail_exp_e,
-                margin=2
-            )
+                pos_tail_exp_e
+                )
 
             total_loss = prediction_loss + explain_loss
 
@@ -156,40 +158,40 @@ class ExTransE_Model(tf.keras.Model):
 
         return {"loss":total_loss}
 
-def exp_loss(
-    pos_head_exp_e,
-    pos_rel_exp_e,
-    pos_tail_exp_e,
-    neg_head_exp_e, 
-    neg_rel_exp_e,
-    neg_tail_exp_e, 
-    margin=2
-    ):
-    '''Explanation loss function'''
-
-    pos = tf.reduce_sum(tf.square(pos_head_exp_e + pos_rel_exp_e - pos_tail_exp_e), axis=1)
-    neg = tf.reduce_sum(tf.square(neg_head_exp_e + pos_rel_exp_e - neg_tail_exp_e), axis=1)    
-            
-    loss = tf.reduce_sum(tf.maximum(pos - neg + margin, 0))  
-
-    return loss
-
 # def exp_loss(
-#     pos_head_e,
-#     pos_tail_e,
 #     pos_head_exp_e,
+#     pos_rel_exp_e,
 #     pos_tail_exp_e,
-#     rel_e, 
-#     rel_exp_e
+#     neg_head_exp_e, 
+#     neg_rel_exp_e,
+#     neg_tail_exp_e, 
+#     margin=2
 #     ):
 #     '''Explanation loss function'''
 
-#     squared_diff = tf.square(pos_head_e - pos_head_exp_e)\
-#      + tf.square(pos_tail_e - pos_tail_exp_e)+tf.square(rel_e - rel_exp_e)
-
-#     loss = tf.reduce_mean(tf.sqrt(tf.reduce_sum(squared_diff,axis=1)))
+#     pos = tf.reduce_sum(tf.square(pos_head_exp_e + pos_rel_exp_e - pos_tail_exp_e), axis=1)
+#     neg = tf.reduce_sum(tf.square(neg_head_exp_e + pos_rel_exp_e - neg_tail_exp_e), axis=1)    
+            
+#     loss = tf.reduce_sum(tf.maximum(pos - neg + margin, 0))  
 
 #     return loss
+
+def exp_loss(
+    pos_head_e,
+    pos_rel_e, 
+    pos_tail_e,
+    pos_head_exp_e,
+    pos_rel_exp_e,
+    pos_tail_exp_e
+    ):
+    '''Explanation loss function'''
+
+    squared_diff = tf.square(pos_head_e - pos_head_exp_e)\
+     + tf.square(pos_tail_e - pos_tail_exp_e)+tf.square(pos_rel_e - pos_rel_exp_e)
+
+    loss = tf.reduce_mean(tf.sqrt(tf.reduce_sum(squared_diff,axis=1)))
+
+    return loss
 
 def pred_loss(
     pos_head_e,
@@ -208,14 +210,28 @@ def pred_loss(
     loss = tf.reduce_sum(tf.maximum(pos - neg + margin, 0))  
 
     return loss
+# def pred_loss(
+#     pos_head_e,
+#     pos_rel_e,
+#     pos_tail_e,
+#     neg_head_e,
+#     neg_rel_e,
+#     neg_tail_e,
+#     margin=2
+#     ):
+#     pos = tf.reduce_sum(tf.multiply(tf.multiply(pos_head_e,pos_rel_e),pos_tail_e))
+#     neg = tf.reduce_sum(tf.multiply(tf.multiply(neg_head_e,neg_rel_e),neg_tail_e))
+
+#     return tf.reduce_sum(tf.maximum(pos-neg + margin,0))
 
 def link_score(head_e, rel_e, tail_e):
     return -np.sum(np.square(head_e + rel_e - tail_e))
 
 def exp_score(triple,k,data,entity_embeddings,relation_embeddings):
 
-    '''Get k closest L2 triples from <data>'''
-    
+    '''Compute score for explanations. Returns k explanations 
+        for each triple in <dataset>
+    '''    
     triple_h_e = entity_embeddings[triple[0]]
     triple_r_e = relation_embeddings[triple[1]]
     triple_t_e = entity_embeddings[triple[2]]
@@ -254,7 +270,3 @@ def predict_link(
         scores.append((rel,rel_idx,score))
 
     return sorted(scores,key=lambda x:x[2],reverse=True)[:k]
-
-def predict_exp(triple,k):
-    '''Predicts k explanations triples of an input triple'''
-    pass
