@@ -92,8 +92,8 @@ def jaccard_score(true_exp,pred_exp):
 
     for i in range(len(true_exp)):
 
-        true_i = true_exp[i]#[true_exp[i] != np.array([-1, -1, -1])].reshape(-1,3)    
-        pred_i = pred_exp[i]#[pred_exp[i] != np.array([-1, -1, -1])].reshape(-1,3)    
+        true_i = true_exp[i]
+        pred_i = pred_exp[i]
 
         num_true_traces = true_i.shape[0]
         num_pred_traces = pred_i.shape[0]
