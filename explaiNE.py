@@ -157,9 +157,9 @@ if __name__ == '__main__':
 
     CNE.fit(lr=LEARNING_RATE, max_iter=MAX_ITER)
 
-    A = utils.get_adjacency_matrix(test,entities,NUM_ENTITIES)
-
     X = CNE._ConditionalNetworkEmbedding__emb
+
+    TEST_A = utils.get_adjacency_matrix(test,entities,NUM_ENTITIES)
 
     probs = joblib.Parallel(n_jobs=-2, verbose=0)(
         joblib.delayed(compute_prob)(
@@ -171,7 +171,7 @@ if __name__ == '__main__':
 
     hessians = joblib.Parallel(n_jobs=-2, verbose=20)(
         joblib.delayed(get_hessian)(
-            i,S1,S2,GAMMA,X,A,EMBEDDING_DIM,PROBS,SEED
+            i,S1,S2,GAMMA,X,TEST_A,EMBEDDING_DIM,PROBS,SEED
             ) for i in range(NUM_ENTITIES)
         )
 
