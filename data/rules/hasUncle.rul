@@ -34,6 +34,7 @@ WHERE {
     ?myuncle foaf:gender ?gender .
     FILTER (!EXISTS {?a dbo:uncle ?myuncle})
     FILTER (?myparent != ?myuncle)
+    FILTER (?a != ?myuncle)
     FILTER(str(?gender) = "male")
 }
 </body>
