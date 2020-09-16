@@ -21,12 +21,14 @@
 >
 
 <rule>
-<body> 
+<body>  
 CONSTRUCT {
-    ?a dbo:ancestor ?myancestor .
+    ?a dbo:sibling ?mysibling .
 }
 WHERE {
-
+    ?a dbo:parent ?myparent .
+    ?mysibling dbo:parent ?myparent .
+    FILTER (?a != ?mysibling)
 }
 </body>
 </rule>

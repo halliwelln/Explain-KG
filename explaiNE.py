@@ -109,8 +109,6 @@ if __name__ == '__main__':
     train_exp = data['train_exp']
     test_exp = data['test_exp']
 
-    full_train = np.concatenate((train,train_exp.reshape(-1,3)), axis=0)
-
     entities = data['entities'].tolist()
     relations = data['relations'].tolist()
 
@@ -130,12 +128,6 @@ if __name__ == '__main__':
 
     A = utils.get_adjacency_matrix(adjacency_data,entities,NUM_ENTITIES)
 
-    trainexp2idx = np.concatenate(
-        [trainexp2idx[:,:,0],trainexp2idx[:,:,2]],axis=1).reshape(-1,1,2)
-
-    testexp2idx = np.concatenate(
-        [testexp2idx[:,:,0],testexp2idx[:,:,2]],axis=1).reshape(-1,1,2)
-
     EMBEDDING_DIM = 50
     S1 = 1
     S2 = 1.5
@@ -143,6 +135,10 @@ if __name__ == '__main__':
     MAX_ITER = 100
     GAMMA = (1/(S1**2)) - (1/(S2**2))
     TOP_K = 1
+
+    trainexp2idx = trainexp2idx[:,:,[0,2]]
+
+    testexp2idx = testexp2idx[:,:,[0,2]]
 
     prior = maxent.BGDistr(A) 
     prior.fit()
@@ -155,31 +151,32 @@ if __name__ == '__main__':
         prior_dist=prior
         )
 
-    CNE.fit(lr=LEARNING_RATE, max_iter=MAX_ITER)
+    CNE.fit(lr=LEARNING_RATE,max_iter=MAX_ITER)
 
     X = CNE._ConditionalNetworkEmbedding__emb
 
-    TEST_A = utils.get_adjacency_matrix(test,entities,NUM_ENTITIES)
+    A = utils.get_adjacency_matrix(test,entities,NUM_ENTITIES)
 
-    probs = joblib.Parallel(n_jobs=-2, verbose=0)(
+    PROBS = joblib.Parallel(n_jobs=-2, verbose=0)(
         joblib.delayed(compute_prob)(
             i,S1,S2,X,NUM_ENTITIES,prior,SEED
             ) for i in range(NUM_ENTITIES)
         )
 
-    PROBS = np.array(probs)
+    PROBS = np.array(PROBS)
 
-    hessians = joblib.Parallel(n_jobs=-2, verbose=20)(
+    HESSIANS = joblib.Parallel(n_jobs=-2, verbose=20)(
         joblib.delayed(get_hessian)(
-            i,S1,S2,GAMMA,X,TEST_A,EMBEDDING_DIM,PROBS,SEED
+            i,S1,S2,GAMMA,X,A,EMBEDDING_DIM,PROBS,SEED
             ) for i in range(NUM_ENTITIES)
         )
 
-    HESSIANS = np.array(hessians)
+    HESSIANS = np.array(HESSIANS)
+    ITER_DATA = np.unique(testexp2idx.reshape(-1,2), axis=0)
 
     explanations = joblib.Parallel(n_jobs=-2, verbose=0)(
         joblib.delayed(get_explanations)(
-            i,j,S1,S2,EMBEDDING_DIM,GAMMA,X,TOP_K,testexp2idx.reshape(-1,2),HESSIANS,PROBS,SEED
+            i,j,S1,S2,EMBEDDING_DIM,GAMMA,X,TOP_K,ITER_DATA,HESSIANS,PROBS,SEED
             ) for i,_,j in test2idx
         )
 

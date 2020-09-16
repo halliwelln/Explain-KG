@@ -21,9 +21,9 @@
 >
 
 <rule>
-<body> 
+<body>  
 CONSTRUCT {
-    ?a dbo:ancestor ?myancestor .
+    ?a dbo:grandfather ?mygrandfather .
 }
 WHERE {
 

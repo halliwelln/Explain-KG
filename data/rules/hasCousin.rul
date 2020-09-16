@@ -7,6 +7,7 @@
   <!ENTITY spin   "http://spinrdf.org/sp#">
   <!ENTITY owl    "http://www.w3.org/2002/07/owl#">
   <!ENTITY dbo    "http://dbpedia.org/ontology/">
+  <!ENTITY foaf   "http://xmlns.com/foaf/0.1/">
 ]>
 
 <rdf:RDF 
@@ -18,15 +19,20 @@
     xmlns:sp   = "&spin;"
     xmlns      = "&rule;"
     xmlns:dbo  = "&dbo;"
+    xmlns:foaf = "&foaf;"
 >
 
 <rule>
-<body> 
+<body>  
 CONSTRUCT {
-    ?a dbo:ancestor ?myancestor .
+    ?a dbo:cousin ?mycousin .
 }
 WHERE {
+    ?a dbo:parent ?myparent .
+    ?myparent sibling???? ?myauntuncle .
+    ?mycousin dbo:parent ?myauntuncle .
 
+    FILTER (?a != ?mycousin)
 }
 </body>
 </rule>
