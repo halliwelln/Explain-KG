@@ -31,11 +31,10 @@ WHERE {
     ?myuncle dbo:parent ?mygrandparent .
     ?myparent dbo:parent ?mygrandparent .
     ?a dbo:parent ?myparent . 
-    ?myuncle foaf:gender ?gender .
+    ?myuncle foaf:gender "male"@en .
     FILTER (!EXISTS {?a dbo:uncle ?myuncle})
     FILTER (?myparent != ?myuncle)
     FILTER (?a != ?myuncle)
-    FILTER(str(?gender) = "male")
 }
 </body>
 </rule>
