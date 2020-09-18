@@ -5,13 +5,21 @@ import random as rn
 import os
 import utils
 from sklearn.model_selection import train_test_split
+import argparse
 
 SEED = 123
 os.environ['PYTHONHASHSEED'] = str(SEED)
 np.random.seed(SEED)
 rn.seed(SEED)
 
-MAX_PADDING = 4
+parser = argparse.ArgumentParser()
+
+parser.add_argument('trace_file',type=str)
+parser.add_argument('max_padding', type=int)
+args = parser.parse_args()
+
+TRACE_FILE = args.trace_file
+MAX_PADDING = args.max_padding
 
 # spouse_triples,spouse_traces = utils.parse_ttl(
 #     file_name=os.path.join('.','data','traces','spouse.ttl'),
@@ -34,24 +42,24 @@ MAX_PADDING = 4
 #     X_train=X_train, X_test=X_test, train_exp=train_exp,
 #     test_exp=test_exp,entities=entities,relations=relations)
 
-uncle_triples,uncle_traces = utils.parse_ttl(
-    file_name=os.path.join('.','data','traces','uncle.ttl'),
+triples,traces = utils.parse_ttl(
+    file_name=os.path.join('.','data','traces',TRACE_FILE+'.ttl'),
     max_padding=MAX_PADDING)
 
-print(f"number of triples {len(uncle_triples)}")
+print(f"number of triples {len(triples)}")
 
-X_train, X_test, train_exp, test_exp = train_test_split(uncle_triples,
-    uncle_traces,test_size=0.30, random_state=42)
+X_train, X_test, train_exp, test_exp = train_test_split(triples,
+    traces,test_size=0.30, random_state=42)
 
-exp_entities = np.array([[uncle_traces[:,i,:][:,0],
-    uncle_traces[:,i,:][:,2]] for i in range(MAX_PADDING)]).flatten()
+exp_entities = np.array([[traces[:,i,:][:,0],
+    traces[:,i,:][:,2]] for i in range(MAX_PADDING)]).flatten()
 
-exp_relations = np.array([uncle_traces[:,i,:][:,1] for i in range(MAX_PADDING)]).flatten()
+exp_relations = np.array([traces[:,i,:][:,1] for i in range(MAX_PADDING)]).flatten()
 
-entities = np.unique(np.concatenate([uncle_triples[:,0], uncle_triples[:,2], exp_entities],axis=0))
-relations = np.unique(np.concatenate([uncle_triples[:,1], exp_relations],axis=0))
+entities = np.unique(np.concatenate([triples[:,0], triples[:,2], exp_entities],axis=0))
+relations = np.unique(np.concatenate([triples[:,1], exp_relations],axis=0))
 
-np.savez(os.path.join('.','data','royalty_uncle.npz'),
+np.savez(os.path.join('.','data','royalty_'+TRACE_FILE+'.npz'),
     X_train=X_train, X_test=X_test, train_exp=train_exp,
     test_exp=test_exp,entities=entities,relations=relations)
 

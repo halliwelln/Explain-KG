@@ -28,6 +28,8 @@ CONSTRUCT {
 WHERE {
     ?a dbo:parent ?myparent .
     ?mysibling dbo:parent ?myparent .
+    
+    FILTER (!EXISTS {?a dbo:sibling ?mysibling})
     FILTER (?a != ?mysibling)
 }
 </body>
