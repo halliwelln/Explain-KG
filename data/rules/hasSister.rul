@@ -31,6 +31,7 @@ WHERE {
     ?a dbo:parent ?parent .
     ?b dbo:parent ?parent .
     ?b foaf:gender "female"@en .
+    
     FILTER (!EXISTS {?a dbo:sister ?b})
     FILTER (?a != ?b)
 }

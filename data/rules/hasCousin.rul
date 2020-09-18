@@ -29,9 +29,10 @@ CONSTRUCT {
 }
 WHERE {
     ?a dbo:parent ?myparent .
-    ?myparent sibling???? ?myauntuncle .
-    ?mycousin dbo:parent ?myauntuncle .
+    ?myparent dbo:sibling ?myaunt_or_uncle .
+    ?mycousin dbo:parent ?myaunt_or_uncle .
 
+    FILTER (!EXISTS {?a dbo:cousin ?mycousin})
     FILTER (?a != ?mycousin)
 }
 </body>

@@ -1,0 +1,441 @@
+graph us:construct1 {
+  dbe:Cnut_the_Great dbo:grandmother dbe:Tove_of_the_Obotrites .
+} 
+graph us:where1 {
+  dbe:Cnut_the_Great dbo:parent dbe:Sweyn_Forkbeard .
+  dbe:Sweyn_Forkbeard dbo:parent dbe:Tove_of_the_Obotrites .
+  dbe:Tove_of_the_Obotrites foaf:gender "female"@en .
+} 
+
+graph us:construct2 {
+  dbe:Caligula dbo:grandmother dbe:Julia_the_Elder .
+} 
+graph us:where2 {
+  dbe:Caligula dbo:parent dbe:Agrippina_the_Elder .
+  dbe:Agrippina_the_Elder dbo:parent dbe:Julia_the_Elder .
+  dbe:Julia_the_Elder foaf:gender "female"@en .
+} 
+
+graph us:construct3 {
+  <http://dbpedia.org/resource/Yinxiang_(prince)> dbo:grandmother dbe:Empress_Xiaokangzhang .
+} 
+graph us:where3 {
+  <http://dbpedia.org/resource/Yinxiang_(prince)> dbo:parent dbe:Kangxi_Emperor .
+  dbe:Kangxi_Emperor dbo:parent dbe:Empress_Xiaokangzhang .
+  dbe:Empress_Xiaokangzhang foaf:gender "female"@en .
+} 
+
+graph us:construct4 {
+  <http://dbpedia.org/resource/Margaret_of_Saxony,_Duchess_of_Brunswick-Lüneburg> dbo:grandmother <http://dbpedia.org/resource/Margaret_of_Austria,_Electress_of_Saxony> .
+} 
+graph us:where4 {
+  <http://dbpedia.org/resource/Margaret_of_Saxony,_Duchess_of_Brunswick-Lüneburg> dbo:parent <http://dbpedia.org/resource/Ernest,_Elector_of_Saxony> .
+  <http://dbpedia.org/resource/Ernest,_Elector_of_Saxony> dbo:parent <http://dbpedia.org/resource/Margaret_of_Austria,_Electress_of_Saxony> .
+  <http://dbpedia.org/resource/Margaret_of_Austria,_Electress_of_Saxony> foaf:gender "female"@en .
+} 
+
+graph us:construct5 {
+  dbe:Philip_the_Good dbo:grandmother dbe:Margaret_of_Brieg .
+} 
+graph us:where5 {
+  dbe:Philip_the_Good dbo:parent dbe:Margaret_of_Bavaria .
+  dbe:Margaret_of_Bavaria dbo:parent dbe:Margaret_of_Brieg .
+  dbe:Margaret_of_Brieg foaf:gender "female"@en .
+} 
+
+graph us:construct6 {
+  <http://dbpedia.org/resource/Ferdinand_Maria,_Elector_of_Bavaria> dbo:grandmother dbe:Renata_of_Lorraine .
+} 
+graph us:where6 {
+  <http://dbpedia.org/resource/Ferdinand_Maria,_Elector_of_Bavaria> dbo:parent <http://dbpedia.org/resource/Maximilian_I,_Elector_of_Bavaria> .
+  <http://dbpedia.org/resource/Maximilian_I,_Elector_of_Bavaria> dbo:parent dbe:Renata_of_Lorraine .
+  dbe:Renata_of_Lorraine foaf:gender "female"@en .
+} 
+
+graph us:construct7 {
+  <http://dbpedia.org/resource/Yun'e> dbo:grandmother dbe:Empress_Xiaokangzhang .
+} 
+graph us:where7 {
+  <http://dbpedia.org/resource/Yun'e> dbo:parent dbe:Kangxi_Emperor .
+  dbe:Kangxi_Emperor dbo:parent dbe:Empress_Xiaokangzhang .
+  dbe:Empress_Xiaokangzhang foaf:gender "female"@en .
+} 
+
+graph us:construct8 {
+  dbe:Yunli dbo:grandmother dbe:Empress_Xiaokangzhang .
+} 
+graph us:where8 {
+  dbe:Yunli dbo:parent dbe:Kangxi_Emperor .
+  dbe:Kangxi_Emperor dbo:parent dbe:Empress_Xiaokangzhang .
+  dbe:Empress_Xiaokangzhang foaf:gender "female"@en .
+} 
+
+graph us:construct9 {
+  dbe:Kamehameha_II dbo:grandmother dbe:Kekuiapoiwa_II .
+} 
+graph us:where9 {
+  dbe:Kamehameha_II dbo:parent dbe:Kamehameha_I .
+  dbe:Kamehameha_I dbo:parent dbe:Kekuiapoiwa_II .
+  dbe:Kekuiapoiwa_II foaf:gender "female"@en .
+} 
+
+graph us:construct10 {
+  dbe:Princess_Nadezhda_of_Bulgaria dbo:grandmother dbe:Princess_Clémentine_of_Orléans .
+} 
+graph us:where10 {
+  dbe:Princess_Nadezhda_of_Bulgaria dbo:parent dbe:Ferdinand_I_of_Bulgaria .
+  dbe:Ferdinand_I_of_Bulgaria dbo:parent dbe:Princess_Clémentine_of_Orléans .
+  dbe:Princess_Clémentine_of_Orléans foaf:gender "female"@en .
+} 
+
+graph us:construct11 {
+  dbe:Marie_Clotilde_Bonaparte dbo:grandmother dbe:Princess_Maria_Clotilde_of_Savoy .
+} 
+graph us:where11 {
+  dbe:Marie_Clotilde_Bonaparte dbo:parent <http://dbpedia.org/resource/Victor,_Prince_Napoléon> .
+  <http://dbpedia.org/resource/Victor,_Prince_Napoléon> dbo:parent dbe:Princess_Maria_Clotilde_of_Savoy .
+  dbe:Princess_Maria_Clotilde_of_Savoy foaf:gender "female"@en .
+} 
+
+graph us:construct12 {
+  dbe:Duke_Alexander_Petrovich_of_Oldenburg dbo:grandmother dbe:Catherine_Pavlovna_of_Russia .
+} 
+graph us:where12 {
+  dbe:Duke_Alexander_Petrovich_of_Oldenburg dbo:parent dbe:Duke_Peter_Georgievich_of_Oldenburg .
+  dbe:Duke_Peter_Georgievich_of_Oldenburg dbo:parent dbe:Catherine_Pavlovna_of_Russia .
+  dbe:Catherine_Pavlovna_of_Russia foaf:gender "female"@en .
+} 
+
+graph us:construct13 {
+  dbe:Duke_Peter_Georgievich_of_Oldenburg dbo:grandmother <http://dbpedia.org/resource/Maria_Feodorovna_(Sophie_Dorothea_of_Württemberg)> .
+} 
+graph us:where13 {
+  dbe:Duke_Peter_Georgievich_of_Oldenburg dbo:parent dbe:Catherine_Pavlovna_of_Russia .
+  dbe:Catherine_Pavlovna_of_Russia dbo:parent <http://dbpedia.org/resource/Maria_Feodorovna_(Sophie_Dorothea_of_Württemberg)> .
+  <http://dbpedia.org/resource/Maria_Feodorovna_(Sophie_Dorothea_of_Württemberg)> foaf:gender "female"@en .
+} 
+
+graph us:construct14 {
+  <http://dbpedia.org/resource/Duarte_Pio,_Duke_of_Braganza> dbo:grandmother dbe:Princess_Maria_Theresa_of_Löwenstein-Wertheim-Rosenberg .
+} 
+graph us:where14 {
+  <http://dbpedia.org/resource/Duarte_Pio,_Duke_of_Braganza> dbo:parent <http://dbpedia.org/resource/Duarte_Nuno,_Duke_of_Braganza> .
+  <http://dbpedia.org/resource/Duarte_Nuno,_Duke_of_Braganza> dbo:parent dbe:Princess_Maria_Theresa_of_Löwenstein-Wertheim-Rosenberg .
+  dbe:Princess_Maria_Theresa_of_Löwenstein-Wertheim-Rosenberg foaf:gender "female"@en .
+} 
+
+graph us:construct15 {
+  dbe:Princess_Charlotte_of_Wales dbo:grandmother dbe:Charlotte_of_Mecklenburg-Strelitz .
+} 
+graph us:where15 {
+  dbe:Princess_Charlotte_of_Wales dbo:parent dbe:George_IV_of_the_United_Kingdom .
+  dbe:George_IV_of_the_United_Kingdom dbo:parent dbe:Charlotte_of_Mecklenburg-Strelitz .
+  dbe:Charlotte_of_Mecklenburg-Strelitz foaf:gender "female"@en .
+} 
+
+graph us:construct16 {
+  <http://dbpedia.org/resource/Sir_James_Graham,_1st_Baronet,_of_Kirkstall> dbo:grandmother dbe:Constance_of_Austria .
+} 
+graph us:where16 {
+  <http://dbpedia.org/resource/Sir_James_Graham,_1st_Baronet,_of_Kirkstall> dbo:parent dbe:John_II_Casimir_Vasa .
+  dbe:John_II_Casimir_Vasa dbo:parent dbe:Constance_of_Austria .
+  dbe:Constance_of_Austria foaf:gender "female"@en .
+} 
+
+graph us:construct17 {
+  dbe:Duchess_Marie_Gabrielle_in_Bavaria dbo:grandmother dbe:Adelaide_of_Löwenstein-Wertheim-Rosenberg .
+} 
+graph us:where17 {
+  dbe:Duchess_Marie_Gabrielle_in_Bavaria dbo:parent dbe:Infanta_Maria_Josepha_of_Portugal .
+  dbe:Infanta_Maria_Josepha_of_Portugal dbo:parent dbe:Adelaide_of_Löwenstein-Wertheim-Rosenberg .
+  dbe:Adelaide_of_Löwenstein-Wertheim-Rosenberg foaf:gender "female"@en .
+} 
+
+graph us:construct18 {
+  dbe:Princess_Tatiana_Constantinovna_of_Russia dbo:grandmother dbe:Princess_Augusta_of_Saxe-Meiningen .
+} 
+graph us:where18 {
+  dbe:Princess_Tatiana_Constantinovna_of_Russia dbo:parent <http://dbpedia.org/resource/Princess_Elisabeth_of_Saxe-Altenburg_(1865–1927)> .
+  <http://dbpedia.org/resource/Princess_Elisabeth_of_Saxe-Altenburg_(1865–1927)> dbo:parent dbe:Princess_Augusta_of_Saxe-Meiningen .
+  dbe:Princess_Augusta_of_Saxe-Meiningen foaf:gender "female"@en .
+} 
+
+graph us:construct19 {
+  <http://dbpedia.org/resource/Infante_Henrique,_Duke_of_Coimbra> dbo:grandmother dbe:Princess_Maria_Theresa_of_Löwenstein-Wertheim-Rosenberg .
+} 
+graph us:where19 {
+  <http://dbpedia.org/resource/Infante_Henrique,_Duke_of_Coimbra> dbo:parent <http://dbpedia.org/resource/Duarte_Nuno,_Duke_of_Braganza> .
+  <http://dbpedia.org/resource/Duarte_Nuno,_Duke_of_Braganza> dbo:parent dbe:Princess_Maria_Theresa_of_Löwenstein-Wertheim-Rosenberg .
+  dbe:Princess_Maria_Theresa_of_Löwenstein-Wertheim-Rosenberg foaf:gender "female"@en .
+} 
+
+graph us:construct20 {
+  dbe:Maria_Anna_Vasa dbo:grandmother dbe:Constance_of_Austria .
+} 
+graph us:where20 {
+  dbe:Maria_Anna_Vasa dbo:parent dbe:John_II_Casimir_Vasa .
+  dbe:John_II_Casimir_Vasa dbo:parent dbe:Constance_of_Austria .
+  dbe:Constance_of_Austria foaf:gender "female"@en .
+} 
+
+graph us:construct21 {
+  dbe:Infante_Sebastian_of_Portugal_and_Spain dbo:grandmother dbe:Infanta_Maria_Ana_Vitória_of_Portugal .
+} 
+graph us:where21 {
+  dbe:Infante_Sebastian_of_Portugal_and_Spain dbo:parent dbe:Infante_Pedro_Carlos_of_Spain_and_Portugal .
+  dbe:Infante_Pedro_Carlos_of_Spain_and_Portugal dbo:parent dbe:Infanta_Maria_Ana_Vitória_of_Portugal .
+  dbe:Infanta_Maria_Ana_Vitória_of_Portugal foaf:gender "female"@en .
+} 
+
+graph us:construct22 {
+  dbe:Mutukan dbo:grandmother dbe:Börte .
+} 
+graph us:where22 {
+  dbe:Mutukan dbo:parent dbe:Chagatai_Khan .
+  dbe:Chagatai_Khan dbo:parent dbe:Börte .
+  dbe:Börte foaf:gender "female"@en .
+} 
+
+graph us:construct23 {
+  dbe:Mehmed_III dbo:grandmother dbe:Nurbanu_Sultan .
+} 
+graph us:where23 {
+  dbe:Mehmed_III dbo:parent dbe:Murad_III .
+  dbe:Murad_III dbo:parent dbe:Nurbanu_Sultan .
+  dbe:Nurbanu_Sultan foaf:gender "female"@en .
+} 
+
+graph us:construct24 {
+  dbe:Mustafa_II dbo:grandmother dbe:Turhan_Hatice_Sultan .
+} 
+graph us:where24 {
+  dbe:Mustafa_II dbo:parent dbe:Mehmed_IV .
+  dbe:Mehmed_IV dbo:parent dbe:Turhan_Hatice_Sultan .
+  dbe:Turhan_Hatice_Sultan foaf:gender "female"@en .
+} 
+
+graph us:construct25 {
+  dbe:Bayezid_I dbo:grandmother dbe:Nilüfer_Hatun .
+} 
+graph us:where25 {
+  dbe:Bayezid_I dbo:parent dbe:Murad_I .
+  dbe:Murad_I dbo:parent dbe:Nilüfer_Hatun .
+  dbe:Nilüfer_Hatun foaf:gender "female"@en .
+} 
+
+graph us:construct26 {
+  dbe:Henry_the_Navigator dbo:grandmother dbe:Blanche_of_Lancaster .
+} 
+graph us:where26 {
+  dbe:Henry_the_Navigator dbo:parent dbe:Philippa_of_Lancaster .
+  dbe:Philippa_of_Lancaster dbo:parent dbe:Blanche_of_Lancaster .
+  dbe:Blanche_of_Lancaster foaf:gender "female"@en .
+} 
+
+graph us:construct27 {
+  <http://dbpedia.org/resource/Joachim_Frederick,_Elector_of_Brandenburg> dbo:grandmother dbe:Magdalena_of_Saxony .
+} 
+graph us:where27 {
+  <http://dbpedia.org/resource/Joachim_Frederick,_Elector_of_Brandenburg> dbo:parent <http://dbpedia.org/resource/John_George,_Elector_of_Brandenburg> .
+  <http://dbpedia.org/resource/John_George,_Elector_of_Brandenburg> dbo:parent dbe:Magdalena_of_Saxony .
+  dbe:Magdalena_of_Saxony foaf:gender "female"@en .
+} 
+
+graph us:construct28 {
+  dbe:Henry_III_of_England dbo:grandmother dbe:Eleanor_of_Aquitaine .
+} 
+graph us:where28 {
+  dbe:Henry_III_of_England dbo:parent <http://dbpedia.org/resource/John,_King_of_England> .
+  <http://dbpedia.org/resource/John,_King_of_England> dbo:parent dbe:Eleanor_of_Aquitaine .
+  dbe:Eleanor_of_Aquitaine foaf:gender "female"@en .
+} 
+
+graph us:construct29 {
+  dbe:Murad_IV dbo:grandmother dbe:Handan_Sultan .
+} 
+graph us:where29 {
+  dbe:Murad_IV dbo:parent dbe:Ahmed_I .
+  dbe:Ahmed_I dbo:parent dbe:Handan_Sultan .
+  dbe:Handan_Sultan foaf:gender "female"@en .
+} 
+
+graph us:construct30 {
+  dbe:Osman_II dbo:grandmother dbe:Handan_Sultan .
+} 
+graph us:where30 {
+  dbe:Osman_II dbo:parent dbe:Ahmed_I .
+  dbe:Ahmed_I dbo:parent dbe:Handan_Sultan .
+  dbe:Handan_Sultan foaf:gender "female"@en .
+} 
+
+graph us:construct31 {
+  <http://dbpedia.org/resource/Charles_FitzRoy,_2nd_Duke_of_Cleveland> dbo:grandmother dbe:Henrietta_Maria_of_France .
+} 
+graph us:where31 {
+  <http://dbpedia.org/resource/Charles_FitzRoy,_2nd_Duke_of_Cleveland> dbo:parent dbe:Charles_II_of_England .
+  dbe:Charles_II_of_England dbo:parent dbe:Henrietta_Maria_of_France .
+  dbe:Henrietta_Maria_of_France foaf:gender "female"@en .
+} 
+
+graph us:construct32 {
+  dbe:Ladislaus_the_Posthumous dbo:grandmother dbe:Barbara_of_Cilli .
+} 
+graph us:where32 {
+  dbe:Ladislaus_the_Posthumous dbo:parent dbe:Elizabeth_of_Luxembourg .
+  dbe:Elizabeth_of_Luxembourg dbo:parent dbe:Barbara_of_Cilli .
+  dbe:Barbara_of_Cilli foaf:gender "female"@en .
+} 
+
+graph us:construct33 {
+  <http://dbpedia.org/resource/Matilda_FitzRoy,_Countess_of_Perche> dbo:grandmother dbe:Matilda_of_Flanders .
+} 
+graph us:where33 {
+  <http://dbpedia.org/resource/Matilda_FitzRoy,_Countess_of_Perche> dbo:parent dbe:Henry_I_of_England .
+  dbe:Henry_I_of_England dbo:parent dbe:Matilda_of_Flanders .
+  dbe:Matilda_of_Flanders foaf:gender "female"@en .
+} 
+
+graph us:construct34 {
+  <http://dbpedia.org/resource/Isabella_of_Portugal,_Duchess_of_Burgundy> dbo:grandmother dbe:Blanche_of_Lancaster .
+} 
+graph us:where34 {
+  <http://dbpedia.org/resource/Isabella_of_Portugal,_Duchess_of_Burgundy> dbo:parent dbe:Philippa_of_Lancaster .
+  dbe:Philippa_of_Lancaster dbo:parent dbe:Blanche_of_Lancaster .
+  dbe:Blanche_of_Lancaster foaf:gender "female"@en .
+} 
+
+graph us:construct35 {
+  <http://dbpedia.org/resource/Margaret_of_Scotland,_Queen_of_Norway> dbo:grandmother dbe:Marie_de_Coucy .
+} 
+graph us:where35 {
+  <http://dbpedia.org/resource/Margaret_of_Scotland,_Queen_of_Norway> dbo:parent dbe:Alexander_III_of_Scotland .
+  dbe:Alexander_III_of_Scotland dbo:parent dbe:Marie_de_Coucy .
+  dbe:Marie_de_Coucy foaf:gender "female"@en .
+} 
+
+graph us:construct36 {
+  dbe:Trần_Nhân_Tông dbo:grandmother <http://dbpedia.org/resource/Thuận_Thiên_(Trần_dynasty_empress)> .
+} 
+graph us:where36 {
+  dbe:Trần_Nhân_Tông dbo:parent dbe:Trần_Thánh_Tông .
+  dbe:Trần_Thánh_Tông dbo:parent <http://dbpedia.org/resource/Thuận_Thiên_(Trần_dynasty_empress)> .
+  <http://dbpedia.org/resource/Thuận_Thiên_(Trần_dynasty_empress)> foaf:gender "female"@en .
+} 
+
+graph us:construct37 {
+  dbe:Grand_Duke_Konstantin_Pavlovich_of_Russia dbo:grandmother dbe:Catherine_the_Great .
+} 
+graph us:where37 {
+  dbe:Grand_Duke_Konstantin_Pavlovich_of_Russia dbo:parent dbe:Paul_I_of_Russia .
+  dbe:Paul_I_of_Russia dbo:parent dbe:Catherine_the_Great .
+  dbe:Catherine_the_Great foaf:gender "female"@en .
+} 
+
+graph us:construct38 {
+  dbe:Countess_Alexandra_von_Zarnekau dbo:grandmother dbe:Princess_Therese_of_Nassau-Weilburg .
+} 
+graph us:where38 {
+  dbe:Countess_Alexandra_von_Zarnekau dbo:parent dbe:Duke_Constantine_Petrovich_of_Oldenburg .
+  dbe:Duke_Constantine_Petrovich_of_Oldenburg dbo:parent dbe:Princess_Therese_of_Nassau-Weilburg .
+  dbe:Princess_Therese_of_Nassau-Weilburg foaf:gender "female"@en .
+} 
+
+graph us:construct39 {
+  dbe:Anne_of_Burgundy dbo:grandmother dbe:Margaret_of_Brieg .
+} 
+graph us:where39 {
+  dbe:Anne_of_Burgundy dbo:parent dbe:Margaret_of_Bavaria .
+  dbe:Margaret_of_Bavaria dbo:parent dbe:Margaret_of_Brieg .
+  dbe:Margaret_of_Brieg foaf:gender "female"@en .
+} 
+
+graph us:construct40 {
+  dbe:Infante_Pedro_Carlos_of_Spain_and_Portugal dbo:grandmother dbe:Maria_I_of_Portugal .
+} 
+graph us:where40 {
+  dbe:Infante_Pedro_Carlos_of_Spain_and_Portugal dbo:parent dbe:Infanta_Maria_Ana_Vitória_of_Portugal .
+  dbe:Infanta_Maria_Ana_Vitória_of_Portugal dbo:parent dbe:Maria_I_of_Portugal .
+  dbe:Maria_I_of_Portugal foaf:gender "female"@en .
+} 
+
+graph us:construct41 {
+  dbe:Bhumibol_Adulyadej dbo:grandmother dbe:Savang_Vadhana .
+} 
+graph us:where41 {
+  dbe:Bhumibol_Adulyadej dbo:parent dbe:Mahidol_Adulyadej .
+  dbe:Mahidol_Adulyadej dbo:parent dbe:Savang_Vadhana .
+  dbe:Savang_Vadhana foaf:gender "female"@en .
+} 
+
+graph us:construct42 {
+  dbe:Prince_Carl_Christian_of_Hohenzollern dbo:grandmother dbe:Princess_Sibylla_of_Saxe-Coburg_and_Gotha .
+} 
+graph us:where42 {
+  dbe:Prince_Carl_Christian_of_Hohenzollern dbo:parent dbe:Princess_Birgitta_of_Sweden .
+  dbe:Princess_Birgitta_of_Sweden dbo:parent dbe:Princess_Sibylla_of_Saxe-Coburg_and_Gotha .
+  dbe:Princess_Sibylla_of_Saxe-Coburg_and_Gotha foaf:gender "female"@en .
+} 
+
+graph us:construct43 {
+  dbe:Martin_I_of_Sicily dbo:grandmother dbe:Eleanor_of_Sicily .
+} 
+graph us:where43 {
+  dbe:Martin_I_of_Sicily dbo:parent dbe:Martin_of_Aragon .
+  dbe:Martin_of_Aragon dbo:parent dbe:Eleanor_of_Sicily .
+  dbe:Eleanor_of_Sicily foaf:gender "female"@en .
+} 
+
+graph us:construct44 {
+  dbe:Infanta_Maria_Cristina_of_Spain dbo:grandmother dbe:Maria_Christina_of_Austria .
+} 
+graph us:where44 {
+  dbe:Infanta_Maria_Cristina_of_Spain dbo:parent dbe:Alfonso_XIII_of_Spain .
+  dbe:Alfonso_XIII_of_Spain dbo:parent dbe:Maria_Christina_of_Austria .
+  dbe:Maria_Christina_of_Austria foaf:gender "female"@en .
+} 
+
+graph us:construct45 {
+  <http://dbpedia.org/resource/Henry_Frederick,_Prince_of_Wales> dbo:grandmother <http://dbpedia.org/resource/Mary,_Queen_of_Scots> .
+} 
+graph us:where45 {
+  <http://dbpedia.org/resource/Henry_Frederick,_Prince_of_Wales> dbo:parent dbe:James_VI_and_I .
+  dbe:James_VI_and_I dbo:parent <http://dbpedia.org/resource/Mary,_Queen_of_Scots> .
+  <http://dbpedia.org/resource/Mary,_Queen_of_Scots> foaf:gender "female"@en .
+} 
+
+graph us:construct46 {
+  dbe:Princess_Désirée_of_Hohenzollern dbo:grandmother dbe:Princess_Sibylla_of_Saxe-Coburg_and_Gotha .
+} 
+graph us:where46 {
+  dbe:Princess_Désirée_of_Hohenzollern dbo:parent dbe:Princess_Birgitta_of_Sweden .
+  dbe:Princess_Birgitta_of_Sweden dbo:parent dbe:Princess_Sibylla_of_Saxe-Coburg_and_Gotha .
+  dbe:Princess_Sibylla_of_Saxe-Coburg_and_Gotha foaf:gender "female"@en .
+} 
+
+graph us:construct47 {
+  dbe:Jigme_Khesar_Namgyel_Wangchuck dbo:grandmother dbe:Princess_Maria_Antonietta_of_Bourbon-Two_Sicilies .
+} 
+graph us:where47 {
+  dbe:Jigme_Khesar_Namgyel_Wangchuck dbo:parent dbe:Tshering_Yangdon .
+  dbe:Tshering_Yangdon dbo:parent dbe:Princess_Maria_Antonietta_of_Bourbon-Two_Sicilies .
+  dbe:Princess_Maria_Antonietta_of_Bourbon-Two_Sicilies foaf:gender "female"@en .
+} 
+
+graph us:construct48 {
+  dbe:Prince_Constantine_Constantinovich_of_Russia dbo:grandmother dbe:Princess_Augusta_of_Saxe-Meiningen .
+} 
+graph us:where48 {
+  dbe:Prince_Constantine_Constantinovich_of_Russia dbo:parent <http://dbpedia.org/resource/Princess_Elisabeth_of_Saxe-Altenburg_(1865–1927)> .
+  <http://dbpedia.org/resource/Princess_Elisabeth_of_Saxe-Altenburg_(1865–1927)> dbo:parent dbe:Princess_Augusta_of_Saxe-Meiningen .
+  dbe:Princess_Augusta_of_Saxe-Meiningen foaf:gender "female"@en .
+} 
+
+graph us:construct49 {
+  <http://dbpedia.org/resource/Prince_Oddone,_Duke_of_Montferrat> dbo:grandmother <http://dbpedia.org/resource/Maria_Theresa_of_Austria_(1801–1855)> .
+} 
+graph us:where49 {
+  <http://dbpedia.org/resource/Prince_Oddone,_Duke_of_Montferrat> dbo:parent dbe:Victor_Emmanuel_II_of_Italy .
+  dbe:Victor_Emmanuel_II_of_Italy dbo:parent <http://dbpedia.org/resource/Maria_Theresa_of_Austria_(1801–1855)> .
+  <http://dbpedia.org/resource/Maria_Theresa_of_Austria_(1801–1855)> foaf:gender "female"@en .
+} 
+

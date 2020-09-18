@@ -27,6 +27,7 @@ CONSTRUCT {
 }
 WHERE {
     ?a dbo:spouse ?b .
+    
     FILTER (!EXISTS {?b dbo:spouse ?a})
 }
 </body>

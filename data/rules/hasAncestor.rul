@@ -26,7 +26,12 @@ CONSTRUCT {
     ?a dbo:ancestor ?myancestor .
 }
 WHERE {
-
+    ?a dbo:parent ?myparent .
+    ?myparent dbo:parent ?mygrandparent .
+    ?mygrandparent dbo:parent ?myancestor .
+    
+    FILTER (?a != ?myancestor)
+    FILTER (!EXISTS {?a dbo:ancestor ?myancestor})
 }
 </body>
 </rule>

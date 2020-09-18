@@ -32,6 +32,7 @@ WHERE {
     ?myparent dbo:parent ?mygrandparent .
     ?a dbo:parent ?myparent . 
     ?myuncle foaf:gender "male"@en .
+    
     FILTER (!EXISTS {?a dbo:uncle ?myuncle})
     FILTER (?myparent != ?myuncle)
     FILTER (?a != ?myuncle)

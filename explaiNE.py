@@ -94,6 +94,8 @@ def get_explanations(i,j,s1,s2,embedding_dim,gamma,X,top_k,iter_data,hessians,pr
 
 if __name__ == '__main__':
 
+    import argparse
+
     SEED = 123
     os.environ['PYTHONHASHSEED'] = str(SEED)
     np.random.seed(SEED)
@@ -101,7 +103,16 @@ if __name__ == '__main__':
 
     print(f'CPU count: {joblib.cpu_count()}')
 
-    data = np.load(os.path.join('.','data','royalty_spouse.npz'))
+    parser = argparse.ArgumentParser()
+
+    parser.add_argument('file_name',type=str)
+    parser.add_argument('top_k', type=int)
+    args = parser.parse_args()
+
+    FILE_NAME = args.file_name
+    TOP_K = args.top_k
+
+    data = np.load(os.path.join('.','data',FILE_NAME))
 
     train = data['X_train']
     test = data['X_test']
@@ -134,7 +145,6 @@ if __name__ == '__main__':
     LEARNING_RATE = .001
     MAX_ITER = 100
     GAMMA = (1/(S1**2)) - (1/(S2**2))
-    TOP_K = 1
 
     trainexp2idx = trainexp2idx[:,:,[0,2]]
 
