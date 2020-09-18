@@ -194,6 +194,6 @@ if __name__ == '__main__':
 
     jaccard = utils.jaccard_score(testexp2idx,explanations)
 
-    print(f"Jaccard score={jaccard} using:")
+    print(f"{FILE_NAME[:-4]} jaccard score={jaccard} using:")
     print(f"embedding dimensions={EMBEDDING_DIM},s1={S1},s2={S2}")
     print(f"learning_rate={LEARNING_RATE},max_iter={MAX_ITER}")
