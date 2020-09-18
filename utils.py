@@ -92,30 +92,17 @@ def jaccard_score(true_exp,pred_exp):
 
     for i in range(len(true_exp)):
 
-        #true_i = true_exp[i][np.argsort(true_exp[i][:, 0])]
-        #pred_i = pred_exp[i][np.argsort(pred_exp[i][:, 0])]
-
         true_i = true_exp[i]
         pred_i = pred_exp[i]
 
         num_true_traces = true_i.shape[0]
         num_pred_traces = pred_i.shape[0]
 
-        # if num_true_traces < num_pred_traces:
-
-        #     pred_i = pred_i[:num_true_traces]
-        #     num_pred_traces = pred_i.shape[0]
-
-        #bool_array = (pred_i == true_i)
-
-        # count = 0
-        # for row in bool_array:
-        #     if row.all():
-        #         count += 1
         count = 0
-        for row in pred_i:
-            if row in true_i:
-                count +=1
+        for pred_row in pred_i:
+            for true_row in true_i:
+                if (pred_row == true_row).all():
+                    count +=1
 
         score = count / (num_true_traces + num_pred_traces-count)
 
