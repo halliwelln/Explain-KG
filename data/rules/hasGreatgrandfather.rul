@@ -29,13 +29,12 @@ CONSTRUCT {
 }
 WHERE {
     ?a dbo:parent ?myparent .
-    ?myparent dbo:parent ?mygrandfather .
-    ?mygrandfather dbo:parent ?great_grandfather .
-    ?mygrandfather foaf:gender "male"@en .
+    ?myparent dbo:parent ?mygrandparent .
+    ?mygrandparent dbo:parent ?great_grandfather .
     ?great_grandfather foaf:gender "male"@en .
-
-    FILTER (?a != ?great_grandfather)
-    FILTER (?a != ?mygrandfather)
+    
+    FILTER (?a != ?mygrandparent)
+    FILTER (?a != ?great_grandfather) 
     FILTER (!EXISTS {?a dbo:great_grandfather ?great_grandfather})
 }
 </body>

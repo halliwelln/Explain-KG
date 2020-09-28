@@ -76,8 +76,9 @@ class ExTransE_Model(tf.keras.Model):
         super(ExTransE_Model,self).__init__(*args, **kwargs)
         self.num_entities = num_entities
 
-    def compile(self,num_entities,margin,pred_loss,exp_loss,*args,**kwargs):
+    def compile(self,optimizer,margin,pred_loss,exp_loss):
         super(ExTransE_Model,self).compile()
+        self.optimizer = optimizer
         self.margin = margin
         self.pred_loss = pred_loss
         self.exp_loss = exp_loss
