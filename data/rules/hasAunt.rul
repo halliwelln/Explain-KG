@@ -35,7 +35,6 @@ WHERE {
     
     FILTER (!EXISTS {?a dbo:aunt ?myaunt})
     FILTER (?myparent != ?myaunt)
-    FILTER (?a != ?myaunt)
 }
 </body>
 </rule>

@@ -60,7 +60,6 @@ with strategy.scope():
 
     model.compile(
         optimizer=tf.keras.optimizers.SGD(learning_rate=LEARNING_RATE),
-        num_entities=NUM_ENTITIES,
         margin=MARGIN,
         pred_loss=transE.pred_loss,
         exp_loss=transE.exp_loss
