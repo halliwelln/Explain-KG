@@ -11,12 +11,11 @@ os.environ['PYTHONHASHSEED'] = str(SEED)
 np.random.seed(SEED)
 rn.seed(SEED)
 
-
 rules = [
-        'spouse','uncle','aunt','sibling',
-        'nephew','niece','brother','sister','grandfather',
-        'grandmother','ancestor','cousin','great_grandfather'
-        'great_grandmother'
+        'spouse','uncle','aunt',
+        'nephew','niece','brother','sister',
+        'grandfather','grandmother','ancestor','cousin_sibling',
+        'great_grandfather','great_grandmother'
         ]
 
 MAX_PADDING = 4
