@@ -194,6 +194,11 @@ if __name__ == '__main__':
 
     jaccard = utils.jaccard_score(testexp2idx,explanations)
 
+    np.savez(os.path.join('.','data','explaine',FILE_NAME,'preds','.npz'),
+        preds=explanations,embedding_dim=EMBEDDING_DIM,learning_rate=LEARNING_RATE,
+        max_iter=MAX_ITER,s1=S1,s2=S2
+        )
+
     print(f"{FILE_NAME[:-4]} jaccard score={jaccard} using:")
     print(f"embedding dimensions={EMBEDDING_DIM},s1={S1},s2={S2}")
     print(f"learning_rate={LEARNING_RATE},max_iter={MAX_ITER}")
