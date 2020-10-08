@@ -38,4 +38,20 @@ WHERE {
 </body>
 </rule>
 
+<rule>
+<body>  
+CONSTRUCT {
+    ?a dbo:is_sister_of ?c .
+}
+WHERE {
+    ?a dbo:sister ?b .
+    ?b dbo:sister ?c .
+    
+    FILTER (!EXISTS {?a dbo:is_sister_of ?c})
+    FILTER (?a != ?b)
+    FILTER (?b != ?c)
+}
+</body>
+</rule>
+
 </rdf:RDF>
