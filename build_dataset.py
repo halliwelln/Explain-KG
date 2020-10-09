@@ -11,15 +11,16 @@ os.environ['PYTHONHASHSEED'] = str(SEED)
 np.random.seed(SEED)
 rn.seed(SEED)
 
-rules = [
-        'spouse','uncle','aunt','nephew',
-        'niece','brother','sister','grandfather',
-        'grandmother','ancestor','cousin_sibling',
-        'great_grandfather','great_grandmother','predecessor'
-        'descendant'
-        ]
+# rules = [
+#         'spouse','uncle','aunt','nephew',
+#         'niece','brother','sister','grandfather',
+#         'grandmother','great_ancestor','cousin_sibling',
+#         'great_grandfather','great_grandmother','predecessor'
+#         'descendant'
+#         ]
 
-MAX_PADDING = 4
+rules = ['grandmother','grandfather']
+MAX_PADDING = 3
 
 all_triples = []
 all_traces = []
@@ -33,10 +34,10 @@ for rule in rules:
     all_triples.append(triples)
     all_traces.append(traces)
 
-all_triples = np.array(all_triples)
+all_triples = np.concatenate(all_triples,axis=0)
 print(f"all_triples shape: {all_triples.shape}")
 
-all_traces = np.array(all_traces)
+all_traces = np.concatenate(all_traces,axis=0)
 print(f"all_traces shape: {all_traces.shape}")
 
 exp_entities = np.array([[all_traces[:,i,:][:,0],
@@ -48,7 +49,7 @@ entities = np.unique(np.concatenate([all_triples[:,0], all_triples[:,2], exp_ent
 relations = np.unique(np.concatenate([all_triples[:,1], exp_relations],axis=0))
 
 np.savez(os.path.join('.','data','royalty.npz'),
-    all_triples=all_triples,all_traces=all_traces,
+    triples=all_triples,traces=all_traces,
     entities=entities,relations=relations)
 
 print('Dataset built.')
