@@ -33,25 +33,7 @@ WHERE {
     ?b foaf:gender "male"@en .
     
     FILTER (!EXISTS {?a dbo:brother ?b})
-    FILTER (?a != ?b)
 }
 </body>
 </rule>
 
-<rule>
-<body>  
-CONSTRUCT {
-    ?a dbo:is_brother_of ?c .
-}
-WHERE {
-    ?a dbo:brother ?b .
-    ?b dbo:brother ?c .
-    
-    FILTER (!EXISTS {?a dbo:is_brother_of ?c})
-    FILTER (?a != ?b)
-    FILTER (?b != ?c)
-}
-</body>
-</rule>
-
-</rdf:RDF>

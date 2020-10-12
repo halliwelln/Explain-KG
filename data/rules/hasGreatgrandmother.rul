@@ -32,9 +32,7 @@ WHERE {
     ?myparent dbo:parent ?mygrandparent .
     ?mygrandparent dbo:parent ?great_grandmother .
     ?great_grandmother foaf:gender "female"@en .
-
-    FILTER (?a != ?mygrandparent)
-    FILTER (?a != ?great_grandmother) 
+    
     FILTER (!EXISTS {?a dbo:great_grandmother ?great_grandmother})
 }
 </body>
