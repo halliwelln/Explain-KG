@@ -34,9 +34,6 @@ WHERE {
     ?mynephew foaf:gender "male"@en .
     
     FILTER (!EXISTS {?a dbo:nephew ?mynephew})
-    FILTER (?a != ?mysibling)
-    FILTER (?a != ?mynephew)
-    FILTER (?mynephew != ?mysibling)
 }
 </body>
 </rule>

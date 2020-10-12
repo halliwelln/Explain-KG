@@ -32,7 +32,6 @@ WHERE {
     ?mysibling dbo:parent ?myparent .
     
     FILTER (!EXISTS {?a dbo:sibling ?mysibling})
-    FILTER (?a != ?mysibling)
 }
 </body>
 </rule>
@@ -48,8 +47,7 @@ WHERE {
     ?mycousin dbo:parent ?myaunt_or_uncle .
 
     FILTER (!EXISTS {?a dbo:cousin ?mycousin})
-    FILTER (?a != ?mycousin)
-    FILTER (?myparent != ?myaunt_or_uncle)
+
 }
 </body>
 </rule>
