@@ -22,6 +22,7 @@ rn.seed(SEED)
 rules = ['grandmother','grandfather']
 MAX_PADDING = 3
 
+data = dict()
 all_triples = []
 all_traces = []
 
@@ -30,9 +31,12 @@ for rule in rules:
     triples,traces = utils.parse_ttl(
         file_name=os.path.join('.','data','traces',rule+'.ttl'),
         max_padding=MAX_PADDING)
-
+    
     all_triples.append(triples)
     all_traces.append(traces)
+    
+    data[rule + '_triples'] = triples
+    data[rule + '_traces'] = traces
 
 all_triples = np.concatenate(all_triples,axis=0)
 print(f"all_triples shape: {all_triples.shape}")
@@ -45,12 +49,13 @@ exp_entities = np.array([[all_traces[:,i,:][:,0],
 
 exp_relations = np.array([all_traces[:,i,:][:,1] for i in range(MAX_PADDING)]).flatten()
 
-entities = np.unique(np.concatenate([all_triples[:,0], all_triples[:,2], exp_entities],axis=0))
-relations = np.unique(np.concatenate([all_triples[:,1], exp_relations],axis=0))
+all_entities = np.unique(np.concatenate([all_triples[:,0], all_triples[:,2], exp_entities],axis=0))
+all_relations = np.unique(np.concatenate([all_triples[:,1], exp_relations],axis=0))
 
-np.savez(os.path.join('.','data','royalty.npz'),
-    triples=all_triples,traces=all_traces,
-    entities=entities,relations=relations)
+data['entities'] = all_entities
+data['relations'] = all_relations
+
+np.savez(os.path.join('.','data','royalty.npz'),**data)
 
 print('Dataset built.')
 
