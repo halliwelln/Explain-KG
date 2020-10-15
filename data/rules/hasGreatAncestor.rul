@@ -21,24 +21,13 @@
 >
 
 <rule>
-<body> 
-CONSTRUCT { ?a dbo:ancestor ?myparent . }
+<body>  
+CONSTRUCT { ?a dbo:great_ancestor ?greatancestor . }
 WHERE {
     ?a dbo:parent ?myparent .
-
-    FILTER (!EXISTS {?a dbo:ancestor ?myparent})
-}
-</body>
-</rule>
-
-<rule>
-<body>  
-CONSTRUCT { ?a dbo:ancestor ?greatancestor . }
-WHERE {
-    ?a dbo:ancestor ?myparent .
-    ?myparent dbo:ancestor ?greatancestor .
+    ?myparent dbo:parent ?greatancestor .
     
-    FILTER (!EXISTS {?a dbo:ancestor ?greatancestor})
+    FILTER (!EXISTS {?a dbo:great_ancestor ?greatancestor})
 }
 </body>
 </rule>
