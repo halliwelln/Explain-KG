@@ -14,7 +14,7 @@ tf.random.set_seed(SEED)
 np.random.seed(SEED)
 rn.seed(SEED)
 
-data = np.load(os.path.join('.','data','royalty_spouse.npz'))
+data = np.load(os.path.join('..','data','royalty_spouse.npz'))
 
 train = data['X_train']
 test = data['X_test']
