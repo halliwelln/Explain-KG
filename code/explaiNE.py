@@ -95,6 +95,7 @@ def get_explanations(i,j,s1,s2,embedding_dim,gamma,X,top_k,iter_data,hessians,pr
 if __name__ == '__main__':
 
     import argparse
+    from sklearn.model_selection import KFold
 
     SEED = 123
     os.environ['PYTHONHASHSEED'] = str(SEED)
@@ -105,20 +106,15 @@ if __name__ == '__main__':
 
     parser = argparse.ArgumentParser()
 
-    parser.add_argument('file_name',type=str)
+    parser.add_argument('file_name',type=str,help=
+        'Enter which rule to use brother,sister,...etc (str), -1 (str) for full dataset')
     parser.add_argument('top_k', type=int)
     args = parser.parse_args()
 
     FILE_NAME = args.file_name
     TOP_K = args.top_k
 
-    data = np.load(os.path.join('.','data',FILE_NAME))
-
-    train = data['X_train']
-    test = data['X_test']
-
-    train_exp = data['train_exp']
-    test_exp = data['test_exp']
+    data = np.load(os.path.join('..','data','royalty.npz'))
 
     entities = data['entities'].tolist()
     relations = data['relations'].tolist()
@@ -129,16 +125,6 @@ if __name__ == '__main__':
     ent2idx = dict(zip(entities, range(NUM_ENTITIES)))
     rel2idx = dict(zip(relations, range(NUM_RELATIONS)))
 
-    train2idx = utils.array2idx(train,ent2idx,rel2idx)
-    test2idx = utils.array2idx(test,ent2idx,rel2idx)
-    
-    trainexp2idx = utils.array2idx(train_exp,ent2idx,rel2idx)
-    testexp2idx = utils.array2idx(test_exp,ent2idx,rel2idx)
-
-    adjacency_data = np.concatenate((train,train_exp.reshape(-1,3)), axis=0)
-
-    A = utils.get_adjacency_matrix(adjacency_data,entities,NUM_ENTITIES)
-
     EMBEDDING_DIM = 50
     S1 = 1
     S2 = 1.5
@@ -146,56 +132,91 @@ if __name__ == '__main__':
     MAX_ITER = 100
     GAMMA = (1/(S1**2)) - (1/(S2**2))
 
-    trainexp2idx = trainexp2idx[:,:,[0,2]]
+    if FILE_NAME == '-1':
+        triples, traces = utils.concat_triples(data, data['rules'])
+        FILE_NAME = 'full_data'
+    else:
+        triples, traces = data[rule + '_triples'], data[rule + '_traces']
 
-    testexp2idx = testexp2idx[:,:,[0,2]]
+    kf = KFold(n_splits=5,shuffle=False,random_state=SEED)
 
-    prior = maxent.BGDistr(A) 
-    prior.fit()
+    cv_scores = []
+    preds = []
 
-    CNE = cne.ConditionalNetworkEmbedding(
-        A=A,
-        d=EMBEDDING_DIM,
-        s1=S1,
-        s2=S2,
-        prior_dist=prior
-        )
+    for train_idx, test_idx in kf.split():
 
-    CNE.fit(lr=LEARNING_RATE,max_iter=MAX_ITER)
+        train = triples[train_idx]
+        test = triples[test_idx]
 
-    X = CNE._ConditionalNetworkEmbedding__emb
+        train_exp = traces[train_idx]
+        test_exp = traces[test_idx]
 
-    A = utils.get_adjacency_matrix(test,entities,NUM_ENTITIES)
+        train2idx = utils.array2idx(train,ent2idx,rel2idx)
+        test2idx = utils.array2idx(test,ent2idx,rel2idx)
+        
+        trainexp2idx = utils.array2idx(train_exp,ent2idx,rel2idx)
+        testexp2idx = utils.array2idx(test_exp,ent2idx,rel2idx)
 
-    PROBS = joblib.Parallel(n_jobs=-2, verbose=0)(
-        joblib.delayed(compute_prob)(
-            i,S1,S2,X,NUM_ENTITIES,prior,SEED
-            ) for i in range(NUM_ENTITIES)
-        )
+        adjacency_data = np.concatenate((train,train_exp.reshape(-1,3)), axis=0)
 
-    PROBS = np.array(PROBS)
+        A = utils.get_adjacency_matrix(adjacency_data,entities,NUM_ENTITIES)
 
-    HESSIANS = joblib.Parallel(n_jobs=-2, verbose=20)(
-        joblib.delayed(get_hessian)(
-            i,S1,S2,GAMMA,X,A,EMBEDDING_DIM,PROBS,SEED
-            ) for i in range(NUM_ENTITIES)
-        )
+        trainexp2idx = trainexp2idx[:,:,[0,2]]
 
-    HESSIANS = np.array(HESSIANS)
-    ITER_DATA = np.unique(testexp2idx.reshape(-1,2), axis=0)
+        testexp2idx = testexp2idx[:,:,[0,2]]
 
-    explanations = joblib.Parallel(n_jobs=-2, verbose=0)(
-        joblib.delayed(get_explanations)(
-            i,j,S1,S2,EMBEDDING_DIM,GAMMA,X,TOP_K,ITER_DATA,HESSIANS,PROBS,SEED
-            ) for i,_,j in test2idx
-        )
+        prior = maxent.BGDistr(A) 
+        prior.fit()
 
-    explanations = np.array(explanations)
+        CNE = cne.ConditionalNetworkEmbedding(
+            A=A,
+            d=EMBEDDING_DIM,
+            s1=S1,
+            s2=S2,
+            prior_dist=prior
+            )
 
-    jaccard = utils.jaccard_score(testexp2idx,explanations)
+        CNE.fit(lr=LEARNING_RATE,max_iter=MAX_ITER)
+
+        X = CNE._ConditionalNetworkEmbedding__emb
+
+        A = utils.get_adjacency_matrix(test,entities,NUM_ENTITIES)
+
+        PROBS = joblib.Parallel(n_jobs=-2, verbose=0)(
+            joblib.delayed(compute_prob)(
+                i,S1,S2,X,NUM_ENTITIES,prior,SEED
+                ) for i in range(NUM_ENTITIES)
+            )
+
+        PROBS = np.array(PROBS)
+
+        HESSIANS = joblib.Parallel(n_jobs=-2, verbose=20)(
+            joblib.delayed(get_hessian)(
+                i,S1,S2,GAMMA,X,A,EMBEDDING_DIM,PROBS,SEED
+                ) for i in range(NUM_ENTITIES)
+            )
+
+        HESSIANS = np.array(HESSIANS)
+        ITER_DATA = np.unique(testexp2idx.reshape(-1,2), axis=0)
+
+        explanations = joblib.Parallel(n_jobs=-2, verbose=0)(
+            joblib.delayed(get_explanations)(
+                i,j,S1,S2,EMBEDDING_DIM,GAMMA,X,TOP_K,ITER_DATA,HESSIANS,PROBS,SEED
+                ) for i,_,j in test2idx
+            )
+
+        explanations = np.array(explanations)
+
+        jaccard = utils.jaccard_score(testexp2idx,explanations)
+
+        cv_scores.append(jaccard)
+        preds.append(explanations)
+
+    best_idx = np.argmin(cv_scores)
+    best_preds = preds[best_idx]
 
     np.savez(os.path.join('.','data','explaine_',FILE_NAME,'_preds','.npz'),
-        preds=explanations,embedding_dim=EMBEDDING_DIM,learning_rate=LEARNING_RATE,
+        preds=best_preds,embedding_dim=EMBEDDING_DIM,learning_rate=LEARNING_RATE,
         max_iter=MAX_ITER,s1=S1,s2=S2
         )
 

@@ -18,13 +18,31 @@ def get_negative_triples(head, rel, tail, num_entities, random_state=123):
 
     return neg_head, neg_tail
 
-def get_entity_embeddings(model):
-    '''Embedding matrix for entities'''
-    return model.get_layer('entity_embeddings').get_weights()[0]
+def concat_triples(data, rules):
+    
+    triples = []
+    traces = []
 
-def get_relation_embeddings(model):
-    '''Embedding matrix for relations'''
-    return model.get_layer('relation_embeddings').get_weights()[0]
+    for rule in rules:
+
+        triple_name = rule + '_triples'
+        traces_name = rule + '_traces'
+
+        triples.append(data[triple_name])
+        traces.append(data[traces_name])
+
+    triples = np.concatenate(triples, axis=0)
+    traces = np.concatenate(traces, axis=0)
+
+    return triples, traces
+
+# def get_entity_embeddings(model):
+#     '''Embedding matrix for entities'''
+#     return model.get_layer('entity_embeddings').get_weights()[0]
+
+# def get_relation_embeddings(model):
+#     '''Embedding matrix for relations'''
+#     return model.get_layer('relation_embeddings').get_weights()[0]
 
 def array2idx(dataset, ent2idx,rel2idx):
     

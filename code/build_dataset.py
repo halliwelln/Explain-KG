@@ -28,7 +28,7 @@ all_traces = []
 for rule in rules:
 
     triples,traces = utils.parse_ttl(
-        file_name=os.path.join('.','data','traces',rule+'.ttl'),
+        file_name=os.path.join('..','data','traces',rule+'.ttl'),
         max_padding=MAX_PADDING)
     
     all_triples.append(triples)
@@ -53,8 +53,9 @@ all_relations = np.unique(np.concatenate([all_triples[:,1], exp_relations],axis=
 
 data['entities'] = all_entities
 data['relations'] = all_relations
+data['rules'] = rules
 
-np.savez(os.path.join('.','data','royalty.npz'),**data)
+np.savez(os.path.join('..','data','royalty.npz'),**data)
 
 print('Dataset built.')
 
