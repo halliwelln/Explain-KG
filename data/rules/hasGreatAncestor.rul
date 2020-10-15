@@ -25,7 +25,8 @@
 CONSTRUCT { ?a dbo:great_ancestor ?greatancestor . }
 WHERE {
     ?a dbo:parent ?myparent .
-    ?myparent dbo:parent ?greatancestor .
+    ?myparent dbo:parent ?grandparent .
+    ?grandparent dbo:parent ?greatancestor .
     
     FILTER (!EXISTS {?a dbo:great_ancestor ?greatancestor})
 }
