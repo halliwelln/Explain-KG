@@ -56,14 +56,14 @@ with strategy.scope():
         num_relations=NUM_RELATIONS,
         embedding_size=EMBEDDING_SIZE,
         random_state=SEED
-        )
+    )
 
     model.compile(
         optimizer=tf.keras.optimizers.SGD(learning_rate=LEARNING_RATE),
         margin=MARGIN,
         pred_loss=transE.pred_loss,
         exp_loss=transE.exp_loss
-        )
+    )
 
 model.fit(
     x=[

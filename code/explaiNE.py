@@ -194,7 +194,7 @@ if __name__ == '__main__':
 
     jaccard = utils.jaccard_score(testexp2idx,explanations)
 
-    np.savez(os.path.join('.','data','explaine',FILE_NAME,'preds','.npz'),
+    np.savez(os.path.join('.','data','explaine_',FILE_NAME,'_preds','.npz'),
         preds=explanations,embedding_dim=EMBEDDING_DIM,learning_rate=LEARNING_RATE,
         max_iter=MAX_ITER,s1=S1,s2=S2
         )
