@@ -15,8 +15,7 @@ rn.seed(SEED)
 #         'spouse','uncle','aunt','nephew',
 #         'niece','brother','sister','grandfather',
 #         'grandmother','great_ancestor','cousin_sibling',
-#         'great_grandfather','great_grandmother','predecessor'
-#         'descendant'
+#         'great_grandfather','great_grandmother','successor_predecessor'
 #         ]
 
 rules = ['grandmother','grandfather']
