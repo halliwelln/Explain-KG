@@ -68,8 +68,8 @@ CONSTRUCT {
   ?a dbo:transitive_successor ?c .
 }
 WHERE {
-   ?a dbo:successor ?b .
-   ?b dbo:successor ?c .
+   ?a dbo:transitive_successor ?b .
+   ?b dbo:transitive_successor ?c .
 }
 
 </body>
@@ -97,8 +97,8 @@ CONSTRUCT {
   ?a dbo:transitive_predecessor ?c .
 }
 WHERE {
-   ?a dbo:predecessor ?b .
-   ?b dbo:predecessor ?c .
+   ?a dbo:transitive_predecessor ?b .
+   ?b dbo:transitive_predecessor ?c .
 }
 
 </body>
