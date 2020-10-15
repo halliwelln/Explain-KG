@@ -43,7 +43,7 @@ for i in range(start,end+offset,offset):
             """)
         sparql.setReturnFormat(XML)
         results = sparql.query().convert().serialize(
-            destination=os.path.join('.','data','royalty_temp',f'sparql-{i}'),
+            destination=os.path.join('..','data','royalty_temp',f'sparql-{i}'),
             format='xml'
             )
         
@@ -57,6 +57,6 @@ g = Graph()
 
 for i in range(start,end+offset,offset):
 
-    g.parse(os.path.join('.','data','royalty_temp',f'sparql-{i}'), format="xml")
+    g.parse(os.path.join('..','data','royalty_temp',f'sparql-{i}'), format="xml")
 
-g.serialize(destination=os.path.join('.','data','rules','royalty'),format='xml')
+g.serialize(destination=os.path.join('..','data','rules','royalty'),format='xml')
