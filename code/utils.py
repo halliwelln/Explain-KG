@@ -18,8 +18,25 @@ def get_negative_triples(head, rel, tail, num_entities, random_state=123):
 
     return neg_head, neg_tail
 
+def get_adjacency_matrix_list(num_relations,num_entities,data):
+
+    adj_mats = []
+
+    for i in range(num_relations):
+
+        adj = np.zeros((num_entities,num_entities))
+
+        for h,_,t in (data[data[:,1] == i]):
+
+            adj[h,t] = 1
+            adj[t,h] = 1
+
+        adj_mats.append(adj)
+
+    return np.expand_dims(adj_mats,axis=0)
+
 def concat_triples(data, rules):
-    
+
     triples = []
     traces = []
 
