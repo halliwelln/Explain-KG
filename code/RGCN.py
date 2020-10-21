@@ -89,7 +89,60 @@ class DistMult(tf.keras.layers.Layer):
         
         return tf.sigmoid(tf.reduce_sum(head_e*rel_e*tail_e, axis=-1))
 
-def RGCN_Model(num_entities,num_relations,embedding_dim,output_dim,seed):
+class RGCN_Model(tf.keras.Model):
+
+    def __init__(self,num_entities,*args,**kwargs):
+        super(RGCN_Model,self).__init__(*args, **kwargs)
+        self.num_entities = num_entities
+
+    def train_step(self,data):
+
+        all_indices,pos_head,rel,pos_tail,adj_mats = data[0]
+        y = data[1]
+
+        neg_head, neg_tail = utils.get_negative_triples(
+                head=pos_head, 
+                rel=rel, 
+                tail=pos_tail,
+                num_entities=self.num_entities
+            )
+
+
+        with tf.GradientTape() as tape:
+
+            y_pos_pred = self([
+                    all_indices,
+                    pos_head,
+                    rel,
+                    pos_tail,
+                    adj_mats
+                    ],
+                    training=True
+                )
+            
+            y_neg_pred = self([
+                    all_indices,
+                    neg_head,
+                    rel,
+                    neg_tail,
+                    adj_mats
+                    ],
+                    training=True
+                )
+
+            y_pred = tf.concat([y_pos_pred,y_neg_pred],axis=0)
+            y_true = tf.concat([y,tf.zeros_like(y)],axis=0)
+                
+            loss = self.compiled_loss(y_true,y_pred)
+
+        grads = tape.gradient(loss, self.trainable_weights)
+        self.optimizer.apply_gradients(zip(grads, self.trainable_weights))
+        
+        self.compiled_metrics.update_state(y_true, y_pred)
+
+        return {m.name: m.result() for m in self.metrics}
+
+def get_RGCN_Model(num_entities,num_relations,embedding_dim,output_dim,seed):
 
     head_input = tf.keras.Input(shape=(None,), name='head_input',dtype=tf.int64)
     rel_input = tf.keras.Input(shape=(None,), name='rel_input',dtype=tf.int64)
@@ -136,7 +189,7 @@ def RGCN_Model(num_entities,num_relations,embedding_dim,output_dim,seed):
         ]
     )
 
-    model = tf.keras.Model(
+    model = RGCN_Model(
         inputs=[
             all_entities,
             head_input,
@@ -146,7 +199,8 @@ def RGCN_Model(num_entities,num_relations,embedding_dim,output_dim,seed):
         ],
         outputs=[
             output
-        ]
+        ],
+        num_entities=num_entities
     )
 
     return model
@@ -177,6 +231,7 @@ if __name__ == '__main__':
     OUTPUT_DIM = 5
     LEARNING_RATE = 1e-3
     NUM_EPOCHS = 1
+    BATCH_SIZE = 32
 
     ent2idx = dict(zip(entities, range(NUM_ENTITIES)))
     rel2idx = dict(zip(relations, range(NUM_RELATIONS)))
@@ -195,7 +250,7 @@ if __name__ == '__main__':
 
     all_indices = np.arange(NUM_ENTITIES).reshape(1,-1)
 
-    model = RGCN_Model(
+    model = get_RGCN_Model(
         num_entities=NUM_ENTITIES,
         num_relations=NUM_RELATIONS,
         embedding_dim=EMBEDDING_DIM,
@@ -203,59 +258,76 @@ if __name__ == '__main__':
         seed=SEED
     )
 
-    optimizer = tf.keras.optimizers.SGD(learning_rate=1e-3)
-    bce = tf.keras.losses.BinaryCrossentropy()
+    model.compile(
+        loss=tf.keras.losses.BinaryCrossentropy(), 
+        optimizer=tf.keras.optimizers.SGD(learning_rate=1e-3)
+    )
 
-    data = tf.data.Dataset.from_tensor_slices((
-            train2idx[0,:,0],
-            train2idx[0,:,1],
-            train2idx[0,:,2], 
-            np.ones(train2idx.shape[1])
-        )
-    ).batch(1)
+    model.fit(x=[
+        all_indices,
+        train2idx[:,:,0],
+        train2idx[:,:,1],
+        train2idx[:,:,2],
+        adj_mats
+        ],
+        y=np.ones(train2idx.shape[1]).reshape(1,-1),
+        epochs=NUM_EPOCHS,
+        batch_size=BATCH_SIZE
+    )
 
-    for epoch in range(NUM_EPOCHS):
+    # optimizer = tf.keras.optimizers.SGD(learning_rate=1e-3)
+    # bce = tf.keras.losses.BinaryCrossentropy()
 
-        for pos_head,rel,pos_tail,y in data:
+    # data = tf.data.Dataset.from_tensor_slices((
+    #         train2idx[0,:,0],
+    #         train2idx[0,:,1],
+    #         train2idx[0,:,2], 
+    #         np.ones(train2idx.shape[1])
+    #     )
+    # ).batch(BATCH_SIZE)
 
-            neg_head, neg_tail = utils.get_negative_triples(
-                head=pos_head, 
-                rel=rel, 
-                tail=pos_tail,
-                num_entities=NUM_ENTITIES
-            )
+    # for epoch in range(NUM_EPOCHS):
 
-            with tf.GradientTape() as tape:
+    #     for pos_head,rel,pos_tail,y in data:
 
-                y_pos_pred = model([
-                    all_indices,
-                    pos_head,
-                    rel,
-                    pos_tail,
-                    adj_mats
-                    ],
-                    training=True
-                )
+    #         neg_head, neg_tail = utils.get_negative_triples(
+    #             head=pos_head, 
+    #             rel=rel, 
+    #             tail=pos_tail,
+    #             num_entities=NUM_ENTITIES
+    #         )
+
+    #         with tf.GradientTape() as tape:
+
+    #             y_pos_pred = model([
+    #                 all_indices,
+    #                 pos_head,
+    #                 rel,
+    #                 pos_tail,
+    #                 adj_mats
+    #                 ],
+    #                 training=True
+    #             )
             
-                y_neg_pred = model([
-                    all_indices,
-                    neg_head,
-                    rel,
-                    neg_tail,
-                    adj_mats
-                    ],
-                    training=True
-                )
+    #             y_neg_pred = model([
+    #                 all_indices,
+    #                 neg_head,
+    #                 rel,
+    #                 neg_tail,
+    #                 adj_mats
+    #                 ],
+    #                 training=True
+    #             )
 
-                y_pred = tf.concat([y_pos_pred,y_neg_pred],axis=0)
-                y_true = tf.concat([y,tf.zeros_like(y)],axis=0)
+    #             y_pred = tf.concat([y_pos_pred,y_neg_pred],axis=0)
+    #             y_true = tf.concat([y,tf.zeros_like(y)],axis=0)
                 
-                loss = bce(y_true,y_pred)
+    #             loss = bce(y_true,y_pred)
 
-            grads = tape.gradient(loss, model.trainable_weights)
-            optimizer.apply_gradients(zip(grads, model.trainable_weights))
+    #         grads = tape.gradient(loss, model.trainable_weights)
+    #         optimizer.apply_gradients(zip(grads, model.trainable_weights))
 
-        print(f'loss {loss} after epoch {epoch}')
+    #     print(f'loss {loss} after epoch {epoch}')
 
 preds = model.predict(
     x=[
@@ -264,10 +336,9 @@ preds = model.predict(
         train2idx[:,:,1],
         train2idx[:,:,2],
         adj_mats
-    ],
-    batch_size=1
+    ]
 )
-print(preds.shape)
+
 print(f'acc {(preds > .5).sum()/train2idx.shape[1]}')
 
 
