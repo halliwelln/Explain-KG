@@ -3,6 +3,74 @@
 import tensorflow as tf
 from tensorflow.keras.layers import Embedding
 
+# class RGCN_Layer(tf.keras.layers.Layer):
+#     def __init__(self,num_relations,output_dim,**kwargs):
+#         super(RGCN_Layer,self).__init__(**kwargs)
+#         self.num_relations = num_relations
+#         self.output_dim = output_dim
+        
+#     def build(self,input_shape):
+
+#         input_dim = int(input_shape[3][-1])
+        
+#         self.relation_kernel = self.add_weight(
+#             shape=(self.num_relations,input_dim, self.output_dim),
+#             name="relation_kernels",
+#             trainable=True,
+#             initializer=tf.keras.initializers.RandomNormal(
+#                 mean=0.0,
+#                 stddev=1,
+#                 seed=SEED
+#             )
+#         )
+
+
+#         self.self_kernel = self.add_weight(
+#             shape=(input_dim, self.output_dim),
+#             name="self_kernel",
+#             trainable=True,
+#             initializer=tf.keras.initializers.RandomNormal(
+#                 mean=0.0,
+#                 stddev=1,
+#                 seed=SEED
+#             )
+#         )
+    
+#     def call(self, inputs):
+        
+#         embeddings,head_idx,tail_idx,head_e,tail_e,adj_mats = inputs
+#         # print('embeddings',embeddings.shape)
+#         # print('adj_mats',adj_mats.shape)
+#         # print('head_idx',head_idx.shape)
+#         # print('head_e',head_e.shape)
+#         adj_mats = tf.squeeze(adj_mats,axis=0)
+#         embeddings = tf.squeeze(embeddings,axis=0)
+#         #print('head_e',head_e)
+#         # print('embeddings',embeddings)
+#         # print('head_idx',head_idx)
+#         # print('adj_mats',adj_mats)
+
+#         head_output = tf.matmul(head_e,self.self_kernel)
+#         tail_output = tf.matmul(tail_e,self.self_kernel)
+        
+#         for i in range(self.num_relations):
+            
+#             adj_i = adj_mats[i]
+
+#             head_adj = tf.nn.embedding_lookup(adj_i,head_idx)
+#             #print('head_adj',head_adj)
+#             tail_adj = tf.nn.embedding_lookup(adj_i,tail_idx)
+            
+#             h_head = tf.matmul(head_adj,embeddings)
+#             h_tail = tf.matmul(head_adj,embeddings)
+            
+#             head_output += tf.matmul(h_head,self.relation_kernel[i])
+#             tail_output += tf.matmul(h_tail,self.relation_kernel[i])
+
+#         print('head_output',head_output.shape)
+
+#         return head_output,tail_output
+
 class RGCN_Layer(tf.keras.layers.Layer):
     def __init__(self,num_relations,output_dim,**kwargs):
         super(RGCN_Layer,self).__init__(**kwargs)
@@ -58,6 +126,8 @@ class RGCN_Layer(tf.keras.layers.Layer):
             
             head_output += tf.matmul(h_head,self.relation_kernel[i])
             tail_output += tf.matmul(h_tail,self.relation_kernel[i])
+
+        print('head_output',head_output.shape)
 
         return head_output,tail_output
 
@@ -189,7 +259,7 @@ def get_RGCN_Model(num_entities,num_relations,embedding_dim,output_dim,seed):
         ]
     )
 
-    model = RGCN_Model(
+    model = tf.keras.Model(
         inputs=[
             all_entities,
             head_input,
@@ -199,8 +269,7 @@ def get_RGCN_Model(num_entities,num_relations,embedding_dim,output_dim,seed):
         ],
         outputs=[
             output
-        ],
-        num_entities=num_entities
+        ]
     )
 
     return model
@@ -227,8 +296,8 @@ if __name__ == '__main__':
 
     NUM_ENTITIES = len(entities)
     NUM_RELATIONS = len(relations)
-    EMBEDDING_DIM = 3
-    OUTPUT_DIM = 5
+    EMBEDDING_DIM = 30
+    OUTPUT_DIM = 50
     LEARNING_RATE = 1e-3
     NUM_EPOCHS = 1
     BATCH_SIZE = 32
@@ -258,76 +327,76 @@ if __name__ == '__main__':
         seed=SEED
     )
 
-    model.compile(
-        loss=tf.keras.losses.BinaryCrossentropy(), 
-        optimizer=tf.keras.optimizers.SGD(learning_rate=1e-3)
-    )
+    # model.compile(
+    #     loss=tf.keras.losses.BinaryCrossentropy(), 
+    #     optimizer=tf.keras.optimizers.SGD(learning_rate=1e-3)
+    # )
 
-    model.fit(x=[
-        all_indices,
-        train2idx[:,:,0],
-        train2idx[:,:,1],
-        train2idx[:,:,2],
-        adj_mats
-        ],
-        y=np.ones(train2idx.shape[1]).reshape(1,-1),
-        epochs=NUM_EPOCHS,
-        batch_size=BATCH_SIZE
-    )
+    # model.fit(x=[
+    #     all_indices,
+    #     train2idx[:,:,0],
+    #     train2idx[:,:,1],
+    #     train2idx[:,:,2],
+    #     adj_mats],
+    #     y=np.ones(train2idx.shape[1]).reshape(1,-1),
+    #     epochs=NUM_EPOCHS,
+    #     batch_size=BATCH_SIZE,
+    #     verbose=0
+    # )
 
-    # optimizer = tf.keras.optimizers.SGD(learning_rate=1e-3)
-    # bce = tf.keras.losses.BinaryCrossentropy()
+    optimizer = tf.keras.optimizers.SGD(learning_rate=1e-3)
+    bce = tf.keras.losses.BinaryCrossentropy()
 
-    # data = tf.data.Dataset.from_tensor_slices((
-    #         train2idx[0,:,0],
-    #         train2idx[0,:,1],
-    #         train2idx[0,:,2], 
-    #         np.ones(train2idx.shape[1])
-    #     )
-    # ).batch(BATCH_SIZE)
+    data = tf.data.Dataset.from_tensor_slices((
+            train2idx[0,:,0],
+            train2idx[0,:,1],
+            train2idx[0,:,2], 
+            np.ones(train2idx.shape[1])
+        )
+    ).batch(BATCH_SIZE)
 
-    # for epoch in range(NUM_EPOCHS):
+    for epoch in range(NUM_EPOCHS):
 
-    #     for pos_head,rel,pos_tail,y in data:
+        for pos_head,rel,pos_tail,y in data:
 
-    #         neg_head, neg_tail = utils.get_negative_triples(
-    #             head=pos_head, 
-    #             rel=rel, 
-    #             tail=pos_tail,
-    #             num_entities=NUM_ENTITIES
-    #         )
+            neg_head, neg_tail = utils.get_negative_triples(
+                head=pos_head, 
+                rel=rel, 
+                tail=pos_tail,
+                num_entities=NUM_ENTITIES
+            )
 
-    #         with tf.GradientTape() as tape:
+            with tf.GradientTape() as tape:
 
-    #             y_pos_pred = model([
-    #                 all_indices,
-    #                 pos_head,
-    #                 rel,
-    #                 pos_tail,
-    #                 adj_mats
-    #                 ],
-    #                 training=True
-    #             )
+                y_pos_pred = model([
+                    all_indices,
+                    pos_head,
+                    rel,
+                    pos_tail,
+                    adj_mats
+                    ],
+                    training=True
+                )
             
-    #             y_neg_pred = model([
-    #                 all_indices,
-    #                 neg_head,
-    #                 rel,
-    #                 neg_tail,
-    #                 adj_mats
-    #                 ],
-    #                 training=True
-    #             )
+                y_neg_pred = model([
+                    all_indices,
+                    neg_head,
+                    rel,
+                    neg_tail,
+                    adj_mats
+                    ],
+                    training=True
+                )
 
-    #             y_pred = tf.concat([y_pos_pred,y_neg_pred],axis=0)
-    #             y_true = tf.concat([y,tf.zeros_like(y)],axis=0)
+                y_pred = tf.concat([y_pos_pred,y_neg_pred],axis=0)
+                y_true = tf.concat([y,tf.zeros_like(y)],axis=0)
                 
-    #             loss = bce(y_true,y_pred)
+                loss = bce(y_true,y_pred)
 
-    #         grads = tape.gradient(loss, model.trainable_weights)
-    #         optimizer.apply_gradients(zip(grads, model.trainable_weights))
+            grads = tape.gradient(loss, model.trainable_weights)
+            optimizer.apply_gradients(zip(grads, model.trainable_weights))
 
-    #     print(f'loss {loss} after epoch {epoch}')
+        print(f'loss {loss} after epoch {epoch}')
 
 preds = model.predict(
     x=[
@@ -338,7 +407,7 @@ preds = model.predict(
         adj_mats
     ]
 )
-
+print(preds.shape)
 print(f'acc {(preds > .5).sum()/train2idx.shape[1]}')
 
 
