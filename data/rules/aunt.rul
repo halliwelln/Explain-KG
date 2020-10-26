@@ -28,10 +28,8 @@ CONSTRUCT {
     ?a dbo:aunt ?myaunt .
 }
 WHERE {
-    ?myaunt dbo:parent ?mygrandparent .
-    ?myparent dbo:parent ?mygrandparent .
+    ?myaunt dbo:sister ?myparent .
     ?a dbo:parent ?myparent . 
-    ?myaunt foaf:gender "female"@en .
     
     FILTER (!EXISTS {?a dbo:aunt ?myaunt})
 }

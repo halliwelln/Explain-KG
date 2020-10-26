@@ -25,17 +25,41 @@
 <rule>
 <body>  
 CONSTRUCT {
-    ?a dbo:great_grandmother ?great_grandmother .
+    ?a dbo:brother ?b .
 }
 WHERE {
-    ?a dbo:parent ?myparent .
-    ?myparent dbo:parent ?mygrandparent .
-    ?mygrandparent dbo:parent ?great_grandmother .
-    ?great_grandmother foaf:gender "female"@en .
+    ?a dbo:parent ?parent .
+    ?b dbo:parent ?parent .
+    ?b foaf:gender "male"@en .
     
-    FILTER (!EXISTS {?a dbo:great_grandmother ?great_grandmother})
+    FILTER (!EXISTS {?a dbo:brother ?b})
 }
 </body>
 </rule>
 
-</rdf:RDF>
+<rule>
+<body>  
+CONSTRUCT {
+    ?a dbo:sister ?b .
+}
+WHERE {
+    ?a dbo:parent ?parent .
+    ?b dbo:parent ?parent .
+    ?b foaf:gender "female"@en .
+    
+    FILTER (!EXISTS {?a dbo:sister ?b})
+}
+</body>
+</rule>
+
+<rule>
+<body>  
+DELETE {
+    ?x foaf:gender ?y .
+}
+WHERE {
+  ?x foaf:gender ?y .
+}
+</body>
+</rule>
+
