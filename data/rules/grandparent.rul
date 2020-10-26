@@ -25,15 +25,15 @@
 <rule>
 <body>  
 CONSTRUCT {
-    ?a dbo:brother ?b .
+    ?a dbo:grandparent ?mygrandparent .
 }
 WHERE {
-    ?a dbo:parent ?parent .
-    ?b dbo:parent ?parent .
-    ?b foaf:gender "male"@en .
+    ?a dbo:parent ?myparent .
+    ?myparent dbo:parent ?mygrandparent .
     
-    FILTER (!EXISTS {?a dbo:brother ?b})
+    FILTER (!EXISTS {?a dbo:grandparent ?mygrandparent})
 }
 </body>
 </rule>
 
+</rdf:RDF>

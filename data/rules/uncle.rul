@@ -28,11 +28,9 @@ CONSTRUCT {
     ?a dbo:uncle ?myuncle .
 }
 WHERE {
-    ?myuncle dbo:parent ?mygrandparent .
-    ?myparent dbo:parent ?mygrandparent .
+    ?myuncle dbo:brother ?myparent .
     ?a dbo:parent ?myparent . 
-    ?myuncle foaf:gender "male"@en .
-
+    
     FILTER (!EXISTS {?a dbo:uncle ?myuncle})
 }
 </body>

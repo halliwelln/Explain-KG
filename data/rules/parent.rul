@@ -7,7 +7,6 @@
   <!ENTITY spin   "http://spinrdf.org/sp#">
   <!ENTITY owl    "http://www.w3.org/2002/07/owl#">
   <!ENTITY dbo    "http://dbpedia.org/ontology/">
-  <!ENTITY foaf   "http://xmlns.com/foaf/0.1/">
 ]>
 
 <rdf:RDF 
@@ -19,20 +18,17 @@
     xmlns:sp   = "&spin;"
     xmlns      = "&rule;"
     xmlns:dbo  = "&dbo;"
-    xmlns:foaf = "&foaf;"
 >
 
 <rule>
 <body>  
 CONSTRUCT {
-    ?a dbo:grandfather ?mygrandfather .
+    ?a dbo:parent ?b .
 }
 WHERE {
-    ?a dbo:parent ?myparent .
-    ?myparent dbo:parent ?mygrandfather .
-    ?mygrandfather foaf:gender "male"@en .
+    ?a dbo:parent ?b .
     
-    FILTER (!EXISTS {?a dbo:grandfather ?mygrandfather})
+    FILTER (!EXISTS {?a dbo:parent ?b})
 }
 </body>
 </rule>

@@ -96,7 +96,7 @@ class RGCN_Model(tf.keras.Model):
     def train_step(self,data):
 
         all_indices,pos_head,rel,pos_tail,adj_mats = data[0]
-        y = data[1]
+        y_pos_true = data[1]
 
         neg_head, neg_tail = utils.get_negative_triples(
                 head=pos_head, 
@@ -116,7 +116,7 @@ class RGCN_Model(tf.keras.Model):
                     ],
                     training=True
                 )
-            
+
             y_neg_pred = self([
                     all_indices,
                     neg_head,
@@ -127,15 +127,20 @@ class RGCN_Model(tf.keras.Model):
                     training=True
                 )
 
-            y_pred = tf.concat([y_pos_pred,y_neg_pred],axis=1)
-            y_true = tf.concat([y,tf.zeros_like(y)],axis=1)
+            y_neg_true = tf.zeros_like(y_pos_true)
+
+            # y_pred = tf.concat([y_pos_pred,y_neg_pred],axis=1)
+            # y_true = tf.concat([y,tf.zeros_like(y)],axis=1)
             
-            loss = self.compiled_loss(y_true,y_pred)
+            pos_loss = self.compiled_loss(y_pos_true,y_pos_pred)
+            neg_loss = self.compiled_loss(y_neg_true,y_neg_pred)
+
+            loss = pos_loss + neg_loss
 
         grads = tape.gradient(loss, self.trainable_weights)
         self.optimizer.apply_gradients(zip(grads, self.trainable_weights))
         
-        self.compiled_metrics.update_state(y_true, y_pred)
+        self.compiled_metrics.update_state(y_pos_true, y_pos_pred)
 
         return {m.name: m.result() for m in self.metrics}
 
@@ -239,7 +244,7 @@ if __name__ == '__main__':
     EMBEDDING_DIM = 5
     OUTPUT_DIM = 10
     LEARNING_RATE = 1e-3
-    NUM_EPOCHS = 20
+    NUM_EPOCHS = 3000 #3000:0.8434393638170974
 
     ent2idx = dict(zip(entities, range(NUM_ENTITIES)))
     rel2idx = dict(zip(relations, range(NUM_RELATIONS)))
@@ -259,7 +264,11 @@ if __name__ == '__main__':
     train2idx = np.expand_dims(train2idx,axis=0)
 
     all_indices = np.arange(NUM_ENTITIES).reshape(1,-1)
+    
+    # strategy = tf.distribute.MirroredStrategy()
+    # print(f'Number of devices: {strategy.num_replicas_in_sync}')
 
+    # with strategy.scope():
     model = get_RGCN_Model(
         num_triples=NUM_TRIPLES,
         num_entities=NUM_ENTITIES,

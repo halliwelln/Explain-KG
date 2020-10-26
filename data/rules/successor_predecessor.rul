@@ -25,31 +25,23 @@
 <rule>
 <body>  
 CONSTRUCT {
-    ?a dbo:sibling ?mysibling .
+  ?a dbo:successor ?b .
 }
 WHERE {
-    ?a dbo:parent ?myparent .
-    ?mysibling dbo:parent ?myparent .
-    
-    FILTER (!EXISTS {?a dbo:sibling ?mysibling})
+  ?b dbo:predecessor ?a .
 }
+
 </body>
 </rule>
 
 <rule>
 <body>  
 CONSTRUCT {
-    ?a dbo:cousin ?mycousin .
+  ?a dbo:predecessor ?b .
 }
 WHERE {
-    ?a dbo:parent ?myparent .
-    ?myparent dbo:sibling ?myaunt_or_uncle .
-    ?mycousin dbo:parent ?myaunt_or_uncle .
-
-    FILTER (!EXISTS {?a dbo:cousin ?mycousin})
-
+  ?b dbo:successor ?a .
 }
+
 </body>
 </rule>
-
-</rdf:RDF>
