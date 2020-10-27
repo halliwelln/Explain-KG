@@ -18,7 +18,12 @@ rn.seed(SEED)
 #         'great_grandfather','great_grandmother','successor_predecessor'
 #         ]
 
-rules = ['grandmother','grandfather']
+rules = [
+    'spouse', 'uncle','aunt',
+    'brother_sister','successor_predecessor',
+    'grandparent','parent'
+]
+
 MAX_PADDING = 3
 
 data = dict()
