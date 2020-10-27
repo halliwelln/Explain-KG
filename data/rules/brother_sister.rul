@@ -33,6 +33,7 @@ WHERE {
     ?b foaf:gender "male"@en .
     
     FILTER (!EXISTS {?a dbo:brother ?b})
+    FILTER (?a != ?b)
 }
 </body>
 </rule>
@@ -48,18 +49,10 @@ WHERE {
     ?b foaf:gender "female"@en .
     
     FILTER (!EXISTS {?a dbo:sister ?b})
+    FILTER (?a != ?b)
 }
 </body>
 </rule>
 
-<rule>
-<body>  
-DELETE {
-    ?x foaf:gender ?y .
-}
-WHERE {
-  ?x foaf:gender ?y .
-}
-</body>
-</rule>
 
+</rdf:RDF>
