@@ -23,10 +23,11 @@
 <rule>
 <body>  
 CONSTRUCT {
-    ?a dbo:parent ?b .
+    ?a dbo:parent ?myparent .
 }
 WHERE {
-    ?a dbo:parent ?b .
+    ?a dbo:brother | dbo:sister ?mysibling .
+    ?mysibling dbo:parent ?myparent .
     
     FILTER (!EXISTS {?a dbo:parent ?b})
 }
