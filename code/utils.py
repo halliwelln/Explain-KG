@@ -20,6 +20,8 @@ def get_negative_triples(head, rel, tail, num_entities, random_state=123):
 
 def get_adjacency_matrix_list(num_relations,num_entities,data):
 
+    '''Construct adjacency matrix for RGCN'''
+
     adj_mats = []
 
     for i in range(num_relations):
@@ -39,19 +41,27 @@ def concat_triples(data, rules):
 
     triples = []
     traces = []
+    no_pred_triples = []
+    no_pred_traces = []
 
     for rule in rules:
 
         triple_name = rule + '_triples'
         traces_name = rule + '_traces'
 
-        triples.append(data[triple_name])
-        traces.append(data[traces_name])
+        if ('brother' in rule) or ('sister' in rule):
+            no_pred_triples.append(data[triple_name])
+            no_pred_traces.append(data[traces_name])
+        else:
+            triples.append(data[triple_name])
+            traces.append(data[traces_name])
 
     triples = np.concatenate(triples, axis=0)
     traces = np.concatenate(traces, axis=0)
-
-    return triples, traces
+    no_pred_triples = np.concatenate(no_pred_triples, axis=0)
+    no_pred_traces = np.concatenate(no_pred_traces, axis=0)
+    
+    return triples, traces, no_pred_triples,no_pred_traces
 
 # def get_entity_embeddings(model):
 #     '''Embedding matrix for entities'''

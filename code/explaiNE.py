@@ -107,7 +107,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
 
     parser.add_argument('file_name',type=str,help=
-        'Enter which rule to use brother,sister,...etc (str), -1 (str) for full dataset')
+        'Enter which rule to use spouse,successor,...etc (str), -1 (str) for full dataset')
     parser.add_argument('top_k', type=int)
     args = parser.parse_args()
 
@@ -133,7 +133,7 @@ if __name__ == '__main__':
     GAMMA = (1/(S1**2)) - (1/(S2**2))
 
     if FILE_NAME == '-1':
-        triples, traces = utils.concat_triples(data, data['rules'])
+        triples, traces,no_pred_triples,no_pred_traces = utils.concat_triples(data, data['rules'])
         FILE_NAME = 'full_data'
     else:
         triples, traces = data[rule + '_triples'], data[rule + '_traces']
@@ -146,9 +146,11 @@ if __name__ == '__main__':
     for train_idx, test_idx in kf.split():
 
         train = triples[train_idx]
+        train = np.concatenate([train,no_pred_triples],axis=0)
         test = triples[test_idx]
 
         train_exp = traces[train_idx]
+        train_exp = np.concatenate([train_exp,no_pred_traces],axis=0)
         test_exp = traces[test_idx]
 
         train2idx = utils.array2idx(train,ent2idx,rel2idx)
@@ -161,7 +163,7 @@ if __name__ == '__main__':
 
         A = utils.get_adjacency_matrix(adjacency_data,entities,NUM_ENTITIES)
 
-        trainexp2idx = trainexp2idx[:,:,[0,2]]
+        #trainexp2idx = trainexp2idx[:,:,[0,2]]
 
         testexp2idx = testexp2idx[:,:,[0,2]]
 

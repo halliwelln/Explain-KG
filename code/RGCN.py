@@ -2,12 +2,14 @@
 
 import tensorflow as tf
 from tensorflow.keras.layers import Embedding, Lambda
+import utils
 
 class RGCN_Layer(tf.keras.layers.Layer):
-    def __init__(self,num_relations,output_dim,**kwargs):
+    def __init__(self,num_relations,output_dim,seed,**kwargs):
         super(RGCN_Layer,self).__init__(**kwargs)
         self.num_relations = num_relations
         self.output_dim = output_dim
+        self.seed = seed
         
     def build(self,input_shape):
 
@@ -20,7 +22,7 @@ class RGCN_Layer(tf.keras.layers.Layer):
             initializer=tf.keras.initializers.RandomNormal(
                 mean=0.0,
                 stddev=1,
-                seed=SEED
+                seed=self.seed
             )
         )
 
@@ -31,7 +33,7 @@ class RGCN_Layer(tf.keras.layers.Layer):
             initializer=tf.keras.initializers.RandomNormal(
                 mean=0.0,
                 stddev=1,
-                seed=SEED
+                seed=self.seed
             )
         )
     
@@ -58,9 +60,10 @@ class RGCN_Layer(tf.keras.layers.Layer):
         return head_output, tail_output
 
 class DistMult(tf.keras.layers.Layer):
-    def __init__(self, num_relations,**kwargs):
+    def __init__(self, num_relations,seed,**kwargs):
         super(DistMult,self).__init__(**kwargs)
         self.num_relations = num_relations
+        self.seed = seed
         
     def build(self,input_shape):
         
@@ -72,7 +75,7 @@ class DistMult(tf.keras.layers.Layer):
             initializer=tf.keras.initializers.RandomNormal(
                 mean=0.0,
                 stddev=1,
-                seed=SEED
+                seed=self.seed
             ),
             name='rel_embedding'
         )
@@ -186,7 +189,7 @@ def get_RGCN_Model(num_triples,num_entities,num_relations,embedding_dim,output_d
 
     adj_mats_layer = Lambda(lambda x:x[0,:,:])(adj_inputs)
 
-    new_head,new_tail = RGCN_Layer(num_relations=num_relations,output_dim=output_dim)([
+    new_head,new_tail = RGCN_Layer(num_relations=num_relations,output_dim=output_dim,seed=seed)([
         all_e,
         head_index,
         head_e,
@@ -196,7 +199,7 @@ def get_RGCN_Model(num_triples,num_entities,num_relations,embedding_dim,output_d
         ]
     )
 
-    output = DistMult(num_relations=num_relations,name='output')([
+    output = DistMult(num_relations=num_relations,seed=seed,name='output')([
         new_head,rel_index,new_tail
         ]
     )
@@ -241,8 +244,8 @@ if __name__ == '__main__':
 
     NUM_ENTITIES = len(entities)
     NUM_RELATIONS = len(relations)
-    EMBEDDING_DIM = 5
-    OUTPUT_DIM = 10
+    EMBEDDING_DIM = 25
+    OUTPUT_DIM = 50
     LEARNING_RATE = 1e-3
     NUM_EPOCHS = 3000 #3000:0.8434393638170974
 
@@ -351,16 +354,16 @@ if __name__ == '__main__':
 
     #     print(f'loss {loss} after epoch {epoch}')
 
-preds = model.predict(
-    x=[
-        all_indices,
-        train2idx[:,:,0],
-        train2idx[:,:,1],
-        train2idx[:,:,2],
-        adj_mats
-    ]
-)
-print(f'acc {(preds > .5).sum()/NUM_TRIPLES}')
+    # preds = model.predict(
+    #     x=[
+    #         all_indices,
+    #         train2idx[:,:,0],
+    #         train2idx[:,:,1],
+    #         train2idx[:,:,2],
+    #         adj_mats
+    #     ]
+    # )
+    # print(f'acc {(preds > .5).sum()/NUM_TRIPLES}')
 
 
 
