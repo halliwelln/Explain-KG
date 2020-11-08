@@ -63,14 +63,6 @@ def concat_triples(data, rules):
     
     return triples, traces, no_pred_triples,no_pred_traces
 
-# def get_entity_embeddings(model):
-#     '''Embedding matrix for entities'''
-#     return model.get_layer('entity_embeddings').get_weights()[0]
-
-# def get_relation_embeddings(model):
-#     '''Embedding matrix for relations'''
-#     return model.get_layer('relation_embeddings').get_weights()[0]
-
 def array2idx(dataset, ent2idx,rel2idx):
     
     if dataset.ndim == 2:
