@@ -271,7 +271,7 @@ if __name__ == '__main__':
     EMBEDDING_DIM = 25
     OUTPUT_DIM = 50
     LEARNING_RATE = 1e-3
-    NUM_EPOCHS = 30
+    NUM_EPOCHS = 2
 
     ent2idx = dict(zip(entities, range(NUM_ENTITIES)))
     rel2idx = dict(zip(relations, range(NUM_RELATIONS)))
