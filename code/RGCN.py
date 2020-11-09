@@ -5,8 +5,9 @@ from tensorflow.keras.layers import Embedding, Lambda
 import utils
 
 class RGCN_Layer(tf.keras.layers.Layer):
-    def __init__(self,num_relations,output_dim,seed,**kwargs):
+    def __init__(self,num_entities,num_relations,output_dim,seed,**kwargs):
         super(RGCN_Layer,self).__init__(**kwargs)
+        self.num_entities = num_entities
         self.num_relations = num_relations
         self.output_dim = output_dim
         self.seed = seed
@@ -37,23 +38,44 @@ class RGCN_Layer(tf.keras.layers.Layer):
             )
         )
     
+    # def call(self, inputs):
+        
+    #     embeddings,head_idx,head_e,tail_idx,tail_e,adj_mats = inputs
+            
+    #     head_output = tf.matmul(head_e,self.self_kernel)
+    #     tail_output = tf.matmul(tail_e,self.self_kernel)
+                
+    #     for i in range(self.num_relations):
+            
+    #         adj_i = adj_mats[i]
+            
+    #         head_adj = tf.nn.embedding_lookup(adj_i,head_idx)
+    #         tail_adj = tf.nn.embedding_lookup(adj_i,tail_idx)
+            
+    #         head_update = tf.matmul(head_adj,embeddings)
+    #         tail_update = tf.matmul(tail_adj,embeddings)
+
+    #         head_output += tf.matmul(head_update,self.relation_kernel[i])
+    #         tail_output += tf.matmul(tail_update,self.relation_kernel[i])
+       
+    #     return head_output, tail_output
+
     def call(self, inputs):
         
-        embeddings,head_idx,head_e,tail_idx,tail_e,adj_mats = inputs
+        embeddings,head_idx,head_e,tail_idx,tail_e,*adj_mats = inputs
             
         head_output = tf.matmul(head_e,self.self_kernel)
         tail_output = tf.matmul(tail_e,self.self_kernel)
                 
         for i in range(self.num_relations):
             
-            adj_i = adj_mats[i]
-            
-            head_adj = tf.nn.embedding_lookup(adj_i,head_idx)
-            tail_adj = tf.nn.embedding_lookup(adj_i,tail_idx)
-            
-            head_update = tf.matmul(head_adj,embeddings)
-            tail_update = tf.matmul(tail_adj,embeddings)
+            adj_i = tf.sparse.reshape(adj_mats[0][i],shape=(self.num_entities,self.num_entities))
 
+            sum_embeddings = tf.sparse.sparse_dense_matmul(adj_i, embeddings)
+            
+            head_update = tf.nn.embedding_lookup(sum_embeddings,head_idx)
+            tail_update = tf.nn.embedding_lookup(sum_embeddings,tail_idx)
+            
             head_output += tf.matmul(head_update,self.relation_kernel[i])
             tail_output += tf.matmul(tail_update,self.relation_kernel[i])
        
@@ -98,7 +120,7 @@ class RGCN_Model(tf.keras.Model):
 
     def train_step(self,data):
 
-        all_indices,pos_head,rel,pos_tail,adj_mats = data[0]
+        all_indices,pos_head,rel,pos_tail,*adj_mats = data[0]
         y_pos_true = data[1]
 
         neg_head, neg_tail = utils.get_negative_triples(
@@ -154,15 +176,21 @@ def get_RGCN_Model(num_triples,num_entities,num_relations,embedding_dim,output_d
     tail_input = tf.keras.Input(shape=(num_triples,), name='tail_input',dtype=tf.int64)
     all_entities = tf.keras.Input(shape=(num_entities,), name='all_entities',dtype=tf.int64)
 
-    adj_inputs = tf.keras.Input(
-        shape=(
-            num_relations,
-            num_entities,
-            num_entities
-        ),
+    # adj_inputs = tf.keras.Input(
+    #     shape=(
+    #         num_relations,
+    #         num_entities,
+    #         num_entities
+    #     ),
+    #     dtype=tf.float32,
+    #     name='adj_inputs'
+    # )
+    adj_inputs = [tf.keras.Input(
+        shape=(num_entities,num_entities),
         dtype=tf.float32,
-        name='adj_inputs'
-    )
+        name='adj_inputs_'+str(i),
+        sparse=True,
+        ) for i in range(num_relations)]
 
     entity_embeddings = Embedding(
         input_dim=num_entities,
@@ -187,17 +215,21 @@ def get_RGCN_Model(num_triples,num_entities,num_relations,embedding_dim,output_d
     rel_index = Lambda(lambda x:x[0,:])(rel_input)
     tail_index = Lambda(lambda x:x[0,:])(tail_input)
 
-    adj_mats_layer = Lambda(lambda x:x[0,:,:])(adj_inputs)
+    #adj_mats_layers = [Lambda(lambda x:x[0,:,:])(adj_inputs[i]) for i in range(num_relations)]
 
-    new_head,new_tail = RGCN_Layer(num_relations=num_relations,output_dim=output_dim,seed=seed)([
-        all_e,
-        head_index,
-        head_e,
-        tail_index,
-        tail_e,
-        adj_mats_layer
-        ]
-    )
+    new_head,new_tail = RGCN_Layer(
+        num_relations=num_relations,
+        num_entities=num_entities,
+        output_dim=output_dim,
+        seed=seed)([
+            all_e,
+            head_index,
+            head_e,
+            tail_index,
+            tail_e,
+            adj_inputs
+            ]
+        )
 
     output = DistMult(num_relations=num_relations,seed=seed,name='output')([
         new_head,rel_index,new_tail
@@ -207,16 +239,8 @@ def get_RGCN_Model(num_triples,num_entities,num_relations,embedding_dim,output_d
     #output = tf.keras.layers.Dense(num_triples,activation='sigmoid')(output)
 
     model = RGCN_Model(
-        inputs=[
-            all_entities,
-            head_input,
-            rel_input,
-            tail_input,
-            adj_inputs
-        ],
-        outputs=[
-            output
-        ],
+        inputs=[all_entities,head_input,rel_input,tail_input] + adj_inputs,
+        outputs=[output],
         num_entities=num_entities
     )
 
@@ -247,22 +271,47 @@ if __name__ == '__main__':
     EMBEDDING_DIM = 25
     OUTPUT_DIM = 50
     LEARNING_RATE = 1e-3
-    NUM_EPOCHS = 3000 #3000:0.8434393638170974
+    NUM_EPOCHS = 30
 
     ent2idx = dict(zip(entities, range(NUM_ENTITIES)))
     rel2idx = dict(zip(relations, range(NUM_RELATIONS)))
 
-    triples, traces = data['grandmother_triples'], data['grandmother_traces']
+    triples, traces = data['spouse_triples'], data['spouse_traces']
 
     train2idx = utils.array2idx(triples,ent2idx,rel2idx)
 
     NUM_TRIPLES = train2idx.shape[0]
 
-    adj_mats = utils.get_adjacency_matrix_list(
-        num_relations=NUM_RELATIONS,
-        num_entities=NUM_ENTITIES,
-        data=train2idx
-    )
+    # adj_mats = utils.get_adjacency_matrix_list(
+    #     num_relations=NUM_RELATIONS,
+    #     num_entities=NUM_ENTITIES,
+    #     data=train2idx
+    # )
+    def get_adj_mats(data,num_entities,num_relations):
+
+        adj_mats = []
+
+        for i in range(num_relations):
+
+            data_i = data[data[:,1] == i]
+
+            indices = np.concatenate([data_i[:,[0,2]],data_i[:,[2,0]]],axis=0)
+
+            sparse_mat = tf.sparse.SparseTensor(
+                indices=indices,
+                values=np.ones((indices.shape[0])),
+                dense_shape=(num_entities,num_entities)
+                )
+
+            sparse_mat = tf.sparse.reorder(sparse_mat)
+
+            sparse_mat = tf.sparse.reshape(sparse_mat, shape=(1,num_entities,num_entities))
+
+            adj_mats.append(sparse_mat)
+
+        return adj_mats
+
+    adj_mats = get_adj_mats(train2idx,NUM_ENTITIES,NUM_RELATIONS)
 
     train2idx = np.expand_dims(train2idx,axis=0)
 
@@ -299,6 +348,8 @@ if __name__ == '__main__':
         batch_size=1,
         verbose=1
     )
+
+    #model.save_weights(os.path.join('..','data','weights','rgcn.h5'))
 
     # optimizer = tf.keras.optimizers.SGD(learning_rate=1e-3)
     # bce = tf.keras.losses.BinaryCrossentropy()
@@ -354,20 +405,13 @@ if __name__ == '__main__':
 
     #     print(f'loss {loss} after epoch {epoch}')
 
-    # preds = model.predict(
-    #     x=[
-    #         all_indices,
-    #         train2idx[:,:,0],
-    #         train2idx[:,:,1],
-    #         train2idx[:,:,2],
-    #         adj_mats
-    #     ]
-    # )
-    # print(f'acc {(preds > .5).sum()/NUM_TRIPLES}')
-
-
-
-
-
-#0.5062127236580517 grandmother
-
+    preds = model.predict(
+        x=[
+            all_indices,
+            train2idx[:,:,0],
+            train2idx[:,:,1],
+            train2idx[:,:,2],
+            adj_mats
+        ]
+    )
+    print(f'acc {(preds > .5).sum()/NUM_TRIPLES}')

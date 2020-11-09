@@ -35,7 +35,7 @@ def get_grads(head,rel,tail,masks,model,y_true,all_indices,k_hop_adj_mats,loss_o
     with tf.GradientTape() as tape:
 
         tape.watch(masks)
-    
+
         masked_adj = k_hop_adj_mats*tf.nn.sigmoid(masks)
 
         y_pred = model(
@@ -47,6 +47,7 @@ def get_grads(head,rel,tail,masks,model,y_true,all_indices,k_hop_adj_mats,loss_o
             masked_adj
             ]
         )
+        print(y_pred)
 
         loss = loss_object(y_true,y_pred)
 
@@ -98,12 +99,12 @@ if __name__ == '__main__':
     EMBEDDING_DIM = 30
     OUTPUT_DIM = 50
     LEARNING_RATE = 1e-3
-    NUM_EPOCHS = 1
+    NUM_EPOCHS = 2
 
     ent2idx = dict(zip(entities, range(NUM_ENTITIES)))
     rel2idx = dict(zip(relations, range(NUM_RELATIONS)))
 
-    triples, traces = data['grandmother_triples'], data['grandmother_traces']
+    triples, traces = data['spouse_triples'], data['spouse_traces']
 
     train2idx = utils.array2idx(triples, ent2idx,rel2idx)
     trainexp2idx = utils.array2idx(traces, ent2idx,rel2idx)
@@ -129,6 +130,25 @@ if __name__ == '__main__':
         seed=SEED
     )
     #LOAD WEIGHTS
+
+    model.compile(
+        loss=tf.keras.losses.BinaryCrossentropy(), 
+        optimizer=tf.keras.optimizers.SGD(learning_rate=LEARNING_RATE)
+    )
+
+    model.fit(
+        x=[
+            all_indices,
+            train2idx[:,:,0],
+            train2idx[:,:,1],
+            train2idx[:,:,2],
+            adj_mats
+            ],
+        y=np.ones(NUM_TRIPLES).reshape(1,-1),
+        epochs=2,
+        batch_size=1,
+        verbose=1
+    )
 
     bce = tf.keras.losses.BinaryCrossentropy()
     optimizer = tf.keras.optimizers.SGD(learning_rate=LEARNING_RATE)
@@ -170,12 +190,11 @@ if __name__ == '__main__':
                 masks=masks,
                 model=model,
                 y_true=y_true,
-                all_indices=all_indices,
+                all_indices=all_indic   es,
                 k_hop_adj_mats=k_hop_adj_mats,
                 loss_object=bce
                 )
-            print(grads.shape)
-            print(masks.shape)
+
             print("loss val: ",loss_val)
             optimizer.apply_gradients(zip([grads],[masks]))
 
