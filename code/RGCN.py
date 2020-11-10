@@ -60,10 +60,10 @@ class RGCN_Layer(tf.keras.layers.Layer):
        
     #     return head_output, tail_output
 
-    def call(self, inputs):
-        
+    def call(self,inputs):
+
         embeddings,head_idx,head_e,tail_idx,tail_e,*adj_mats = inputs
-            
+                        
         head_output = tf.matmul(head_e,self.self_kernel)
         tail_output = tf.matmul(tail_e,self.self_kernel)
                 
@@ -80,6 +80,7 @@ class RGCN_Layer(tf.keras.layers.Layer):
             tail_output += tf.matmul(tail_update,self.relation_kernel[i])
        
         return head_output, tail_output
+
 
 class DistMult(tf.keras.layers.Layer):
     def __init__(self, num_relations,seed,**kwargs):
@@ -271,7 +272,7 @@ if __name__ == '__main__':
     EMBEDDING_DIM = 25
     OUTPUT_DIM = 50
     LEARNING_RATE = 1e-3
-    NUM_EPOCHS = 2
+    NUM_EPOCHS = 2000
 
     ent2idx = dict(zip(entities, range(NUM_ENTITIES)))
     rel2idx = dict(zip(relations, range(NUM_RELATIONS)))
@@ -349,7 +350,7 @@ if __name__ == '__main__':
         verbose=1
     )
 
-    #model.save_weights(os.path.join('..','data','weights','rgcn.h5'))
+    model.save_weights(os.path.join('..','data','weights','rgcn.h5'))
 
     # optimizer = tf.keras.optimizers.SGD(learning_rate=1e-3)
     # bce = tf.keras.losses.BinaryCrossentropy()
