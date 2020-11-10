@@ -5,3 +5,4 @@ __pycache__
 .ipynb_checkpoints
 *weights/
 /data/royalty.npz
+royalty.npz
