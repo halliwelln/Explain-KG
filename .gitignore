@@ -1,15 +1,11 @@
 *application.log
-<<<<<<< HEAD
 /data/.DS_Store
 .DS_Store
 __pycache__
 .ipynb_checkpoints
-*weights/
 /data/royalty.npz
 royalty.npz
-=======
 data/.DS_Store
 .DS_Store
 __pycache__
 .ipynb_checkpoints
->>>>>>> cb656e13e43c556b5d38268828f28cd8e745f3a9
