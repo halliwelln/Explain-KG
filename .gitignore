@@ -1,6 +1,6 @@
 *application.log
-data/.DS_Store
-data/royalty.npz
+/data/.DS_Store
+/data/royalty.npz
 .DS_Store
 __pycache__
 .ipynb_checkpoints
