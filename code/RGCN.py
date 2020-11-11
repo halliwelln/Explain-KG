@@ -264,8 +264,8 @@ if __name__ == '__main__':
 
     data = np.load(os.path.join('..','data','royalty.npz'))
 
-    entities = data['entities'].tolist()
-    relations = data['relations'].tolist()
+    entities = data['all_entities'].tolist()
+    relations = data['all_relations'].tolist()
 
     NUM_ENTITIES = len(entities)
     NUM_RELATIONS = len(relations)

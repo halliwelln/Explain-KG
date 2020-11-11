@@ -106,18 +106,25 @@ if __name__ == '__main__':
 
     parser = argparse.ArgumentParser()
 
-    parser.add_argument('file_name',type=str,help=
+    parser.add_argument('rule',type=str,help=
         'Enter which rule to use spouse,successor,...etc (str), -1 (str) for full dataset')
     parser.add_argument('top_k', type=int)
     args = parser.parse_args()
 
-    FILE_NAME = args.file_name
+    RULE = args.rule
     TOP_K = args.top_k
 
     data = np.load(os.path.join('..','data','royalty.npz'))
 
-    entities = data['entities'].tolist()
-    relations = data['relations'].tolist()
+    if RULE == '-1':
+        triples, traces,no_pred_triples,no_pred_traces = utils.concat_triples(data, data['rules'])
+        RULE = 'full_data'
+        entities = data['all_entities'].tolist()
+        relations = data['all_relations'].tolist()
+    else:
+        triples, traces = data[RULE + '_triples'], data[RULE + '_traces']
+        entities = data[RULE + '_entities'].tolist()
+        relations = data[RULE + '_relations'].tolist()     
 
     NUM_ENTITIES = len(entities)
     NUM_RELATIONS = len(relations)
@@ -131,12 +138,6 @@ if __name__ == '__main__':
     LEARNING_RATE = .001
     MAX_ITER = 100
     GAMMA = (1/(S1**2)) - (1/(S2**2))
-
-    if FILE_NAME == '-1':
-        triples, traces,no_pred_triples,no_pred_traces = utils.concat_triples(data, data['rules'])
-        FILE_NAME = 'full_data'
-    else:
-        triples, traces = data[rule + '_triples'], data[rule + '_traces']
 
     kf = KFold(n_splits=5,shuffle=False,random_state=SEED)
 
@@ -217,11 +218,11 @@ if __name__ == '__main__':
     best_idx = np.argmin(cv_scores)
     best_preds = preds[best_idx]
 
-    np.savez(os.path.join('.','data','explaine_',FILE_NAME,'_preds','.npz'),
+    np.savez(os.path.join('.','data','explaine_',RULE,'_preds','.npz'),
         preds=best_preds,embedding_dim=EMBEDDING_DIM,learning_rate=LEARNING_RATE,
         max_iter=MAX_ITER,s1=S1,s2=S2
         )
 
-    print(f"{FILE_NAME[:-4]} jaccard score={jaccard} using:")
+    print(f"{RULE} jaccard score={jaccard} using:")
     print(f"embedding dimensions={EMBEDDING_DIM},s1={S1},s2={S2}")
     print(f"learning_rate={LEARNING_RATE},max_iter={MAX_ITER}")
