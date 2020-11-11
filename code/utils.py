@@ -5,6 +5,30 @@ import tensorflow as tf
 from collections import defaultdict
 from scipy import sparse
 
+def get_adj_mats(data,num_entities,num_relations):
+
+    adj_mats = []
+
+    for i in range(num_relations):
+
+        data_i = data[data[:,1] == i]
+
+        indices = tf.concat([data_i[:,[0,2]],data_i[:,[2,0]]],axis=0)
+
+        sparse_mat = tf.sparse.SparseTensor(
+            indices=indices,
+            values=tf.ones((indices.shape[0])),
+            dense_shape=(num_entities,num_entities)
+            )
+
+        sparse_mat = tf.sparse.reorder(sparse_mat)
+
+        sparse_mat = tf.sparse.reshape(sparse_mat, shape=(1,num_entities,num_entities))
+
+        adj_mats.append(sparse_mat)
+
+    return adj_mats
+
 def get_negative_triples(head, rel, tail, num_entities, random_state=123):
 
     #cond = tf.random.uniform(head.shape, 0, 2, dtype=tf.int64, seed=random_state) #1 means keep entity

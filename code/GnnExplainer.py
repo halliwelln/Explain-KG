@@ -129,26 +129,7 @@ if __name__ == '__main__':
         output_dim=OUTPUT_DIM,
         seed=SEED
     )
-    #LOAD WEIGHTS
-
-    model.compile(
-        loss=tf.keras.losses.BinaryCrossentropy(), 
-        optimizer=tf.keras.optimizers.SGD(learning_rate=LEARNING_RATE)
-    )
-
-    model.fit(
-        x=[
-            all_indices,
-            train2idx[:,:,0],
-            train2idx[:,:,1],
-            train2idx[:,:,2],
-            adj_mats
-            ],
-        y=np.ones(NUM_TRIPLES).reshape(1,-1),
-        epochs=2,
-        batch_size=1,
-        verbose=1
-    )
+    model.load_weights(os.path.join('..','data','weights','rgcn.h5'))
 
     bce = tf.keras.losses.BinaryCrossentropy()
     optimizer = tf.keras.optimizers.SGD(learning_rate=LEARNING_RATE)

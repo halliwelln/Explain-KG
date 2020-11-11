@@ -269,10 +269,10 @@ if __name__ == '__main__':
 
     NUM_ENTITIES = len(entities)
     NUM_RELATIONS = len(relations)
-    EMBEDDING_DIM = 25
+    EMBEDDING_DIM = 50
     OUTPUT_DIM = 50
     LEARNING_RATE = 1e-3
-    NUM_EPOCHS = 2000
+    NUM_EPOCHS = 3000
 
     ent2idx = dict(zip(entities, range(NUM_ENTITIES)))
     rel2idx = dict(zip(relations, range(NUM_RELATIONS)))
@@ -288,31 +288,8 @@ if __name__ == '__main__':
     #     num_entities=NUM_ENTITIES,
     #     data=train2idx
     # )
-    def get_adj_mats(data,num_entities,num_relations):
 
-        adj_mats = []
-
-        for i in range(num_relations):
-
-            data_i = data[data[:,1] == i]
-
-            indices = np.concatenate([data_i[:,[0,2]],data_i[:,[2,0]]],axis=0)
-
-            sparse_mat = tf.sparse.SparseTensor(
-                indices=indices,
-                values=np.ones((indices.shape[0])),
-                dense_shape=(num_entities,num_entities)
-                )
-
-            sparse_mat = tf.sparse.reorder(sparse_mat)
-
-            sparse_mat = tf.sparse.reshape(sparse_mat, shape=(1,num_entities,num_entities))
-
-            adj_mats.append(sparse_mat)
-
-        return adj_mats
-
-    adj_mats = get_adj_mats(train2idx,NUM_ENTITIES,NUM_RELATIONS)
+    adj_mats = utils.get_adj_mats(train2idx,NUM_ENTITIES,NUM_RELATIONS)
 
     train2idx = np.expand_dims(train2idx,axis=0)
 
@@ -351,60 +328,6 @@ if __name__ == '__main__':
     )
 
     model.save_weights(os.path.join('..','data','weights','rgcn.h5'))
-
-    # optimizer = tf.keras.optimizers.SGD(learning_rate=1e-3)
-    # bce = tf.keras.losses.BinaryCrossentropy()
-
-    # data = tf.data.Dataset.from_tensor_slices((
-    #         train2idx[:,:,0],
-    #         train2idx[:,:,1],
-    #         train2idx[:,:,2], 
-    #         np.ones(train2idx.shape[1]),reshape(1,-1)
-    #     )
-    # ).batch(1)
-
-    # for epoch in range(NUM_EPOCHS):
-
-    #     for pos_head,rel,pos_tail,y in data:
-
-    #         neg_head, neg_tail = utils.get_negative_triples(
-    #             head=pos_head, 
-    #             rel=rel, 
-    #             tail=pos_tail,
-    #             num_entities=NUM_ENTITIES
-    #         )
-
-    #         with tf.GradientTape() as tape:
-
-    #             y_pos_pred = model([
-    #                 all_indices,
-    #                 pos_head,
-    #                 rel,
-    #                 pos_tail,
-    #                 adj_mats
-    #                 ],
-    #                 training=True
-    #             )
-            
-    #             y_neg_pred = model([
-    #                 all_indices,
-    #                 neg_head,
-    #                 rel,
-    #                 neg_tail,
-    #                 adj_mats
-    #                 ],
-    #                 training=True
-    #             )
-
-    #             y_pred = tf.concat([y_pos_pred,y_neg_pred],axis=1)
-    #             y_true = tf.concat([y,tf.zeros_like(y)],axis=1)
-                
-    #             loss = bce(y_true,y_pred)
-
-    #         grads = tape.gradient(loss, model.trainable_weights)
-    #         optimizer.apply_gradients(zip(grads, model.trainable_weights))
-
-    #     print(f'loss {loss} after epoch {epoch}')
 
     preds = model.predict(
         x=[
