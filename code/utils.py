@@ -5,7 +5,7 @@ import tensorflow as tf
 from collections import defaultdict
 from scipy import sparse
 
-def get_adj_mats(data,num_entities,num_relations):
+def get_adj_mats(data,num_entities,num_relations,reshape=True):
 
     adj_mats = []
 
@@ -13,7 +13,9 @@ def get_adj_mats(data,num_entities,num_relations):
 
         data_i = data[data[:,1] == i]
 
-        indices = tf.concat([data_i[:,[0,2]],data_i[:,[2,0]]],axis=0)
+        indices = tf.concat([
+            tf.gather(data_i,[0,2],axis=1),
+            tf.gather(data_i,[2,0],axis=1)],axis=0)
 
         sparse_mat = tf.sparse.SparseTensor(
             indices=indices,
@@ -23,7 +25,8 @@ def get_adj_mats(data,num_entities,num_relations):
 
         sparse_mat = tf.sparse.reorder(sparse_mat)
 
-        sparse_mat = tf.sparse.reshape(sparse_mat, shape=(1,num_entities,num_entities))
+        if reshape:
+            sparse_mat = tf.sparse.reshape(sparse_mat, shape=(1,num_entities,num_entities))
 
         adj_mats.append(sparse_mat)
 
