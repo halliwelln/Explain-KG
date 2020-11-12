@@ -262,10 +262,27 @@ if __name__ == '__main__':
     np.random.seed(SEED)
     rn.seed(SEED)
 
+    # parser = argparse.ArgumentParser()
+
+    # parser.add_argument('rule',type=str,help=
+    #     'Enter which rule to use spouse,successor,...etc (str), -1 (str) for full dataset')
+    # args = parser.parse_args()
+
+    # RULE = args.rule
+
+    RULE = 'spouse'
+
     data = np.load(os.path.join('..','data','royalty.npz'))
 
-    entities = data['all_entities'].tolist()
-    relations = data['all_relations'].tolist()
+    if RULE == '-1':
+        triples, traces,no_pred_triples,no_pred_traces = utils.concat_triples(data, data['rules'])
+        RULE = 'full_data'
+        entities = data['all_entities'].tolist()
+        relations = data['all_relations'].tolist()
+    else:
+        triples, traces = data[RULE + '_triples'], data[RULE + '_traces']
+        entities = data[RULE + '_entities'].tolist()
+        relations = data[RULE + '_relations'].tolist()  
 
     NUM_ENTITIES = len(entities)
     NUM_RELATIONS = len(relations)
@@ -276,8 +293,6 @@ if __name__ == '__main__':
 
     ent2idx = dict(zip(entities, range(NUM_ENTITIES)))
     rel2idx = dict(zip(relations, range(NUM_RELATIONS)))
-
-    triples, traces = data['spouse_triples'], data['spouse_traces']
 
     train2idx = utils.array2idx(triples,ent2idx,rel2idx)
 

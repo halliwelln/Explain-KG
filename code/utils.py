@@ -2,10 +2,22 @@
 
 import numpy as np
 import tensorflow as tf
-from collections import defaultdict
 from scipy import sparse
 
+def tf_binary_jaccard(true_graph,pred_graph):
+    
+    m11 = tf.reduce_sum(tf.cast(tf.math.logical_and(true_graph==1,
+                                                    pred_graph==1),dtype=tf.int32))
+    m01 = tf.reduce_sum(tf.cast(tf.math.logical_and(true_graph==0,
+                                                    pred_graph==1),dtype=tf.int32))
+    m10 = tf.reduce_sum(tf.cast(tf.math.logical_and(true_graph==1,
+                                                    pred_graph==0),dtype=tf.int32))
+    
+    return m11 / (m01 + m10 + m11)
+
 def get_adj_mats(data,num_entities,num_relations,reshape=True):
+
+    '''Use reshape when feeding adj_mats into RGCN'''
 
     adj_mats = []
 
