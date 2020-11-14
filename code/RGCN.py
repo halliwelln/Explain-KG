@@ -81,7 +81,6 @@ class RGCN_Layer(tf.keras.layers.Layer):
        
         return head_output, tail_output
 
-
 class DistMult(tf.keras.layers.Layer):
     def __init__(self, num_relations,seed,**kwargs):
         super(DistMult,self).__init__(**kwargs)
@@ -170,22 +169,13 @@ class RGCN_Model(tf.keras.Model):
 
         return {m.name: m.result() for m in self.metrics}
 
-def get_RGCN_Model(num_triples,num_entities,num_relations,embedding_dim,output_dim,seed):
+def get_RGCN_Model(num_entities,num_relations,embedding_dim,output_dim,seed):
 
-    head_input = tf.keras.Input(shape=(num_triples,), name='head_input',dtype=tf.int64)
-    rel_input = tf.keras.Input(shape=(num_triples,), name='rel_input',dtype=tf.int64)
-    tail_input = tf.keras.Input(shape=(num_triples,), name='tail_input',dtype=tf.int64)
-    all_entities = tf.keras.Input(shape=(num_entities,), name='all_entities',dtype=tf.int64)
+    head_input = tf.keras.Input(shape=(None,), name='head_input',dtype=tf.int64)
+    rel_input = tf.keras.Input(shape=(None,), name='rel_input',dtype=tf.int64)
+    tail_input = tf.keras.Input(shape=(None,), name='tail_input',dtype=tf.int64)
+    all_entities = tf.keras.Input(shape=(None,), name='all_entities',dtype=tf.int64)
 
-    # adj_inputs = tf.keras.Input(
-    #     shape=(
-    #         num_relations,
-    #         num_entities,
-    #         num_entities
-    #     ),
-    #     dtype=tf.float32,
-    #     name='adj_inputs'
-    # )
     adj_inputs = [tf.keras.Input(
         shape=(num_entities,num_entities),
         dtype=tf.float32,
@@ -216,8 +206,6 @@ def get_RGCN_Model(num_triples,num_entities,num_relations,embedding_dim,output_d
     rel_index = Lambda(lambda x:x[0,:])(rel_input)
     tail_index = Lambda(lambda x:x[0,:])(tail_input)
 
-    #adj_mats_layers = [Lambda(lambda x:x[0,:,:])(adj_inputs[i]) for i in range(num_relations)]
-
     new_head,new_tail = RGCN_Layer(
         num_relations=num_relations,
         num_entities=num_entities,
@@ -237,8 +225,6 @@ def get_RGCN_Model(num_triples,num_entities,num_relations,embedding_dim,output_d
         ]
     )
 
-    #output = tf.keras.layers.Dense(num_triples,activation='sigmoid')(output)
-
     model = RGCN_Model(
         inputs=[all_entities,head_input,rel_input,tail_input] + adj_inputs,
         outputs=[output],
@@ -254,7 +240,8 @@ if __name__ == '__main__':
     import os
     import utils
     import random as rn
-    
+    from sklearn.model_selection import train_test_split
+
     SEED = 123
     os.environ['PYTHONHASHSEED'] = str(SEED)
     os.environ['TF_DETERMINISTIC_OPS'] = '1'
@@ -262,15 +249,13 @@ if __name__ == '__main__':
     np.random.seed(SEED)
     rn.seed(SEED)
 
-    # parser = argparse.ArgumentParser()
+    parser = argparse.ArgumentParser()
 
-    # parser.add_argument('rule',type=str,help=
-    #     'Enter which rule to use spouse,successor,...etc (str), -1 (str) for full dataset')
-    # args = parser.parse_args()
+    parser.add_argument('rule',type=str,help=
+        'Enter which rule to use spouse,successor,...etc (str), -1 (str) for full dataset')
+    args = parser.parse_args()
 
-    # RULE = args.rule
-
-    RULE = 'spouse'
+    RULE = args.rule
 
     data = np.load(os.path.join('..','data','royalty.npz'))
 
@@ -289,24 +274,49 @@ if __name__ == '__main__':
     EMBEDDING_DIM = 50
     OUTPUT_DIM = 50
     LEARNING_RATE = 1e-3
-    NUM_EPOCHS = 3000
+    NUM_EPOCHS = 2000
 
     ent2idx = dict(zip(entities, range(NUM_ENTITIES)))
     rel2idx = dict(zip(relations, range(NUM_RELATIONS)))
 
-    train2idx = utils.array2idx(triples,ent2idx,rel2idx)
+    triples2idx = utils.array2idx(triples,ent2idx,rel2idx)
+    traces2idx = utils.array2idx(traces,ent2idx,rel2idx)
 
-    NUM_TRIPLES = train2idx.shape[0]
-
-    # adj_mats = utils.get_adjacency_matrix_list(
-    #     num_relations=NUM_RELATIONS,
-    #     num_entities=NUM_ENTITIES,
-    #     data=train2idx
+    #X_train = np.concatenate([triples2idx,traces2idx.reshape(-1,3)])
+    # X_train,X_test,y_train,y_test = train_test_split(
+    #     triples2idx,
+    #     traces2idx,
+    #     test_size=0.3,
+    #     random_state=SEED
     # )
 
-    adj_mats = utils.get_adj_mats(train2idx,NUM_ENTITIES,NUM_RELATIONS)
+    # X_train = np.concatenate([X_train,y_train.reshape(-1,3)],axis=0)
 
-    train2idx = np.expand_dims(train2idx,axis=0)
+    # if RULE == 'full_data':
+    #     no_pred_triples2idx = utils.array2idx(no_pred_triples,ent2idx,rel2idx)
+    #     no_pred_traces2idx = utils.array2idx(no_pred_traces,ent2idx,rel2idx).reshape(-1,3)
+    #     X_train = np.concatenate([X_train,no_pred_triples,no_pred_traces],axis=0)
+
+    # X_train = np.unique(X_train,axis=0)
+
+    full_data = np.concatenate([triples2idx,traces2idx.reshape(-1,3)],axis=0)
+
+    idx_train,idx_test = utils.train_test_split_no_unseen(
+        full_data, 
+        test_size=1500,
+        seed=SEED, 
+        allow_duplication=False, 
+        filtered_test_predicates=None)
+
+    X_train = full_data[idx_train]
+    X_test = full_data[idx_test]
+
+    NUM_TRIPLES = X_train.shape[0]
+
+    adj_mats = utils.get_adj_mats(X_train,NUM_ENTITIES,NUM_RELATIONS,reshape=True)
+
+    X_train = np.expand_dims(X_train,axis=0)
+    X_test = np.expand_dims(X_test,axis=0)
 
     all_indices = np.arange(NUM_ENTITIES).reshape(1,-1)
     
@@ -315,7 +325,6 @@ if __name__ == '__main__':
 
     # with strategy.scope():
     model = get_RGCN_Model(
-        num_triples=NUM_TRIPLES,
         num_entities=NUM_ENTITIES,
         num_relations=NUM_RELATIONS,
         embedding_dim=EMBEDDING_DIM,
@@ -331,9 +340,9 @@ if __name__ == '__main__':
     model.fit(
         x=[
             all_indices,
-            train2idx[:,:,0],
-            train2idx[:,:,1],
-            train2idx[:,:,2],
+            X_train[:,:,0],
+            X_train[:,:,1],
+            X_train[:,:,2],
             adj_mats
             ],
         y=np.ones(NUM_TRIPLES).reshape(1,-1),
@@ -342,15 +351,15 @@ if __name__ == '__main__':
         verbose=1
     )
 
-    model.save_weights(os.path.join('..','data','weights','rgcn.h5'))
+    model.save_weights(os.path.join('..','data','weights',RULE+'.h5'))
 
     preds = model.predict(
         x=[
             all_indices,
-            train2idx[:,:,0],
-            train2idx[:,:,1],
-            train2idx[:,:,2],
+            X_test[:,:,0],
+            X_test[:,:,1],
+            X_test[:,:,2],
             adj_mats
         ]
     )
-    print(f'acc {(preds > .5).sum()/NUM_TRIPLES}')
+    print(f'acc {(preds > .5).sum()/X_test.shape[1]}')

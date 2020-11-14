@@ -2,4 +2,4 @@
 
 conda activate kg_env
 
-./RGCN.py
+./RGCN.py 'spouse'

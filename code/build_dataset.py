@@ -13,8 +13,8 @@ rn.seed(SEED)
 
 rules = [
     'spouse', 'uncle',
-    'aunt', 'brother_sister',
-    'successor_predecessor', 'grandparent'
+    'aunt', 'brother','sister',
+    'successor','predecessor'
 ]
 
 MAX_PADDING = 3
@@ -25,11 +25,25 @@ all_traces = []
 
 for rule in rules:
 
+    if (rule == 'brother') or (rule == 'sister'):
+        rule_file = 'brother_sister'
+
+    elif (rule == 'successor') or (rule == 'predecessor'):
+        rule_file = 'successor_predecessor'
+
+    else:
+        rule_file = rule
+
     triples,traces = utils.parse_ttl(
-        file_name=os.path.join('..','data','traces',rule+'.ttl'),
+        file_name=os.path.join('..','data','traces',rule_file+'.ttl'),
         max_padding=MAX_PADDING
     )
-    
+
+    idx = triples[:,1] == rule #get indicies of triples for <rule>
+
+    triples = triples[idx]
+    traces = traces[idx]
+
     exp_entities = np.array([[traces[:,i,:][:,0],
         traces[:,i,:][:,2]] for i in range(MAX_PADDING)]).flatten()
 

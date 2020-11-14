@@ -92,6 +92,49 @@ def get_explanations(i,j,s1,s2,embedding_dim,gamma,X,top_k,iter_data,hessians,pr
 
     return np.array(explanation)
 
+def jaccard_score(true_exp,pred_exp):
+
+    assert len(true_exp) == len(pred_exp)
+
+    scores = []
+
+    for i in range(len(true_exp)):
+
+        true_i = true_exp[i]
+        pred_i = pred_exp[i]
+
+        num_true_traces = true_i.shape[0]
+        num_pred_traces = pred_i.shape[0]
+
+        count = 0
+        for pred_row in pred_i:
+            for true_row in true_i:
+                if (pred_row == true_row).all():
+                    count +=1
+
+        score = count / (num_true_traces + num_pred_traces-count)
+
+        scores.append(score)
+        
+    return np.mean(scores)
+
+def get_adjacency_matrix(data,entities,num_entities):
+
+    row = []
+    col = []
+
+    for h,r,t in data:
+
+        h_idx = entities.index(h)
+        t_idx = entities.index(t)
+
+        row.append(h_idx)
+        col.append(t_idx)
+
+    adj = np.ones(len(row))
+
+    return sparse.csr_matrix((adj,(row,col)),shape=(num_entities,num_entities))
+
 if __name__ == '__main__':
 
     import argparse
@@ -162,7 +205,7 @@ if __name__ == '__main__':
 
         adjacency_data = np.concatenate((train,train_exp.reshape(-1,3)), axis=0)
 
-        A = utils.get_adjacency_matrix(adjacency_data,entities,NUM_ENTITIES)
+        A = get_adjacency_matrix(adjacency_data,entities,NUM_ENTITIES)
 
         #trainexp2idx = trainexp2idx[:,:,[0,2]]
 
@@ -183,7 +226,7 @@ if __name__ == '__main__':
 
         X = CNE._ConditionalNetworkEmbedding__emb
 
-        A = utils.get_adjacency_matrix(test,entities,NUM_ENTITIES)
+        A = get_adjacency_matrix(test,entities,NUM_ENTITIES)
 
         PROBS = joblib.Parallel(n_jobs=-2, verbose=0)(
             joblib.delayed(compute_prob)(
@@ -210,7 +253,7 @@ if __name__ == '__main__':
 
         explanations = np.array(explanations)
 
-        jaccard = utils.jaccard_score(testexp2idx,explanations)
+        jaccard = jaccard_score(testexp2idx,explanations)
 
         cv_scores.append(jaccard)
         preds.append(explanations)

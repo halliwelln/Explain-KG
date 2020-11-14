@@ -15,19 +15,84 @@ def tf_binary_jaccard(true_graph,pred_graph):
     
     return m11 / (m01 + m10 + m11)
 
+def train_test_split_no_unseen(X, test_size=100, seed=0, allow_duplication=False, filtered_test_predicates=None):
+
+    if type(test_size) is float:
+        test_size = int(len(X) * test_size)
+
+    rnd = np.random.RandomState(seed)
+
+    subs, subs_cnt = np.unique(X[:, 0], return_counts=True)
+    objs, objs_cnt = np.unique(X[:, 2], return_counts=True)
+    rels, rels_cnt = np.unique(X[:, 1], return_counts=True)
+    dict_subs = dict(zip(subs, subs_cnt))
+    dict_objs = dict(zip(objs, objs_cnt))
+    dict_rels = dict(zip(rels, rels_cnt))
+
+    idx_test = np.array([], dtype=int)
+
+    loop_count = 0
+    tolerance = len(X) * 10
+    # Set the indices of test set triples. If filtered, reduce candidate triples to certain predicate types.
+    if filtered_test_predicates:
+        test_triples_idx = np.where(np.isin(X[:, 1], filtered_test_predicates))[0]
+    else:
+        test_triples_idx = np.arange(len(X))
+
+    while idx_test.shape[0] < test_size:
+        i = rnd.choice(test_triples_idx)
+        if dict_subs[X[i, 0]] > 1 and dict_objs[X[i, 2]] > 1 and dict_rels[X[i, 1]] > 1:
+            dict_subs[X[i, 0]] -= 1
+            dict_objs[X[i, 2]] -= 1
+            dict_rels[X[i, 1]] -= 1
+            if allow_duplication:
+                idx_test = np.append(idx_test, i)
+            else:
+                idx_test = np.unique(np.append(idx_test, i))
+
+        loop_count += 1
+
+        # in case can't find solution
+        if loop_count == tolerance:
+            if allow_duplication:
+                raise Exception("Cannot create a test split of the desired size. "
+                                "Some entities will not occur in both training and test set. "
+                                "Change seed values, remove filter on test predicates or set "
+                                "test_size to a smaller value.")
+            else:
+                raise Exception("Cannot create a test split of the desired size. "
+                                "Some entities will not occur in both training and test set. "
+                                "Set allow_duplication=True,"
+                                "change seed values, remove filter on test predicates or "
+                                "set test_size to a smaller value.")
+    idx = np.arange(len(X))
+    idx_train = np.setdiff1d(idx, idx_test)
+
+    return idx_train,idx_test
+
+def distinct(a):
+    _a = np.unique(a,axis=0)
+    return _a
+
 def get_adj_mats(data,num_entities,num_relations,reshape=True):
 
     '''Use reshape when feeding adj_mats into RGCN'''
-
     adj_mats = []
 
     for i in range(num_relations):
 
         data_i = data[data[:,1] == i]
 
-        indices = tf.concat([
-            tf.gather(data_i,[0,2],axis=1),
-            tf.gather(data_i,[2,0],axis=1)],axis=0)
+        if not data_i.shape[0]:
+            indices = tf.zeros((1,2),dtype=tf.int64)
+
+        else:
+
+            indices = tf.concat([
+                    tf.gather(data_i,[0,2],axis=1),
+                    tf.gather(data_i,[2,0],axis=1)],axis=0)
+
+            indices = tf.py_function(distinct,[indices],indices.dtype)
 
         sparse_mat = tf.sparse.SparseTensor(
             indices=indices,
@@ -159,49 +224,6 @@ def array2idx(dataset, ent2idx,rel2idx):
 #     data = np.array(data)
 
 #     return data
-
-def jaccard_score(true_exp,pred_exp):
-
-    assert len(true_exp) == len(pred_exp)
-
-    scores = []
-
-    for i in range(len(true_exp)):
-
-        true_i = true_exp[i]
-        pred_i = pred_exp[i]
-
-        num_true_traces = true_i.shape[0]
-        num_pred_traces = pred_i.shape[0]
-
-        count = 0
-        for pred_row in pred_i:
-            for true_row in true_i:
-                if (pred_row == true_row).all():
-                    count +=1
-
-        score = count / (num_true_traces + num_pred_traces-count)
-
-        scores.append(score)
-        
-    return np.mean(scores)
-
-def get_adjacency_matrix(data,entities,num_entities):
-
-    row = []
-    col = []
-
-    for h,r,t in data:
-
-        h_idx = entities.index(h)
-        t_idx = entities.index(t)
-
-        row.append(h_idx)
-        col.append(t_idx)
-
-    adj = np.ones(len(row))
-
-    return sparse.csr_matrix((adj,(row,col)),shape=(num_entities,num_entities))
 
 def get_tup(line_str):
     
