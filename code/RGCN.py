@@ -271,10 +271,10 @@ if __name__ == '__main__':
 
     NUM_ENTITIES = len(entities)
     NUM_RELATIONS = len(relations)
-    EMBEDDING_DIM = 50
-    OUTPUT_DIM = 50
+    EMBEDDING_DIM = 100
+    OUTPUT_DIM = 100    
     LEARNING_RATE = 1e-3
-    NUM_EPOCHS = 2000
+    NUM_EPOCHS = 100
 
     ent2idx = dict(zip(entities, range(NUM_ENTITIES)))
     rel2idx = dict(zip(relations, range(NUM_RELATIONS)))

@@ -85,6 +85,7 @@ def get_adj_mats(data,num_entities,num_relations,reshape=True):
 
         if not data_i.shape[0]:
             indices = tf.zeros((1,2),dtype=tf.int64)
+            values = tf.zeros((indices.shape[0]))
 
         else:
 
@@ -93,10 +94,11 @@ def get_adj_mats(data,num_entities,num_relations,reshape=True):
                     tf.gather(data_i,[2,0],axis=1)],axis=0)
 
             indices = tf.py_function(distinct,[indices],indices.dtype)
+            values = tf.ones((indices.shape[0]))
 
         sparse_mat = tf.sparse.SparseTensor(
             indices=indices,
-            values=tf.ones((indices.shape[0])),
+            values=values,
             dense_shape=(num_entities,num_entities)
             )
 

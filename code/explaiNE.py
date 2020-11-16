@@ -175,7 +175,7 @@ if __name__ == '__main__':
     ent2idx = dict(zip(entities, range(NUM_ENTITIES)))
     rel2idx = dict(zip(relations, range(NUM_RELATIONS)))
 
-    EMBEDDING_DIM = 50
+    EMBEDDING_DIM = 100
     S1 = 1
     S2 = 1.5
     LEARNING_RATE = .001
@@ -261,11 +261,11 @@ if __name__ == '__main__':
     best_idx = np.argmin(cv_scores)
     best_preds = preds[best_idx]
 
-    np.savez(os.path.join('.','data','explaine_',RULE,'_preds','.npz'),
-        preds=best_preds,embedding_dim=EMBEDDING_DIM,learning_rate=LEARNING_RATE,
-        max_iter=MAX_ITER,s1=S1,s2=S2
-        )
+    # np.savez(os.path.join('.','data','explaine_',RULE,'_preds','.npz'),
+    #     preds=best_preds,embedding_dim=EMBEDDING_DIM,learning_rate=LEARNING_RATE,
+    #     max_iter=MAX_ITER,s1=S1,s2=S2
+    #     )
 
-    print(f"{RULE} jaccard score={jaccard} using:")
+    print(f"{RULE} jaccard score={np.mean(cv_scores)} using:")
     print(f"embedding dimensions={EMBEDDING_DIM},s1={S1},s2={S2}")
     print(f"learning_rate={LEARNING_RATE},max_iter={MAX_ITER}")
