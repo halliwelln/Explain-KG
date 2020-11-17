@@ -276,7 +276,7 @@ if __name__ == '__main__':
     EMBEDDING_DIM = 100
     OUTPUT_DIM = 100    
     LEARNING_RATE = 1e-3
-    NUM_EPOCHS = 100
+    NUM_EPOCHS = 50
 
     ent2idx = dict(zip(entities, range(NUM_ENTITIES)))
     rel2idx = dict(zip(relations, range(NUM_RELATIONS)))
@@ -353,7 +353,7 @@ if __name__ == '__main__':
         verbose=1
     )
 
-    model.save_weights(os.path.join('..','data','weights',RULE+'.h5'))
+    #model.save_weights(os.path.join('..','data','weights',RULE+'.h5'))
 
     preds = model.predict(
         x=[

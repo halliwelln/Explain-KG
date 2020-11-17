@@ -86,8 +86,11 @@ def score_subgraphs(
 
         pred_graph = tf.sparse.to_dense(pred_graph)
         true_graph = tf.sparse.to_dense(true_subgraphs[i])
-        print(true_graph.numpy().sum())
-        print(pred_graph.numpy().sum())
+
+        print(np.argwhere(pred_graph.numpy()))
+        print(np.argwhere(true_graph.numpy()))
+        #print(true_graph.numpy().sum())
+        #print(pred_graph.numpy().sum())
 
         score = utils.tf_binary_jaccard(true_graph,pred_graph)
 
@@ -137,8 +140,8 @@ if __name__ == '__main__':
     EMBEDDING_DIM = 100
     OUTPUT_DIM = 100
     LEARNING_RATE = .01
-    NUM_EPOCHS = 20
-    THRESHOLD = .5
+    NUM_EPOCHS = 2
+    THRESHOLD = .01
 
     ent2idx = dict(zip(entities, range(NUM_ENTITIES)))
     rel2idx = dict(zip(relations, range(NUM_RELATIONS)))
@@ -176,7 +179,7 @@ if __name__ == '__main__':
     )
 
     model.load_weights(os.path.join('..','data','weights',RULE+'.h5'))
-    model.trainable = False
+    #model.trainable = False
     optimizer = tf.keras.optimizers.Adam(learning_rate=LEARNING_RATE)
 
     full_data = tf.concat([triples2idx,tf.reshape(traces2idx,(-1,3))],axis=0)
@@ -187,7 +190,7 @@ if __name__ == '__main__':
 
     entity_embeddings = model.get_layer('entity_embeddings').get_weights()[0]
 
-    scores = []
+    jaccard_scores = []
     for i in range(1):
         # head = tf.reshape(triples2idx[i,0],shape=(-1,1))
         # rel = tf.reshape(triples2idx[i,1],shape=(-1,1))
@@ -228,8 +231,8 @@ if __name__ == '__main__':
 
         for epoch in range(NUM_EPOCHS):
 
-            with tf.GradientTape(watch_accessed_variables=False) as tape:
-            #with tf.GradientTape() as tape:
+            #with tf.GradientTape(watch_accessed_variables=False) as tape:
+            with tf.GradientTape() as tape:
 
                 tape.watch(masks)
 
@@ -237,7 +240,8 @@ if __name__ == '__main__':
                 tail_output = tf.matmul(tf.reshape(entity_embeddings[tail],(1,-1)),self_kernel)
 
                 for i in range(NUM_RELATIONS):
-                    adj_i = masks[i][0]
+                    adj_i = tf.sparse.to_dense(adj_mats[i])[0] * tf.sigmoid(masks[i][0])
+
                     sum_embeddings = tf.matmul(adj_i,entity_embeddings)
                     head_update = tf.reshape(sum_embeddings[head],(1,-1))
                     tail_update = tf.reshape(sum_embeddings[tail],(1,-1))
@@ -248,10 +252,18 @@ if __name__ == '__main__':
                 head_output = tf.sigmoid(head_output)
                 tail_output = tf.sigmoid(tail_output)
 
-                score = tf.matmul(tf.matmul(head_output,
-                    relation_kernel[rel]),tf.transpose(tail_output))
+                pred = tf.sigmoid(tf.reduce_sum(head_output*relation_kernel[rel]*tail_output))
 
-                loss = -1 * tf.math.log(tf.sigmoid(score))
+                # score = score_subgraphs(
+                #         true_subgraphs=true_subgraphs,
+                #         adj_mats=adj_mats,
+                #         masks=masks,
+                #         num_relations=NUM_RELATIONS,
+                #         num_entities=NUM_ENTITIES,
+                #         threshold=THRESHOLD
+                #     )
+                # score = tf.cast(score,dtype=tf.float32) + 0.00001
+                loss = -1 * tf.math.log(pred) #tf.reduce_mean(tf.cast(tf.sigmoid(masks) > .5,dtype=tf.float32))
 
                 # masked_adjs = []
 
@@ -278,19 +290,20 @@ if __name__ == '__main__':
                 #     masked_adjs
                 #     ]
                 # )
+                # print(y_pred)
+                # # sig_masks = tf.nn.sigmoid(masks)
 
-                # sig_masks = tf.nn.sigmoid(masks)
+                # # penalty = tf.reduce_sum(sig_masks)
 
-                # penalty = tf.reduce_sum(sig_masks)
-
-                # loss = -1 * tf.math.log(y_pred +.00001) #+ (0.000001*penalty)
+                # loss = -1 * tf.math.log(y_pred) #+ (0.000001*penalty)
 
             print(f"Loss {tf.squeeze(loss).numpy()} @ epoch {epoch}")
-            grads = tape.gradient(loss,masks)
 
+            grads = tape.gradient(loss,masks)
             optimizer.apply_gradients(zip(grads,masks))
 
-        score = score_subgraphs(
+
+        jaccard = score_subgraphs(
             true_subgraphs=true_subgraphs,
             adj_mats=adj_mats,
             masks=masks,
@@ -298,8 +311,8 @@ if __name__ == '__main__':
             num_entities=NUM_ENTITIES,
             threshold=THRESHOLD
         )
-        scores.append(score)
+        jaccard_scores.append(jaccard)
 
-        print(f"score {score.numpy()}")
-    print(np.mean(scores))
+        print(f"jaccard score {jaccard.numpy()}")
+    print(np.mean(jaccard_scores))
 
