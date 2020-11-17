@@ -64,7 +64,8 @@ def score_subgraphs(
     adj_mats,
     masks,
     num_relations,
-    num_entities
+    num_entities,
+    threshold
     ):
     
     '''Compute jaccard score across all relations for one triple'''
@@ -75,7 +76,7 @@ def score_subgraphs(
 
         mask_i = adj_mats[i] * tf.nn.sigmoid(masks[i])
 
-        non_masked_indices = mask_i.indices[mask_i.values > .5]
+        non_masked_indices = mask_i.indices[mask_i.values > threshold]
 
         pred_graph = tf.sparse.SparseTensor(
             indices=non_masked_indices,
@@ -85,6 +86,8 @@ def score_subgraphs(
 
         pred_graph = tf.sparse.to_dense(pred_graph)
         true_graph = tf.sparse.to_dense(true_subgraphs[i])
+        print(true_graph.numpy().sum())
+        print(pred_graph.numpy().sum())
 
         score = utils.tf_binary_jaccard(true_graph,pred_graph)
 
@@ -129,14 +132,13 @@ if __name__ == '__main__':
         entities = data[RULE + '_entities'].tolist()
         relations = data[RULE + '_relations'].tolist()  
 
-    #relations = [relations[-1]]
-
     NUM_ENTITIES = len(entities)
     NUM_RELATIONS = len(relations)
     EMBEDDING_DIM = 100
     OUTPUT_DIM = 100
-    LEARNING_RATE = .001
-    NUM_EPOCHS = 100
+    LEARNING_RATE = .01
+    NUM_EPOCHS = 20
+    THRESHOLD = .5
 
     ent2idx = dict(zip(entities, range(NUM_ENTITIES)))
     rel2idx = dict(zip(relations, range(NUM_RELATIONS)))
@@ -174,13 +176,18 @@ if __name__ == '__main__':
     )
 
     model.load_weights(os.path.join('..','data','weights',RULE+'.h5'))
-
-    optimizer = tf.keras.optimizers.SGD(learning_rate=LEARNING_RATE)
+    model.trainable = False
+    optimizer = tf.keras.optimizers.Adam(learning_rate=LEARNING_RATE)
 
     full_data = tf.concat([triples2idx,tf.reshape(traces2idx,(-1,3))],axis=0)
 
-    #DEFINE JACCARD SCORES LIST
-    #LOOP THROUGH DATA
+    relation_embeddings = model.get_layer('output').get_weights()[0]
+
+    relation_kernel, self_kernel = model.get_layer('rgcn__layer').get_weights()
+
+    entity_embeddings = model.get_layer('entity_embeddings').get_weights()[0]
+
+    scores = []
     for i in range(1):
         # head = tf.reshape(triples2idx[i,0],shape=(-1,1))
         # rel = tf.reshape(triples2idx[i,1],shape=(-1,1))
@@ -190,11 +197,11 @@ if __name__ == '__main__':
         rel = triples2idx[i,1]
         tail = triples2idx[i,2]
 
-        true_subgraphs = utils.get_adj_mats(traces2idx[i],NUM_ENTITIES,NUM_RELATIONS,reshape=True)
+        true_subgraphs = utils.get_adj_mats(traces2idx[i],NUM_ENTITIES,NUM_RELATIONS)
 
         comp_graph = get_computation_graph(head,rel,tail,full_data,NUM_RELATIONS)
 
-        adj_mats = utils.get_adj_mats(comp_graph, NUM_ENTITIES, NUM_RELATIONS,reshape=True)
+        adj_mats = utils.get_adj_mats(comp_graph, NUM_ENTITIES, NUM_RELATIONS)
 
         masks = [tf.Variable(
                 initial_value=tf.random.normal(
@@ -209,7 +216,9 @@ if __name__ == '__main__':
         # masks = [tf.Variable(
         #         initial_value=tf.sparse.to_dense(adj_mats[i]),
         #         name='mask_'+str(i),
-        #         trainable=True) for i in range(NUM_RELATIONS)
+        #         trainable=
+            #     adj_mats,
+            #     model,True) for i in range(NUM_RELATIONS)
         #]
         # masks = [tf.Variable(
         #         initial_value=tf.ones((NUM_ENTITIES,NUM_ENTITIES)),
@@ -219,80 +228,78 @@ if __name__ == '__main__':
 
         for epoch in range(NUM_EPOCHS):
 
-            # loss, grads = gnn_explainer_grads(
-            #     tf.reshape(head,shape=(-1,1)),
-            #     tf.reshape(rel,shape=(-1,1)),
-            #     tf.reshape(tail,shape=(-1,1)),
-            #     masks,
-            #     adj_mats,
-            #     model,
-            #     all_indices,
-            #     NUM_RELATIONS
-            # )
-            with tf.GradientTape() as tape:
+            with tf.GradientTape(watch_accessed_variables=False) as tape:
+            #with tf.GradientTape() as tape:
 
                 tape.watch(masks)
 
-                # masked_adjs = []
-
-                # for i in range(1,NUM_RELATIONS):
-
-                #     masked_adj = adj_mats[i] * tf.nn.sigmoid(masks[i])
-
-                #     masked_adjs.append(masked_adj)
-
-                masked_adjs = []
+                head_output = tf.matmul(tf.reshape(entity_embeddings[head],(1,-1)),self_kernel)
+                tail_output = tf.matmul(tf.reshape(entity_embeddings[tail],(1,-1)),self_kernel)
 
                 for i in range(NUM_RELATIONS):
+                    adj_i = masks[i][0]
+                    sum_embeddings = tf.matmul(adj_i,entity_embeddings)
+                    head_update = tf.reshape(sum_embeddings[head],(1,-1))
+                    tail_update = tf.reshape(sum_embeddings[tail],(1,-1))
+                    
+                    head_output += tf.matmul(head_update,relation_kernel[i])
+                    tail_output += tf.matmul(tail_update,relation_kernel[i])
+                
+                head_output = tf.sigmoid(head_output)
+                tail_output = tf.sigmoid(tail_output)
 
-                    mask_adj = adj_mats[i] * tf.nn.sigmoid(masks[i])
+                score = tf.matmul(tf.matmul(head_output,
+                    relation_kernel[rel]),tf.transpose(tail_output))
 
-                    thresholded_indices = mask_adj.indices[mask_adj.values > .5]
+                loss = -1 * tf.math.log(tf.sigmoid(score))
+
+                # masked_adjs = []
+
+                # for i in range(NUM_RELATIONS):
+
+                #     mask_adj = adj_mats[i] * tf.nn.sigmoid(masks[i])
+
+                #     thresholded_indices = mask_adj.indices[mask_adj.values > THRESHOLD]
     
-                    masked_adj = tf.sparse.SparseTensor(
-                            indices=thresholded_indices,
-                            values=tf.ones(thresholded_indices.shape[0]),
-                            dense_shape=(1,NUM_ENTITIES,NUM_ENTITIES)
-                            )
+                #     masked_adj = tf.sparse.SparseTensor(
+                #             indices=thresholded_indices,
+                #             values=tf.ones(thresholded_indices.shape[0]),
+                #             dense_shape=(1,NUM_ENTITIES,NUM_ENTITIES)
+                #             )
     
-                    masked_adjs.append(masked_adj)
+                #     masked_adjs.append(masked_adj)
 
-                #masked_adjs = [adj_mats[i] * tf.nn.sigmoid(masks[i]) for i in range(NUM_RELATIONS)]
+                # y_pred = model(
+                #     [
+                #     all_indices,
+                #     tf.reshape(head,shape=(-1,1)),
+                #     tf.reshape(rel,shape=(-1,1)),
+                #     tf.reshape(tail,shape=(-1,1)),
+                #     masked_adjs
+                #     ]
+                # )
 
-                y_pred = model(
-                    [
-                    all_indices,
-                    tf.reshape(head,shape=(-1,1)),
-                    tf.reshape(rel,shape=(-1,1)),
-                    tf.reshape(tail,shape=(-1,1)),
-                    masked_adjs
-                    ]
-                )
-                sig_masks = tf.nn.sigmoid(masks)
+                # sig_masks = tf.nn.sigmoid(masks)
 
-                penalty = tf.reduce_sum(sig_masks)
+                # penalty = tf.reduce_sum(sig_masks)
 
-                loss = -1 * tf.math.log(y_pred +.00001) + penalty#(0.00001*penalty)
-
-                # sig_mask = tf.nn.sigmoid(masks)
-        
-                #ent = - sig_mask * tf.math.log(sig_mask + .00001) - (1-sig_mask) * tf.math.log(1-sig_mask + .00001)
-                #loss = -1 * tf.math.log(y_pred + .00001) + tf.reduce_mean(ent)
+                # loss = -1 * tf.math.log(y_pred +.00001) #+ (0.000001*penalty)
 
             print(f"Loss {tf.squeeze(loss).numpy()} @ epoch {epoch}")
             grads = tape.gradient(loss,masks)
-            #print(grads[2])
+
             optimizer.apply_gradients(zip(grads,masks))
 
         score = score_subgraphs(
-            true_subgraphs,
-            adj_mats,
-            masks,
-            NUM_RELATIONS,
-            NUM_ENTITIES
+            true_subgraphs=true_subgraphs,
+            adj_mats=adj_mats,
+            masks=masks,
+            num_relations=NUM_RELATIONS,
+            num_entities=NUM_ENTITIES,
+            threshold=THRESHOLD
         )
-        #scores.append(score)
+        scores.append(score)
 
         print(f"score {score.numpy()}")
-
+    print(np.mean(scores))
 

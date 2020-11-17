@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 
 import numpy as np
-#import cupy as np
 from collections import defaultdict
 
 class ConditionalNetworkEmbedding:

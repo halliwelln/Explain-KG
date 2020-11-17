@@ -74,7 +74,7 @@ def distinct(a):
     _a = np.unique(a,axis=0)
     return _a
 
-def get_adj_mats(data,num_entities,num_relations,reshape=True):
+def get_adj_mats(data,num_entities,num_relations):
 
     '''Use reshape when feeding adj_mats into RGCN'''
     adj_mats = []
@@ -104,8 +104,7 @@ def get_adj_mats(data,num_entities,num_relations,reshape=True):
 
         sparse_mat = tf.sparse.reorder(sparse_mat)
 
-        if reshape:
-            sparse_mat = tf.sparse.reshape(sparse_mat, shape=(1,num_entities,num_entities))
+        sparse_mat = tf.sparse.reshape(sparse_mat, shape=(1,num_entities,num_entities))
 
         adj_mats.append(sparse_mat)
 

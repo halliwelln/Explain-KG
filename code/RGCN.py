@@ -79,7 +79,7 @@ class RGCN_Layer(tf.keras.layers.Layer):
             head_output += tf.matmul(head_update,self.relation_kernel[i])
             tail_output += tf.matmul(tail_update,self.relation_kernel[i])
        
-        return head_output, tail_output
+        return tf.sigmoid(head_output), tf.sigmoid(tail_output)
 
 class DistMult(tf.keras.layers.Layer):
     def __init__(self, num_relations,seed,**kwargs):
@@ -107,7 +107,7 @@ class DistMult(tf.keras.layers.Layer):
         head_e,rel_idx,tail_e = inputs
         
         rel_e = tf.nn.embedding_lookup(self.kernel,rel_idx)
-        
+
         score = tf.sigmoid(tf.reduce_sum(head_e*rel_e*tail_e,axis=-1))
 
         return tf.expand_dims(score,axis=0)
@@ -152,15 +152,17 @@ class RGCN_Model(tf.keras.Model):
                     training=True
                 )
 
-            y_neg_true = tf.zeros_like(y_pos_true)
+            y_pred = tf.concat([y_pos_pred,y_neg_pred],axis=1)
+            y_true = tf.concat([y_pos_true,tf.zeros_like(y_pos_true)],axis=1)
 
-            # y_pred = tf.concat([y_pos_pred,y_neg_pred],axis=1)
-            # y_true = tf.concat([y,tf.zeros_like(y)],axis=1)
+            loss = self.compiled_loss(y_true,y_pred)
+
+            loss *= (1/ self.num_entities)
             
-            pos_loss = self.compiled_loss(y_pos_true,y_pos_pred)
-            neg_loss = self.compiled_loss(y_neg_true,y_neg_pred)
+            # pos_loss = self.compiled_loss(y_pos_true,y_pos_pred)
+            # neg_loss = self.compiled_loss(y_neg_true,y_neg_pred)
 
-            loss = pos_loss + neg_loss
+            # loss = (pos_loss + neg_loss)
 
         grads = tape.gradient(loss, self.trainable_weights)
         self.optimizer.apply_gradients(zip(grads, self.trainable_weights))
@@ -313,7 +315,7 @@ if __name__ == '__main__':
 
     NUM_TRIPLES = X_train.shape[0]
 
-    adj_mats = utils.get_adj_mats(X_train,NUM_ENTITIES,NUM_RELATIONS,reshape=True)
+    adj_mats = utils.get_adj_mats(X_train,NUM_ENTITIES,NUM_RELATIONS)
 
     X_train = np.expand_dims(X_train,axis=0)
     X_test = np.expand_dims(X_test,axis=0)
@@ -334,7 +336,7 @@ if __name__ == '__main__':
 
     model.compile(
         loss=tf.keras.losses.BinaryCrossentropy(), 
-        optimizer=tf.keras.optimizers.SGD(learning_rate=LEARNING_RATE)
+        optimizer=tf.keras.optimizers.Adam(learning_rate=LEARNING_RATE)
     )
 
     model.fit(

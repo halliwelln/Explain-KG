@@ -243,7 +243,7 @@ if __name__ == '__main__':
             )
 
         HESSIANS = np.array(HESSIANS)
-        ITER_DATA = np.unique(testexp2idx.reshape(-1,2), axis=0)
+        ITER_DATA = np.unique(testexp2idx.reshape(-1,2), axis=0)#add test2idx
 
         explanations = joblib.Parallel(n_jobs=-2, verbose=0)(
             joblib.delayed(get_explanations)(
