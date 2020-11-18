@@ -76,7 +76,6 @@ def distinct(a):
 
 def get_adj_mats(data,num_entities,num_relations):
 
-    '''Use reshape when feeding adj_mats into RGCN'''
     adj_mats = []
 
     for i in range(num_relations):

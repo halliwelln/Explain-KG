@@ -7,18 +7,54 @@ import utils
 import random as rn
 import RGCN
 
-def get_computation_graph(head,rel,tail,data,num_relations):
+def get_neighbors(data_subset,node_idx):
     
-    '''Get 1st degree neighbors of head and tail'''
-     
-    subset = data[data[:,1] == rel]
+    neighbors = tf.concat([data_subset[data_subset[:,0] == node_idx],
+                           data_subset[data_subset[:,2] == node_idx]],axis=0)
+    
+    return neighbors
 
-    neighbors_head = tf.concat([subset[subset[:,0] == head],
-                                subset[subset[:,2] == head]],axis=0)
-    neighbors_tail = tf.concat([subset[(subset[:,0] == tail) & (subset[:,0] != head)],
-                                subset[(subset[:,2] == tail) & (subset[:,0] != head)]],axis=0)
+def get_computation_graph(head,rel,tail,k,data,num_relations):
+
+    '''Get k hop neighbors (may include duplicates)'''
+         
+    # subset = data[data[:,1] == rel]
+
+    # neighbors_head = get_neighbors(subset,head)
+    # neighbors_tail = get_neighbors(subset,tail)
+
+    neighbors_head = get_neighbors(data,head)
+    neighbors_tail = get_neighbors(data,tail)
 
     all_neighbors = tf.concat([neighbors_head,neighbors_tail],axis=0)
+
+    if k > 1:
+        num_indices = all_neighbors.shape[0]
+
+        seen_nodes = []
+        
+        for _ in range(k-1):#-1 since we already computed 1st degree neighbors above
+
+            for idx in range(num_indices):
+
+                head_neighbor_idx = all_neighbors[idx,0]
+                tail_neighbor_idx = all_neighbors[idx,2]
+
+                if head_neighbor_idx not in seen_nodes:
+                    
+                    seen_nodes.append(head_neighbor_idx)
+
+                    more_head_neighbors = get_neighbors(data,head_neighbor_idx)
+
+                    all_neighbors = tf.concat([all_neighbors,more_head_neighbors],axis=0)
+
+                if tail_neighbor_idx not in seen_nodes:
+
+                    seen_nodes.append(tail_neighbor_idx)
+
+                    more_tail_neighbors = get_neighbors(data,tail_neighbor_idx)
+
+                    all_neighbors = tf.concat([all_neighbors,more_tail_neighbors],axis=0)
 
     return all_neighbors
 
@@ -139,9 +175,10 @@ if __name__ == '__main__':
     NUM_RELATIONS = len(relations)
     EMBEDDING_DIM = 100
     OUTPUT_DIM = 100
-    LEARNING_RATE = .01
-    NUM_EPOCHS = 2
+    LEARNING_RATE = 0.001#.01
+    NUM_EPOCHS = 100
     THRESHOLD = .01
+    K = 2
 
     ent2idx = dict(zip(entities, range(NUM_ENTITIES)))
     rel2idx = dict(zip(relations, range(NUM_RELATIONS)))
@@ -191,7 +228,7 @@ if __name__ == '__main__':
     entity_embeddings = model.get_layer('entity_embeddings').get_weights()[0]
 
     jaccard_scores = []
-    for i in range(1):
+    for i in range(10):
         # head = tf.reshape(triples2idx[i,0],shape=(-1,1))
         # rel = tf.reshape(triples2idx[i,1],shape=(-1,1))
         # tail = tf.reshape(triples2idx[i,2],shape=(-1,1))
@@ -200,9 +237,7 @@ if __name__ == '__main__':
         rel = triples2idx[i,1]
         tail = triples2idx[i,2]
 
-        true_subgraphs = utils.get_adj_mats(traces2idx[i],NUM_ENTITIES,NUM_RELATIONS)
-
-        comp_graph = get_computation_graph(head,rel,tail,full_data,NUM_RELATIONS)
+        comp_graph = get_computation_graph(head,rel,tail,K,full_data,NUM_RELATIONS)
 
         adj_mats = utils.get_adj_mats(comp_graph, NUM_ENTITIES, NUM_RELATIONS)
 
@@ -263,7 +298,10 @@ if __name__ == '__main__':
                 #         threshold=THRESHOLD
                 #     )
                 # score = tf.cast(score,dtype=tf.float32) + 0.00001
-                loss = -1 * tf.math.log(pred) #tf.reduce_mean(tf.cast(tf.sigmoid(masks) > .5,dtype=tf.float32))
+                #(0.0000001*tf.reduce_sum(tf.sigmoid(masks))))
+                loss = -1 * tf.math.log(pred+0.00001)# + tf.reduce_mean(masks)
+
+                #tf.reduce_mean(tf.cast(tf.sigmoid(masks) > .5,dtype=tf.float32))
 
                 # masked_adjs = []
 
@@ -302,6 +340,7 @@ if __name__ == '__main__':
             grads = tape.gradient(loss,masks)
             optimizer.apply_gradients(zip(grads,masks))
 
+        true_subgraphs = utils.get_adj_mats(traces2idx[i],NUM_ENTITIES,NUM_RELATIONS)
 
         jaccard = score_subgraphs(
             true_subgraphs=true_subgraphs,
