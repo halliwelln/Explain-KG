@@ -242,7 +242,6 @@ if __name__ == '__main__':
     import os
     import utils
     import random as rn
-    from sklearn.model_selection import train_test_split
 
     SEED = 123
     os.environ['PYTHONHASHSEED'] = str(SEED)
@@ -255,70 +254,56 @@ if __name__ == '__main__':
 
     parser.add_argument('rule',type=str,help=
         'Enter which rule to use spouse,successor,...etc (str), -1 (str) for full dataset')
+    parser.add_argument('num_epochs',type=int)
+
     args = parser.parse_args()
 
     RULE = args.rule
 
     data = np.load(os.path.join('..','data','royalty.npz'))
 
-    if RULE == '-1':
-        triples, traces,no_pred_triples,no_pred_traces = utils.concat_triples(data, data['rules'])
-        RULE = 'full_data'
+    if RULE == 'full_data':
+        triples,traces,nopred = utils.concat_triples(data, data['rules'])
         entities = data['all_entities'].tolist()
         relations = data['all_relations'].tolist()
     else:
-        triples, traces = data[RULE + '_triples'], data[RULE + '_traces']
+        #triples, traces = data[RULE + '_triples'], data[RULE + '_traces']
+        triples,traces,nopred = utils.concat_triples(data, [RULE])
         entities = data[RULE + '_entities'].tolist()
         relations = data[RULE + '_relations'].tolist()  
 
     NUM_ENTITIES = len(entities)
     NUM_RELATIONS = len(relations)
-    EMBEDDING_DIM = 100
-    OUTPUT_DIM = 100    
+    EMBEDDING_DIM = 50
+    OUTPUT_DIM = 50    
     LEARNING_RATE = 1e-3
-    NUM_EPOCHS = 50
+    NUM_EPOCHS = args.num_epochs
 
     ent2idx = dict(zip(entities, range(NUM_ENTITIES)))
     rel2idx = dict(zip(relations, range(NUM_RELATIONS)))
 
     triples2idx = utils.array2idx(triples,ent2idx,rel2idx)
     traces2idx = utils.array2idx(traces,ent2idx,rel2idx)
-
-    #X_train = np.concatenate([triples2idx,traces2idx.reshape(-1,3)])
-    # X_train,X_test,y_train,y_test = train_test_split(
-    #     triples2idx,
-    #     traces2idx,
-    #     test_size=0.3,
-    #     random_state=SEED
-    # )
-
-    # X_train = np.concatenate([X_train,y_train.reshape(-1,3)],axis=0)
-
-    # if RULE == 'full_data':
-    #     no_pred_triples2idx = utils.array2idx(no_pred_triples,ent2idx,rel2idx)
-    #     no_pred_traces2idx = utils.array2idx(no_pred_traces,ent2idx,rel2idx).reshape(-1,3)
-    #     X_train = np.concatenate([X_train,no_pred_triples,no_pred_traces],axis=0)
-
-    # X_train = np.unique(X_train,axis=0)
+    nopred2idx = utils.array2idx(nopred,ent2idx,rel2idx)
 
     full_data = np.concatenate([triples2idx,traces2idx.reshape(-1,3)],axis=0)
 
     idx_train,idx_test = utils.train_test_split_no_unseen(
         full_data, 
-        test_size=1500,
+        test_size=.2,
         seed=SEED, 
         allow_duplication=False, 
         filtered_test_predicates=None)
 
     X_train = full_data[idx_train]
-    X_test = full_data[idx_test]
+    X_train = np.concatenate([X_train,nopred2idx],axis=0)
 
-    NUM_TRIPLES = X_train.shape[0]
+    X_test = full_data[idx_test]
 
     adj_mats = utils.get_adj_mats(X_train,NUM_ENTITIES,NUM_RELATIONS)
 
     X_train = np.expand_dims(X_train,axis=0)
-    X_test = np.expand_dims(X_test,axis=0)
+    X_test = np.expand_dims(X_test,axi=0)
 
     all_indices = np.arange(NUM_ENTITIES).reshape(1,-1)
     
@@ -347,13 +332,13 @@ if __name__ == '__main__':
             X_train[:,:,2],
             adj_mats
             ],
-        y=np.ones(NUM_TRIPLES).reshape(1,-1),
+        y=np.ones(X_train.shape[0]).reshape(1,-1),
         epochs=NUM_EPOCHS,
         batch_size=1,
         verbose=1
     )
 
-    #model.save_weights(os.path.join('..','data','weights',RULE+'.h5'))
+    model.save_weights(os.path.join('..','data','weights',RULE+'.h5'))
 
     preds = model.predict(
         x=[

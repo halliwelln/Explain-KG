@@ -3,11 +3,10 @@
 import numpy as np
 import random as rn
 import os
-import cne
-import maxent
 from scipy.stats import halfnorm
 import utils
 import joblib
+from scipy import sparse
 
 def get_pij(i,j,X,s1,s2,prior,seed):
     
@@ -118,27 +117,11 @@ def jaccard_score(true_exp,pred_exp):
         
     return np.mean(scores)
 
-def get_adjacency_matrix(data,entities,num_entities):
-
-    row = []
-    col = []
-
-    for h,r,t in data:
-
-        h_idx = entities.index(h)
-        t_idx = entities.index(t)
-
-        row.append(h_idx)
-        col.append(t_idx)
-
-    adj = np.ones(len(row))
-
-    return sparse.csr_matrix((adj,(row,col)),shape=(num_entities,num_entities))
-
 if __name__ == '__main__':
 
     import argparse
     from sklearn.model_selection import KFold
+    import maxent
 
     SEED = 123
     os.environ['PYTHONHASHSEED'] = str(SEED)
@@ -150,7 +133,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
 
     parser.add_argument('rule',type=str,help=
-        'Enter which rule to use spouse,successor,...etc (str), -1 (str) for full dataset')
+        'Enter which rule to use spouse,successor,...etc (str), full_data for full dataset')
     parser.add_argument('top_k', type=int)
     args = parser.parse_args()
 
@@ -159,15 +142,14 @@ if __name__ == '__main__':
 
     data = np.load(os.path.join('..','data','royalty.npz'))
 
-    if RULE == '-1':
-        triples, traces,no_pred_triples,no_pred_traces = utils.concat_triples(data, data['rules'])
-        RULE = 'full_data'
+    if RULE == 'full_data':
+        triples,traces,nopred = utils.concat_triples(data, data['rules'])
         entities = data['all_entities'].tolist()
         relations = data['all_relations'].tolist()
     else:
-        triples, traces = data[RULE + '_triples'], data[RULE + '_traces']
+        triples,traces,nopred = utils.concat_triples(data, [RULE])
         entities = data[RULE + '_entities'].tolist()
-        relations = data[RULE + '_relations'].tolist()     
+        relations = data[RULE + '_relations'].tolist()  
 
     NUM_ENTITIES = len(entities)
     NUM_RELATIONS = len(relations)
@@ -175,60 +157,45 @@ if __name__ == '__main__':
     ent2idx = dict(zip(entities, range(NUM_ENTITIES)))
     rel2idx = dict(zip(relations, range(NUM_RELATIONS)))
 
-    EMBEDDING_DIM = 100
-    S1 = 1
-    S2 = 1.5
-    LEARNING_RATE = .001
-    MAX_ITER = 100
+    cne_data = np.load(os.path.join('..','data','weights','cne_embeddings_'+RULE+'.npz'))
+
+    X = cne_data['embeddings']
+    S1 = cne_data['s1']
+    S2 = cne_data['s2']
+    EMBEDDING_DIM = X.shape[1]
     GAMMA = (1/(S1**2)) - (1/(S2**2))
 
-    kf = KFold(n_splits=5,shuffle=False,random_state=SEED)
+    kf = KFold(n_splits=3,shuffle=True,random_state=SEED)
 
     cv_scores = []
     preds = []
 
-    for train_idx, test_idx in kf.split():
 
-        train = triples[train_idx]
-        train = np.concatenate([train,no_pred_triples],axis=0)
-        test = triples[test_idx]
+    for train_idx, test_idx in kf.split(X=triples):
 
-        train_exp = traces[train_idx]
-        train_exp = np.concatenate([train_exp,no_pred_traces],axis=0)
-        test_exp = traces[test_idx]
+        test_idx = test_idx[0:10]
 
-        train2idx = utils.array2idx(train,ent2idx,rel2idx)
-        test2idx = utils.array2idx(test,ent2idx,rel2idx)
-        
-        trainexp2idx = utils.array2idx(train_exp,ent2idx,rel2idx)
-        testexp2idx = utils.array2idx(test_exp,ent2idx,rel2idx)
+        train2idx = utils.array2idx(triples[train_idx],ent2idx,rel2idx)
+        trainexp2idx = utils.array2idx(traces[train_idx],ent2idx,rel2idx)
+        nopred2idx = utils.array2idx(nopred,ent2idx,rel2idx)
 
-        adjacency_data = np.concatenate((train,train_exp.reshape(-1,3)), axis=0)
+        adjacency_data = np.concatenate([train2idx,trainexp2idx.reshape(-1,3),nopred2idx],axis=0)
 
-        A = get_adjacency_matrix(adjacency_data,entities,NUM_ENTITIES)
+        test2idx = utils.array2idx(triples[test_idx],ent2idx,rel2idx)
+        testexp2idx = utils.array2idx(traces[test_idx],ent2idx,rel2idx)
 
-        #trainexp2idx = trainexp2idx[:,:,[0,2]]
-
-        testexp2idx = testexp2idx[:,:,[0,2]]
+        A = utils.get_adjacency_matrix(np.unique(adjacency_data,axis=0),NUM_ENTITIES)
 
         prior = maxent.BGDistr(A) 
         prior.fit()
 
-        CNE = cne.ConditionalNetworkEmbedding(
-            A=A,
-            d=EMBEDDING_DIM,
-            s1=S1,
-            s2=S2,
-            prior_dist=prior
-            )
+        #trainexp2idx = trainexp2idx[:,:,[0,2]]
 
-        CNE.fit(lr=LEARNING_RATE,max_iter=MAX_ITER)
+        testexp2idx = testexp2idx[:,:,[0,2]]
+        
+        #A = utils.get_adjacency_matrix(test2idx,NUM_ENTITIES)
 
-        X = CNE._ConditionalNetworkEmbedding__emb
-
-        A = get_adjacency_matrix(test,entities,NUM_ENTITIES)
-
-        PROBS = joblib.Parallel(n_jobs=-2, verbose=0)(
+        PROBS = joblib.Parallel(n_jobs=-2, verbose=20)(
             joblib.delayed(compute_prob)(
                 i,S1,S2,X,NUM_ENTITIES,prior,SEED
                 ) for i in range(NUM_ENTITIES)
@@ -239,13 +206,14 @@ if __name__ == '__main__':
         HESSIANS = joblib.Parallel(n_jobs=-2, verbose=20)(
             joblib.delayed(get_hessian)(
                 i,S1,S2,GAMMA,X,A,EMBEDDING_DIM,PROBS,SEED
-                ) for i in range(NUM_ENTITIES)
-            )
+            ) for i in range(NUM_ENTITIES)
+        )
 
         HESSIANS = np.array(HESSIANS)
+
         ITER_DATA = np.unique(testexp2idx.reshape(-1,2), axis=0)#add test2idx
 
-        explanations = joblib.Parallel(n_jobs=-2, verbose=0)(
+        explanations = joblib.Parallel(n_jobs=-2, verbose=20)(
             joblib.delayed(get_explanations)(
                 i,j,S1,S2,EMBEDDING_DIM,GAMMA,X,TOP_K,ITER_DATA,HESSIANS,PROBS,SEED
                 ) for i,_,j in test2idx
@@ -261,11 +229,9 @@ if __name__ == '__main__':
     best_idx = np.argmin(cv_scores)
     best_preds = preds[best_idx]
 
-    # np.savez(os.path.join('.','data','explaine_',RULE,'_preds','.npz'),
-    #     preds=best_preds,embedding_dim=EMBEDDING_DIM,learning_rate=LEARNING_RATE,
-    #     max_iter=MAX_ITER,s1=S1,s2=S2
-    #     )
+    np.savez(os.path.join('..','data','preds','explaine_'+RULE+'_preds.npz'),
+        preds=best_preds,embedding_dim=EMBEDDING_DIM,s1=S1,s2=S2,best_idx=best_idx
+        )
 
     print(f"{RULE} jaccard score={np.mean(cv_scores)} using:")
     print(f"embedding dimensions={EMBEDDING_DIM},s1={S1},s2={S2}")
-    print(f"learning_rate={LEARNING_RATE},max_iter={MAX_ITER}")

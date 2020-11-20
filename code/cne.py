@@ -148,3 +148,94 @@ class ConditionalNetworkEmbedding:
             ids.extend(ids_dict[u])
 
         return [p for _,p in sorted(zip(ids, pred))]
+
+if __name__ == "__main__":
+
+    import utils
+    import argparse
+    import os
+    import utils
+    import random as rn
+    import maxent
+
+    SEED = 123
+    os.environ['PYTHONHASHSEED'] = str(SEED)
+    np.random.seed(SEED)
+    rn.seed(SEED)
+
+    parser = argparse.ArgumentParser()
+
+    parser.add_argument('rule',type=str,help=
+        'Enter which rule to use spouse,successor,...etc (str), full_data for full dataset')
+
+    args = parser.parse_args()
+
+    RULE = args.rule
+
+    data = np.load(os.path.join('..','data','royalty.npz'))
+
+    if RULE == 'full_data':
+        triples, traces,no_pred = utils.concat_triples(data, data['rules'])
+        entities = data['all_entities'].tolist()
+        relations = data['all_relations'].tolist()
+    else:
+        triples, traces = data[RULE + '_triples'], data[RULE + '_traces']
+        entities = data[RULE + '_entities'].tolist()
+        relations = data[RULE + '_relations'].tolist()  
+
+    NUM_ENTITIES = len(entities)
+    NUM_RELATIONS = len(relations)
+
+    S1 = 1
+    S2 = 1.5
+    LEARNING_RATE = .001
+    MAX_ITER = 50
+    GAMMA = (1/(S1**2)) - (1/(S2**2))
+    EMBEDDING_DIM = 50
+
+    ent2idx = dict(zip(entities, range(NUM_ENTITIES)))
+    rel2idx = dict(zip(relations, range(NUM_RELATIONS)))
+
+    triples2idx = utils.array2idx(triples,ent2idx,rel2idx)
+    traces2idx = utils.array2idx(traces,ent2idx,rel2idx)
+
+    full_data = np.concatenate([triples2idx,traces2idx.reshape(-1,3)],axis=0)
+
+    idx_train,_ = utils.train_test_split_no_unseen(
+        full_data, 
+        test_size=.2,
+        seed=SEED, 
+        allow_duplication=False, 
+        filtered_test_predicates=None)
+
+    train2idx = full_data[idx_train]
+
+    if RULE == 'full_data':
+        no_pred2idx = utils.array2idx(no_pred,ent2idx,rel2idx)
+        train2idx = np.concatenate([train2idx,no_pred2idx],axis=0)
+
+    A = utils.get_adjacency_matrix(train2idx,NUM_ENTITIES)
+
+    prior = maxent.BGDistr(A) 
+    prior.fit()
+
+    CNE = ConditionalNetworkEmbedding(
+        A=A,
+        d=EMBEDDING_DIM,
+        s1=S1,
+        s2=S2,
+        prior_dist=prior
+        )
+
+    CNE.fit(lr=LEARNING_RATE,max_iter=MAX_ITER)
+
+    X = CNE._ConditionalNetworkEmbedding__emb
+
+    np.savez(os.path.join('..','data','weights','cne_embeddings_'+RULE +'.npz'),
+        embeddings=X,
+        learning_rate=LEARNING_RATE,
+        max_iter=MAX_ITER,
+        s1=S1,
+        s2=S2
+        )
+    print('Done.')

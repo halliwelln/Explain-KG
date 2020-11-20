@@ -14,7 +14,7 @@ rn.seed(SEED)
 rules = [
     'spouse', 'uncle',
     'aunt', 'brother','sister',
-    'successor','predecessor'
+    'successor','predecessor', 'grandparent'
 ]
 
 MAX_PADDING = 3
@@ -75,7 +75,22 @@ data['all_entities'] = all_entities
 data['all_relations'] = all_relations
 data['rules'] = rules
 
+print('Saving numpy file...')
+
 np.savez(os.path.join('..','data','royalty.npz'),**data)
 
-print('Dataset built.')
+# ttl_dir = os.path.join('..','data','traces')
+# ttl_files = [f for f in os.listdir(ttl_dir) if f.endswith('.ttl')]
+# print(ttl_dir)
+# print(ttl_files)
+# g = Graph()
 
+# for file_name in ttl_files:
+#     print(os.path.join(ttl_dir,file_name))
+#     g.parse(os.path.join(ttl_dir,file_name),format='nt')
+
+# print(len(g))
+#print('Saving rdf file...')
+# #g.serialize(destination=os.path.join('..','data','rules','royalty'),format='xml')
+
+print('Done')

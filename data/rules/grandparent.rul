@@ -29,10 +29,12 @@ CONSTRUCT {
 }
 WHERE {
     ?a dbo:parent ?myparent .
-    ?myparent dbo:parent ?mygrandparent .
-    
+    ?myparent dbo:parent ?mygrandparent .    
+
     FILTER (!EXISTS {?a dbo:grandparent ?mygrandparent})
+    FILTER (!EXISTS {?a dbo:parent ?myparent2 . ?myparent2 dbo:parent ?mygrandparent . FILTER (?myparent!=?myparent2)})
 }
+
 </body>
 </rule>
 

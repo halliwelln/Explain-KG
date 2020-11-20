@@ -59,4 +59,4 @@ for i in range(start,end+offset,offset):
 
     g.parse(os.path.join('..','data','royalty_temp',f'sparql-{i}'), format="xml")
 
-g.serialize(destination=os.path.join('..','data','rules','royalty'),format='xml')
+g.serialize(destination=os.path.join('..','data','rules','full_royalty'),format='xml')

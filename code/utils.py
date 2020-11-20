@@ -141,6 +141,20 @@ def get_adjacency_matrix_list(num_relations,num_entities,data):
 
     return np.expand_dims(adj_mats,axis=0)
 
+def get_adjacency_matrix(data,num_entities):
+
+    row = []
+    col = []
+
+    for h,_,t in data:
+
+        row.append(h)
+        col.append(t)
+
+    adj = np.ones(len(row))
+
+    return sparse.csr_matrix((adj,(row,col)),shape=(num_entities,num_entities))
+
 def concat_triples(data, rules):
 
     triples = []
@@ -164,8 +178,10 @@ def concat_triples(data, rules):
     traces = np.concatenate(traces, axis=0)
     no_pred_triples = np.concatenate(no_pred_triples, axis=0)
     no_pred_traces = np.concatenate(no_pred_traces, axis=0)
+
+    no_pred = np.concatenate([no_pred_triples,no_pred_traces.reshape(-1,3)],axis=0)
     
-    return triples, traces, no_pred_triples,no_pred_traces
+    return triples, traces, no_pred#no_pred_triples,no_pred_traces
 
 def array2idx(dataset, ent2idx,rel2idx):
     

@@ -1,0 +1,14 @@
+Jobs:
+
+Conditional Network Embedding
+
+Job ID: 11096377
+Rule: spouse
+S1 = 1
+S2 = 1.5
+LEARNING_RATE = .001
+MAX_ITER = 50
+GAMMA = (1/(S1**2)) - (1/(S2**2))
+EMBEDDING_DIM = 50
+
+
