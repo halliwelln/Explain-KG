@@ -101,10 +101,10 @@ def score_subgraphs(
         col = np.ones((graph.shape[0],1),dtype=np.int64) * i
         out_graph = np.concatenate([graph[:,0].reshape(-1,1),col,graph[:,1].reshape(-1,1)],axis=1)
 
-        print('out_graph',out_graph)
-        
         if out_graph.shape[0]:
             pred_graphs.append(out_graph)
+        else:
+            pred_graphs.append([])
 
     return tf.reduce_mean(scores[1:]), pred_graphs#ignore unknown relation
 
@@ -135,9 +135,15 @@ if __name__ == '__main__':
         entities = data['all_entities'].tolist()
         relations = data['all_relations'].tolist()
     else:
-        triples,traces,nopred = utils.concat_triples(data, [RULE])
-        entities = data[RULE + '_entities'].tolist()
-        relations = data[RULE + '_relations'].tolist()  
+        triples,traces,nopred = utils.concat_triples(data, [RULE,'brother','sister'])
+        sister_relations = data['sister_relations'].tolist()
+        sister_entities = data['sister_entities'].tolist()
+
+        brother_relations = data['brother_relations'].tolist()
+        brother_entities = data['brother_entities'].tolist()
+
+        entities = np.unique(data[RULE + '_entities'].tolist()+brother_entities+sister_entities).tolist()
+        relations = np.unique(data[RULE + '_relations'].tolist()+brother_relations+sister_relations).tolist()
 
     NUM_ENTITIES = len(entities)
     NUM_RELATIONS = len(relations)
@@ -174,17 +180,14 @@ if __name__ == '__main__':
 
     entity_embeddings = model.get_layer('entity_embeddings').get_weights()[0]
 
-    kf = KFold(n_splits=5,shuffle=True,random_state=SEED)
+    kf = KFold(n_splits=3,shuffle=True,random_state=SEED)
 
     cv_scores = []
     cv_preds = []
 
     for train_idx,test_idx in kf.split(X=triples):
 
-        test_idx = test_idx[0:2]
-
-        jaccard_scores = []
-        preds = []
+        #test_idx = test_idx[0:2]
 
         train2idx = utils.array2idx(triples[train_idx],ent2idx,rel2idx)
         trainexp2idx = utils.array2idx(traces[train_idx],ent2idx,rel2idx)
@@ -195,6 +198,9 @@ if __name__ == '__main__':
         test2idx = utils.array2idx(triples[test_idx],ent2idx,rel2idx)
         testexp2idx = utils.array2idx(traces[test_idx],ent2idx,rel2idx)
 
+        jaccard_scores = []
+        preds = []
+        
         for i in range(test2idx.shape[0]):
 
             head = test2idx[i,0]
@@ -261,13 +267,11 @@ if __name__ == '__main__':
                 threshold=THRESHOLD
             )
             jaccard_scores.append(jaccard)
-
-            if len(pred_graphs):
-                preds.append(pred_graphs)
+            preds.append(pred_graphs)
 
         cv_scores.append(np.mean(jaccard_scores))
-        cv_preds.append(np.array(preds).squeeze())
-    print(cv_preds)
+        cv_preds.append(preds)
+
     best_idx = np.argmin(cv_scores)
     best_preds = cv_preds[best_idx]#.squeeze()
 

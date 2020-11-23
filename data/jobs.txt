@@ -2,7 +2,7 @@ Jobs:
 
 Conditional Network Embedding
 
-Job ID: 11096377
+Job ID: 11100216
 Rule: spouse
 S1 = 1
 S2 = 1.5
@@ -11,4 +11,84 @@ MAX_ITER = 50
 GAMMA = (1/(S1**2)) - (1/(S2**2))
 EMBEDDING_DIM = 50
 
+Job ID: 11100232
+Rule: uncle
+S1 = 1
+S2 = 1.5
+LEARNING_RATE = .001
+MAX_ITER = 50
+GAMMA = (1/(S1**2)) - (1/(S2**2))
+EMBEDDING_DIM = 50
 
+Job ID: 11100234
+Rule: aunt
+S1 = 1
+S2 = 1.5
+LEARNING_RATE = .001
+MAX_ITER = 50
+GAMMA = (1/(S1**2)) - (1/(S2**2))
+EMBEDDING_DIM = 50
+
+Job ID: 11100235
+Rule: successor
+S1 = 1
+S2 = 1.5
+LEARNING_RATE = .001
+MAX_ITER = 50
+GAMMA = (1/(S1**2)) - (1/(S2**2))
+EMBEDDING_DIM = 50
+
+Job ID: 11100236
+Rule: predecessor
+S1 = 1
+S2 = 1.5
+LEARNING_RATE = .001
+MAX_ITER = 50
+GAMMA = (1/(S1**2)) - (1/(S2**2))
+EMBEDDING_DIM = 50
+
+Job ID: 11100239
+Rule: grandparent
+S1 = 1
+S2 = 1.5
+LEARNING_RATE = .001
+MAX_ITER = 50
+GAMMA = (1/(S1**2)) - (1/(S2**2))
+EMBEDDING_DIM = 50
+
+Job ID: 11100448
+Rule: full_data
+S1 = 1
+S2 = 1.5
+LEARNING_RATE = .001
+MAX_ITER = 50
+GAMMA = (1/(S1**2)) - (1/(S2**2))
+EMBEDDING_DIM = 50
+
+
+######################################
+ExplaiNE:
+
+Job ID: 11100362
+Rule: spouse
+Jaccard: 0.7323948226233821
+
+Job ID: 11100363
+Rule: uncle
+Jaccard: 0.08857906644904563
+
+Job ID: 11100364
+Rule: aunt
+Jaccard: 0.08434846806939829
+
+Job ID: 11100365
+Rule: successor
+Jaccard: 0.45783409375814904
+
+Job ID: 11100366
+Rule: predecessor
+Jaccard: 0.47496149965482454
+
+Job ID: 11100598
+Rule: full_data
+Jaccard: 

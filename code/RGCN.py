@@ -267,10 +267,15 @@ if __name__ == '__main__':
         entities = data['all_entities'].tolist()
         relations = data['all_relations'].tolist()
     else:
-        #triples, traces = data[RULE + '_triples'], data[RULE + '_traces']
-        triples,traces,nopred = utils.concat_triples(data, [RULE])
-        entities = data[RULE + '_entities'].tolist()
-        relations = data[RULE + '_relations'].tolist()  
+        triples,traces,nopred = utils.concat_triples(data, [RULE,'brother','sister'])
+        sister_relations = data['sister_relations'].tolist()
+        sister_entities = data['sister_entities'].tolist()
+
+        brother_relations = data['brother_relations'].tolist()
+        brother_entities = data['brother_entities'].tolist()
+
+        entities = np.unique(data[RULE + '_entities'].tolist()+brother_entities+sister_entities).tolist()
+        relations = np.unique(data[RULE + '_relations'].tolist()+brother_relations+sister_relations).tolist()
 
     NUM_ENTITIES = len(entities)
     NUM_RELATIONS = len(relations)
@@ -303,7 +308,7 @@ if __name__ == '__main__':
     adj_mats = utils.get_adj_mats(X_train,NUM_ENTITIES,NUM_RELATIONS)
 
     X_train = np.expand_dims(X_train,axis=0)
-    X_test = np.expand_dims(X_test,axi=0)
+    X_test = np.expand_dims(X_test,axis=0)
 
     all_indices = np.arange(NUM_ENTITIES).reshape(1,-1)
     
@@ -332,7 +337,7 @@ if __name__ == '__main__':
             X_train[:,:,2],
             adj_mats
             ],
-        y=np.ones(X_train.shape[0]).reshape(1,-1),
+        y=np.ones(X_train.shape[1]).reshape(1,-1),
         epochs=NUM_EPOCHS,
         batch_size=1,
         verbose=1

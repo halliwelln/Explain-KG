@@ -175,13 +175,19 @@ if __name__ == "__main__":
     data = np.load(os.path.join('..','data','royalty.npz'))
 
     if RULE == 'full_data':
-        triples, traces,no_pred = utils.concat_triples(data, data['rules'])
+        triples, traces,nopred = utils.concat_triples(data, data['rules'])
         entities = data['all_entities'].tolist()
         relations = data['all_relations'].tolist()
     else:
-        triples, traces = data[RULE + '_triples'], data[RULE + '_traces']
-        entities = data[RULE + '_entities'].tolist()
-        relations = data[RULE + '_relations'].tolist()  
+        triples,traces,nopred = utils.concat_triples(data, [RULE,'brother','sister'])
+        sister_relations = data['sister_relations'].tolist()
+        sister_entities = data['sister_entities'].tolist()
+
+        brother_relations = data['brother_relations'].tolist()
+        brother_entities = data['brother_entities'].tolist()
+
+        entities = np.unique(data[RULE + '_entities'].tolist()+brother_entities+sister_entities).tolist()
+        relations = np.unique(data[RULE + '_relations'].tolist()+brother_relations+sister_relations).tolist()
 
     NUM_ENTITIES = len(entities)
     NUM_RELATIONS = len(relations)
@@ -210,9 +216,8 @@ if __name__ == "__main__":
 
     train2idx = full_data[idx_train]
 
-    if RULE == 'full_data':
-        no_pred2idx = utils.array2idx(no_pred,ent2idx,rel2idx)
-        train2idx = np.concatenate([train2idx,no_pred2idx],axis=0)
+    nopred2idx = utils.array2idx(nopred,ent2idx,rel2idx)
+    train2idx = np.concatenate([train2idx,nopred2idx],axis=0)
 
     A = utils.get_adjacency_matrix(train2idx,NUM_ENTITIES)
 

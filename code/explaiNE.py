@@ -91,7 +91,7 @@ def get_explanations(i,j,s1,s2,embedding_dim,gamma,X,top_k,iter_data,hessians,pr
 
     return np.array(explanation)
 
-def jaccard_score(true_exp,pred_exp):
+def jaccard_score(true_exp,pred_exp,top_k):
 
     assert len(true_exp) == len(pred_exp)
 
@@ -99,7 +99,7 @@ def jaccard_score(true_exp,pred_exp):
 
     for i in range(len(true_exp)):
 
-        true_i = true_exp[i]
+        true_i = true_exp[i][:top_k,]
         pred_i = pred_exp[i]
 
         num_true_traces = true_i.shape[0]
@@ -147,9 +147,15 @@ if __name__ == '__main__':
         entities = data['all_entities'].tolist()
         relations = data['all_relations'].tolist()
     else:
-        triples,traces,nopred = utils.concat_triples(data, [RULE])
-        entities = data[RULE + '_entities'].tolist()
-        relations = data[RULE + '_relations'].tolist()  
+        triples,traces,nopred = utils.concat_triples(data, [RULE,'brother','sister'])
+        sister_relations = data['sister_relations'].tolist()
+        sister_entities = data['sister_entities'].tolist()
+
+        brother_relations = data['brother_relations'].tolist()
+        brother_entities = data['brother_entities'].tolist()
+
+        entities = np.unique(data[RULE + '_entities'].tolist()+brother_entities+sister_entities).tolist()
+        relations = np.unique(data[RULE + '_relations'].tolist()+brother_relations+sister_relations).tolist()
 
     NUM_ENTITIES = len(entities)
     NUM_RELATIONS = len(relations)
@@ -170,10 +176,9 @@ if __name__ == '__main__':
     cv_scores = []
     preds = []
 
-
     for train_idx, test_idx in kf.split(X=triples):
 
-        test_idx = test_idx[0:10]
+        #test_idx = test_idx[0:10]
 
         train2idx = utils.array2idx(triples[train_idx],ent2idx,rel2idx)
         trainexp2idx = utils.array2idx(traces[train_idx],ent2idx,rel2idx)
@@ -193,7 +198,7 @@ if __name__ == '__main__':
 
         testexp2idx = testexp2idx[:,:,[0,2]]
         
-        #A = utils.get_adjacency_matrix(test2idx,NUM_ENTITIES)
+        A = utils.get_adjacency_matrix(test2idx,NUM_ENTITIES)
 
         PROBS = joblib.Parallel(n_jobs=-2, verbose=20)(
             joblib.delayed(compute_prob)(
@@ -221,7 +226,7 @@ if __name__ == '__main__':
 
         explanations = np.array(explanations)
 
-        jaccard = jaccard_score(testexp2idx,explanations)
+        jaccard = jaccard_score(testexp2idx,explanations,TOP_K)
 
         cv_scores.append(jaccard)
         preds.append(explanations)
