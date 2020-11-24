@@ -4,17 +4,6 @@ import numpy as np
 import tensorflow as tf
 from scipy import sparse
 
-def tf_binary_jaccard(true_graph,pred_graph):
-    
-    m11 = tf.reduce_sum(tf.cast(tf.math.logical_and(true_graph==1,
-                                                    pred_graph==1),dtype=tf.int32))
-    m01 = tf.reduce_sum(tf.cast(tf.math.logical_and(true_graph==0,
-                                                    pred_graph==1),dtype=tf.int32))
-    m10 = tf.reduce_sum(tf.cast(tf.math.logical_and(true_graph==1,
-                                                    pred_graph==0),dtype=tf.int32))
-    
-    return m11 / (m01 + m10 + m11)
-
 def train_test_split_no_unseen(X, test_size=100, seed=0, allow_duplication=False, filtered_test_predicates=None):
 
     if type(test_size) is float:
@@ -33,7 +22,7 @@ def train_test_split_no_unseen(X, test_size=100, seed=0, allow_duplication=False
 
     loop_count = 0
     tolerance = len(X) * 10
-    # Set the indices of test set triples. If filtered, reduce candidate triples to certain predicate types.
+
     if filtered_test_predicates:
         test_triples_idx = np.where(np.isin(X[:, 1], filtered_test_predicates))[0]
     else:
@@ -52,7 +41,6 @@ def train_test_split_no_unseen(X, test_size=100, seed=0, allow_duplication=False
 
         loop_count += 1
 
-        # in case can't find solution
         if loop_count == tolerance:
             if allow_duplication:
                 raise Exception("Cannot create a test split of the desired size. "

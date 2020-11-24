@@ -6,6 +6,8 @@ import os
 import utils
 import random as rn
 import RGCN
+from sklearn.metrics import jaccard_score
+from scipy.sparse import csr_matrix
 
 def get_neighbors(data_subset,node_idx):
     
@@ -76,35 +78,39 @@ def score_subgraphs(
 
         mask_i = adj_mats[i] * tf.nn.sigmoid(masks[i])
 
-        non_masked_indices = mask_i.indices[mask_i.values > threshold]
+        non_masked_indices = tf.gather(mask_i.indices[mask_i.values > threshold], [1,2],axis=1)
 
-        pred_graph = tf.sparse.SparseTensor(
-            indices=non_masked_indices,
-            values=tf.ones(non_masked_indices.shape[0]),
-            dense_shape=(1,num_entities,num_entities)
+        if non_masked_indices.shape[0]:
+
+            pred_graph = csr_matrix(
+                (tf.ones(non_masked_indices.shape[0]),(non_masked_indices[:,0],non_masked_indices[:,1])),
+                shape=(num_entities,num_entities)
             )
 
-        pred_graph = tf.sparse.to_dense(pred_graph)
-        true_graph = tf.sparse.to_dense(true_subgraphs[i])
+            pred_graphs.append(non_masked_indices)
 
-        #print(np.argwhere(pred_graph.numpy()))
-        #print(np.argwhere(true_graph.numpy()))
-
-        score = utils.tf_binary_jaccard(true_graph,pred_graph)
-
-        if tf.math.is_nan(score):
-            scores.append(0)
         else:
-            scores.append(score)
 
-        graph = np.argwhere(pred_graph.numpy().squeeze())
-        col = np.ones((graph.shape[0],1),dtype=np.int64) * i
-        out_graph = np.concatenate([graph[:,0].reshape(-1,1),col,graph[:,1].reshape(-1,1)],axis=1)
-
-        if out_graph.shape[0]:
-            pred_graphs.append(out_graph)
-        else:
+            pred_graph = csr_matrix(([],([],[])),shape=(num_entities,num_entities))
             pred_graphs.append([])
+
+        true_indices = true_subgraphs[i].indices
+
+        if true_indices.shape[0]:
+
+            gather = tf.gather(true_indices,[1,2],axis=1)
+
+            true_graph = csr_matrix(
+                (true_subgraphs[i].values,(gather[:,0],gather[:,1])),
+                shape=(num_entities,num_entities))
+
+        else:
+            true_graph = csr_matrix(([],([],[])),shape=(num_entities,num_entities))
+
+
+        score = jaccard_score(true_graph,pred_graph,average='micro')
+
+        scores.append(score)
 
     return tf.reduce_mean(scores[1:]), pred_graphs#ignore unknown relation
 
@@ -174,34 +180,51 @@ if __name__ == '__main__':
 
     optimizer = tf.keras.optimizers.Adam(learning_rate=LEARNING_RATE)
 
-    relation_embeddings = model.get_layer('output').get_weights()[0]
-
-    relation_kernel, self_kernel = model.get_layer('rgcn__layer').get_weights()
-
-    entity_embeddings = model.get_layer('entity_embeddings').get_weights()[0]
-
     kf = KFold(n_splits=3,shuffle=True,random_state=SEED)
 
     cv_scores = []
     cv_preds = []
 
-    for train_idx,test_idx in kf.split(X=triples):
+    masks = [tf.Variable(
+            initial_value=tf.random.normal(
+                (1,NUM_ENTITIES,NUM_ENTITIES), 
+                mean=0, 
+                stddev=1, 
+                dtype=tf.float32, 
+                seed=SEED),
+            name='mask_'+str(i),
+            trainable=True) for i in range(NUM_RELATIONS)
+    ]
 
-        #test_idx = test_idx[0:2]
+    for train_idx,test_idx in kf.split(X=triples):
 
         train2idx = utils.array2idx(triples[train_idx],ent2idx,rel2idx)
         trainexp2idx = utils.array2idx(traces[train_idx],ent2idx,rel2idx)
         nopred2idx = utils.array2idx(nopred,ent2idx,rel2idx)
         
-        adjacency_data = tf.concat([train2idx,trainexp2idx.reshape(-1,3),nopred2idx],axis=0)
+        #adjacency_data = tf.concat([train2idx,trainexp2idx.reshape(-1,3),nopred2idx],axis=0)
 
         test2idx = utils.array2idx(triples[test_idx],ent2idx,rel2idx)
         testexp2idx = utils.array2idx(traces[test_idx],ent2idx,rel2idx)
 
+        adjacency_data = tf.concat([
+            train2idx,
+            trainexp2idx.reshape(-1,3),
+            nopred2idx,
+            test2idx,
+            testexp2idx.reshape(-1,3)
+            ],axis=0
+        )
+
+        del train2idx
+        del trainexp2idx
+        del nopred2idx
+
         jaccard_scores = []
         preds = []
-        
+
         for i in range(test2idx.shape[0]):
+        #for i in range(1):
 
             head = test2idx[i,0]
             rel = test2idx[i,1]
@@ -211,17 +234,6 @@ if __name__ == '__main__':
 
             adj_mats = utils.get_adj_mats(comp_graph, NUM_ENTITIES, NUM_RELATIONS)
 
-            masks = [tf.Variable(
-                    initial_value=tf.random.normal(
-                        (1,NUM_ENTITIES,NUM_ENTITIES), 
-                        mean=0, 
-                        stddev=1, 
-                        dtype=tf.float32, 
-                        seed=SEED),
-                    name='mask_'+str(i),
-                    trainable=True) for i in range(NUM_RELATIONS)
-            ]
-
             for epoch in range(NUM_EPOCHS):
 
                 with tf.GradientTape(watch_accessed_variables=False) as tape:
@@ -229,25 +241,16 @@ if __name__ == '__main__':
 
                     tape.watch(masks)
 
-                    head_output = tf.matmul(tf.reshape(entity_embeddings[head],(1,-1)),self_kernel)
-                    tail_output = tf.matmul(tf.reshape(entity_embeddings[tail],(1,-1)),self_kernel)
+                    masked_adjs = [adj_mats[i] * tf.sigmoid(masks[i]) for i in range(NUM_RELATIONS)]
 
-                    for i in range(NUM_RELATIONS):
-
-                        adj_i = tf.sparse.to_dense(adj_mats[i])[0] * tf.sigmoid(masks[i][0])
-
-                        sum_embeddings = tf.matmul(adj_i,entity_embeddings)
-
-                        head_update = tf.reshape(sum_embeddings[head],(1,-1))
-                        tail_update = tf.reshape(sum_embeddings[tail],(1,-1))
-                        
-                        head_output += tf.matmul(head_update,relation_kernel[i])
-                        tail_output += tf.matmul(tail_update,relation_kernel[i])
-                    
-                    head_output = tf.sigmoid(head_output)
-                    tail_output = tf.sigmoid(tail_output)
-
-                    pred = tf.sigmoid(tf.reduce_sum(head_output*relation_kernel[rel]*tail_output))
+                    pred = model([
+                        all_indices,
+                        tf.reshape(head,(1,-1)),
+                        tf.reshape(rel,(1,-1)),
+                        tf.reshape(tail,(1,-1)),
+                        masked_adjs
+                        ]
+                    )
 
                     loss = -1 * tf.math.log(pred+0.00001)# + tf.reduce_mean(masks)
 
@@ -267,9 +270,13 @@ if __name__ == '__main__':
                 threshold=THRESHOLD
             )
             jaccard_scores.append(jaccard)
+            print(f"Jaccard {jaccard}")
             preds.append(pred_graphs)
 
-        cv_scores.append(np.mean(jaccard_scores))
+        cv_avg = np.mean(jaccard_scores)
+
+        print(f"CV Average: {cv_avg}")
+        cv_scores.append(cv_avg)
         cv_preds.append(preds)
 
     best_idx = np.argmin(cv_scores)
@@ -281,5 +288,3 @@ if __name__ == '__main__':
         preds=best_preds,embedding_dim=EMBEDDING_DIM,best_idx=best_idx,k=K,
         threshold=THRESHOLD,learning_rate=LEARNING_RATE,num_epochs=NUM_EPOCHS
         )
-
-
