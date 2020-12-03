@@ -269,7 +269,7 @@ if __name__ == '__main__':
 
         total_jaccard /= TEST_SIZE
 
-        print(f"CV Average: {total_jaccard}")
+        print(f"CV jaccard: {total_jaccard}")
 
         cv_scores.append(total_jaccard)
         #cv_preds.append(current_preds)

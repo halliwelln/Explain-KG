@@ -38,11 +38,17 @@ for rule in rules:
         file_name=os.path.join('..','data','traces',rule_file+'.ttl'),
         max_padding=MAX_PADDING
     )
-
-    idx = triples[:,1] == rule #get indicies of triples for <rule>
+    
+    #get indicies of triples for <rule>
+    idx = triples[:,1] == rule
 
     triples = triples[idx]
     traces = traces[idx]
+
+    #replace male/female triples with unknown
+    if rule_file == 'brother_sister':
+        num_triples = traces[:,2,:].shape[0]
+        traces[:,2,:] = np.array([['UNK_ENT', 'UNK_REL', 'UNK_ENT'] for i in range(num_triples)])
 
     exp_entities = np.array([[traces[:,i,:][:,0],
         traces[:,i,:][:,2]] for i in range(MAX_PADDING)]).flatten()
