@@ -1,0 +1,7 @@
+'spouse' 50
+'uncle' 2000
+'aunt' 2000
+'successor' 2000
+'predecessor' 2000
+'grandparent' 2000
+'full_data' 50

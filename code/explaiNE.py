@@ -8,28 +8,38 @@ import utils
 import joblib
 from scipy import sparse
 
-def get_pij(i,j,X,s1,s2,prior,seed):
+# def get_pij(i,j,X,s1,s2,prior,seed):
     
-    p_prior = prior.get_row_probability([i],[j])[0]
+#     p_prior = prior.get_row_probability([i],[j])[0]
 
-    x_i = X[i,:]
-    x_j = X[j,:]
+#     x_i = X[i,:]
+#     x_j = X[j,:]
 
-    diff = np.linalg.norm(x_i-x_j)
+#     diff = np.linalg.norm(x_i-x_j)
 
-    normal_s1 = halfnorm.rvs(loc=diff,scale=s1,size=1,random_state=seed)[0]
-    normal_s2 = halfnorm.rvs(loc=diff,scale=s2,size=1,random_state=seed)[0]
+#     normal_s1 = halfnorm.rvs(loc=diff,scale=s1,size=1,random_state=seed)[0]
+#     normal_s2 = halfnorm.rvs(loc=diff,scale=s2,size=1,random_state=seed)[0]
     
-    numerator = p_prior * normal_s1
-    denom = numerator + (1-p_prior)*normal_s2
+#     numerator = p_prior * normal_s1
+#     denom = numerator + (1-p_prior)*normal_s2
     
-    return numerator/denom
+#     return numerator/denom
 
-def compute_prob(i,s1,s2,X,num_entities,prior,seed):
-    prob = []
+def sigmoid(x):
+    return 1 / (1 + np.exp(-x))
+
+def compute_prob(i,rel,s1,s2,X,num_entities,prior,seed):
+    probs = []
     for j in range(num_entities):
-        prob.append(get_pij(i,j,X,s1,s2,prior,seed))
-    return prob
+
+        x_i = X[i,:]
+        x_j = X[j,:]
+
+        prob = sigmoid(np.sum(x_i * x_j))
+
+        probs.append(prob)
+        #probs.append(get_pij(i,j,X,s1,s2,prior,seed))
+    return probs
 
 def get_hessian(i,s1,s2,gamma,X,A,embedding_dim,probs,seed):
     
@@ -125,6 +135,7 @@ if __name__ == '__main__':
     import argparse
     from sklearn.model_selection import KFold
     import maxent
+    import RGCN
 
     SEED = 123
     os.environ['PYTHONHASHSEED'] = str(SEED)
@@ -162,15 +173,28 @@ if __name__ == '__main__':
 
     NUM_ENTITIES = len(entities)
     NUM_RELATIONS = len(relations)
+    EMBEDDING_DIM = 50
+    OUTPUT_DIM = 50
 
     ent2idx = dict(zip(entities, range(NUM_ENTITIES)))
     rel2idx = dict(zip(relations, range(NUM_RELATIONS)))
 
-    cne_data = np.load(os.path.join('..','data','weights','cne_embeddings_'+RULE+'.npz'))
+    #cne_data = np.load(os.path.join('..','data','weights','cne_embeddings_'+RULE+'.npz'))
+    # X = cne_data['embeddings']
+    # S1 = cne_data['s1']
+    # S2 = cne_data['s2']
+    model = RGCN.get_RGCN_Model(
+        num_entities=NUM_ENTITIES,
+        num_relations=NUM_RELATIONS,
+        embedding_dim=EMBEDDING_DIM,
+        output_dim=OUTPUT_DIM,
+        seed=SEED
+    )
 
-    X = cne_data['embeddings']
-    S1 = cne_data['s1']
-    S2 = cne_data['s2']
+    model.load_weights(os.path.join('..','data','weights',RULE+'.h5'))
+
+    X = model.get_layer('entity_embeddings').get_weights()[0]
+
     EMBEDDING_DIM = X.shape[1]
     GAMMA = (1/(S1**2)) - (1/(S2**2))
 
@@ -194,8 +218,8 @@ if __name__ == '__main__':
 
         A = utils.get_adjacency_matrix(np.unique(adjacency_data,axis=0),NUM_ENTITIES)
 
-        prior = maxent.BGDistr(A) 
-        prior.fit()
+        # prior = maxent.BGDistr(A) 
+        # prior.fit()
 
         #trainexp2idx = trainexp2idx[:,:,[0,2]]
 
@@ -219,7 +243,7 @@ if __name__ == '__main__':
 
         HESSIANS = np.array(HESSIANS)
 
-        ITER_DATA = np.concatenate([test2idx,np.unique(testexp2idx.reshape(-1,2), axis=0)],axis=0)#add test2idx
+        ITER_DATA = np.concatenate([test2idx,np.unique(testexp2idx.reshape(-1,2), axis=0)],axis=0)
 
         explanations = joblib.Parallel(n_jobs=-2, verbose=20)(
             joblib.delayed(get_explanations)(
@@ -237,9 +261,9 @@ if __name__ == '__main__':
     best_idx = np.argmin(cv_scores)
     best_preds = preds[best_idx]
 
-    # np.savez(os.path.join('..','data','preds','explaine_'+RULE+'_preds.npz'),
-    #     preds=best_preds,embedding_dim=EMBEDDING_DIM,s1=S1,s2=S2,best_idx=best_idx
-    #     )
+    np.savez(os.path.join('..','data','preds','explaine_'+RULE+'_preds.npz'),
+        preds=best_preds,embedding_dim=EMBEDDING_DIM,s1=S1,s2=S2,best_idx=best_idx
+        )
 
     print(f"{RULE} jaccard score={np.mean(cv_scores)} using:")
     print(f"embedding dimensions={EMBEDDING_DIM},s1={S1},s2={S2}")

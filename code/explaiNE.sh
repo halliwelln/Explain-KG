@@ -1,6 +1,6 @@
 #!/bin/bash
 
-conda activate kg_env
+conda activate kg_env_new
 
 #./explaiNE.py 'spouse' 1
 #./explaiNE.py 'uncle' 2

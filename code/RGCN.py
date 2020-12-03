@@ -222,7 +222,7 @@ def get_RGCN_Model(num_entities,num_relations,embedding_dim,output_dim,seed):
             ]
         )
 
-    output = DistMult(num_relations=num_relations,seed=seed,name='output')([
+    output = DistMult(num_relations=num_relations,seed=seed,name='DistMult')([
         new_head,rel_index,new_tail
         ]
     )
@@ -354,4 +354,4 @@ if __name__ == '__main__':
             adj_mats
         ]
     )
-    print(f'acc {(preds > .5).sum()/X_test.shape[1]}')
+    print(f'{RULE} Accuracy {(preds > .5).sum()/X_test.shape[1]}')
