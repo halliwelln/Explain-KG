@@ -7,4 +7,5 @@ conda activate kg_env
 #./explaiNE.py 'aunt' 2
 #./explaiNE.py 'successor' 1
 #./explaiNE.py 'predecessor' 1
+#./explaiNE.py 'grandparent' 2
 ./explaiNE.py 'full_data' 2

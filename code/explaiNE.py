@@ -91,7 +91,7 @@ def get_explanations(i,j,s1,s2,embedding_dim,gamma,X,top_k,iter_data,hessians,pr
 
     return np.array(explanation)
 
-def jaccard_score(true_exp,pred_exp,top_k):
+def jaccard_score(true_exp,pred_exp,top_k,return_scores=False):
 
     assert len(true_exp) == len(pred_exp)
 
@@ -115,7 +115,10 @@ def jaccard_score(true_exp,pred_exp,top_k):
 
         scores.append(score)
         
-    return np.mean(scores)
+    if return_scores:
+        return np.mean(scores), np.array(scores)
+    else:
+        return np.mean(scores)
 
 if __name__ == '__main__':
 
@@ -234,9 +237,9 @@ if __name__ == '__main__':
     best_idx = np.argmin(cv_scores)
     best_preds = preds[best_idx]
 
-    np.savez(os.path.join('..','data','preds','explaine_'+RULE+'_preds.npz'),
-        preds=best_preds,embedding_dim=EMBEDDING_DIM,s1=S1,s2=S2,best_idx=best_idx
-        )
+    # np.savez(os.path.join('..','data','preds','explaine_'+RULE+'_preds.npz'),
+    #     preds=best_preds,embedding_dim=EMBEDDING_DIM,s1=S1,s2=S2,best_idx=best_idx
+    #     )
 
     print(f"{RULE} jaccard score={np.mean(cv_scores)} using:")
     print(f"embedding dimensions={EMBEDDING_DIM},s1={S1},s2={S2}")
