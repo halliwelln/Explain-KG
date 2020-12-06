@@ -135,13 +135,28 @@ if __name__ == '__main__':
             grads = tape.gradient(loss,masks)
             optimizer.apply_gradients(zip(grads,masks))
 
+        current_preds = []
+        #num_rel = 0.0 
+
         for i in range(NUM_RELATIONS):
 
             mask_i = adj_mats[i] * tf.nn.sigmoid(masks[i])
 
             non_masked_indices = mask_i.indices[mask_i.values > THRESHOLD]
 
-            total_jaccard += tf_jaccard(true_subgraphs[i].indices,non_masked_indices)
+            # if (non_masked_indices.shape[0] > 0) and tf.math.reduce_all(true_subgraphs[i].values != tf.zeros((1,3))):
+
+            #     total_jaccard += tf_jaccard(true_subgraphs[i].indices,non_masked_indices)
+
+            #     num_rel += 1 
+            if (non_masked_indices.shape[0] == 0) and (tf.math.reduce_all(true_subgraphs[i].values == tf.zeros((1,3)))):
+                total_jaccard += 1.
+            else:
+                total_jaccard += tf_jaccard(true_subgraphs[i].indices,non_masked_indices)
+
+            pred = non_masked_indices.numpy()
+
+            current_preds.append(pred[:,1:])
 
         total_jaccard /= NUM_RELATIONS
 
@@ -150,18 +165,20 @@ if __name__ == '__main__':
         for mask in masks:
             mask.assign(value=init_value)
 
-        return total_loss, total_jaccard
+        print('current_preds', current_preds)
+
+        return total_loss, total_jaccard, current_preds
 
     def distributed_replica_step(head,rel,tail,explanation):
 
-        per_replica_losses, per_replica_jaccard = strategy.run(replica_step, args=(head,rel,tail,explanation))
+        per_replica_losses, per_replica_jaccard, current_preds = strategy.run(replica_step, args=(head,rel,tail,explanation))
 
         reduce_loss = per_replica_losses / NUM_EPOCHS
 
         #tf.print(f"reduced loss {reduce_loss}")
         #tf.print(f"reduced jaccard {per_replica_jaccard}")
 
-        return reduce_loss,per_replica_jaccard
+        return reduce_loss,per_replica_jaccard, current_preds
 
     data = np.load(os.path.join('..','data','royalty.npz'))
 
@@ -185,7 +202,7 @@ if __name__ == '__main__':
     EMBEDDING_DIM = 50
     OUTPUT_DIM = 50
     LEARNING_RATE = .001
-    NUM_EPOCHS = 30
+    NUM_EPOCHS = 1
     THRESHOLD = .01
     K = 1
 
@@ -195,9 +212,6 @@ if __name__ == '__main__':
     ALL_INDICES = tf.reshape(tf.range(0,NUM_ENTITIES,1,dtype=tf.int64), (1,-1))
 
     kf = KFold(n_splits=3,shuffle=True,random_state=SEED)
-
-    cv_scores = []
-    #cv_preds = []    
 
     strategy = tf.distribute.MirroredStrategy()
     print(f'Number of devices: {strategy.num_replicas_in_sync}')
@@ -230,7 +244,15 @@ if __name__ == '__main__':
             trainable=True) for i in range(NUM_RELATIONS)
         ]
 
+    cv_scores = []
+    cv_preds = []
+    test_indices = []
+
     for train_idx,test_idx in kf.split(X=triples):
+
+        test_idx = test_idx[0:3]
+
+        preds = []
 
         train2idx = utils.array2idx(triples[train_idx],ent2idx,rel2idx)
         trainexp2idx = utils.array2idx(traces[train_idx],ent2idx,rel2idx)
@@ -263,7 +285,9 @@ if __name__ == '__main__':
 
         for head,rel,tail,explanation in dist_dataset:
 
-            loss, jaccard = distributed_replica_step(head,rel,tail,explanation)
+            loss, jaccard, current_preds = distributed_replica_step(head,rel,tail,explanation)
+    
+            preds.append(current_preds)
 
             total_jaccard += jaccard
 
@@ -272,16 +296,19 @@ if __name__ == '__main__':
         print(f"CV jaccard: {total_jaccard}")
 
         cv_scores.append(total_jaccard)
-        #cv_preds.append(current_preds)
+        cv_preds.append(preds)
+        test_indices.append(test_idx)
 
-    best_idx = np.argmin(cv_scores)
-    #best_preds = cv_preds[best_idx]
+    best_idx = np.argmax(cv_scores)
+    best_preds = np.array(cv_preds[best_idx])
+    best_test_indices = test_indices[best_idx]
 
-    #print(f"Jaccard score: {np.mean(cv_scores)}")
+    print(f"Jaccard score: {cv_scores[best_idx]}")
+    print(f"using learning rate: {LEARNING_RATE}, and {NUM_EPOCHS} epochs")
+    print(f"threshold {THRESHOLD}, and k={K}")
 
     np.savez(os.path.join('..','data','preds','gnn_explainer_'+RULE+'_preds.npz'),
-        embedding_dim=EMBEDDING_DIM,best_idx=best_idx,k=K,
-        threshold=THRESHOLD,learning_rate=LEARNING_RATE,num_epochs=NUM_EPOCHS
+        best_idx=best_idx, preds=best_preds,test_idx=best_test_indices
         )
 
     print('Done.')

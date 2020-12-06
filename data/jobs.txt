@@ -59,3 +59,8 @@ NUM_EPOCHS = 2000
 Accuracy: 0.703778677462888
 ########################################
 
+ExplaiNE
+
+Rule: spouse
+Job ID: 11117668
+Jaccard: 

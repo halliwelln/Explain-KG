@@ -1,154 +1,74 @@
 #!/usr/bin/env python3
 
 import numpy as np
-import random as rn
-import os
-from scipy.stats import halfnorm
-import utils
-import joblib
-from scipy import sparse
 
-# def get_pij(i,j,X,s1,s2,prior,seed):
+def jaccard_score(true_exp,pred_exp,top_k):
+
+    true_exp = true_exp[:top_k]
+
+    num_true_traces = true_exp.shape[0]
+    num_pred_traces = pred_exp.shape[0]
+
+    count = 0
+    for pred_row in pred_exp:
+        for true_row in true_exp:
+            if (pred_row == true_row).all():
+                count +=1
+
+    score = count / (num_true_traces + num_pred_traces-count)
     
-#     p_prior = prior.get_row_probability([i],[j])[0]
+    return score
 
-#     x_i = X[i,:]
-#     x_j = X[j,:]
-
-#     diff = np.linalg.norm(x_i-x_j)
-
-#     normal_s1 = halfnorm.rvs(loc=diff,scale=s1,size=1,random_state=seed)[0]
-#     normal_s2 = halfnorm.rvs(loc=diff,scale=s2,size=1,random_state=seed)[0]
+def get_preds(adj_mats,num_relations,top_k,tape,pred):
     
-#     numerator = p_prior * normal_s1
-#     denom = numerator + (1-p_prior)*normal_s2
-    
-#     return numerator/denom
-
-def sigmoid(x):
-    return 1 / (1 + np.exp(-x))
-
-def compute_prob(i,rel,s1,s2,X,num_entities,prior,seed):
-    probs = []
-    for j in range(num_entities):
-
-        x_i = X[i,:]
-        x_j = X[j,:]
-
-        prob = sigmoid(np.sum(x_i * x_j))
-
-        probs.append(prob)
-        #probs.append(get_pij(i,j,X,s1,s2,prior,seed))
-    return probs
-
-def get_hessian(i,s1,s2,gamma,X,A,embedding_dim,probs,seed):
-    
-    hessian = np.zeros(shape=(embedding_dim,embedding_dim))
-
-    for j in range(A.shape[0]):
-
-        if i != j:
-
-            x_i = X[i,:]
-            x_j = X[j,:]
-
-            x_diff = (x_i - x_j).reshape(-1,1)  
-            
-            prob = probs[i,j]
-
-            h = (gamma**2) * np.dot(x_diff,x_diff.T) * (prob * (1-prob))
-
-            p_diff_mat = gamma * (prob - A[i,j]) * np.identity(h.shape[0])
-
-            hessian += (p_diff_mat - h)
-            
-    return hessian
-
-def explaiNE(i,j,k,l,s1,s2,embedding_dim,gamma,X,hessians,probs,seed):
-
-    hessian = hessians[i]
-
-    pij = probs[i,j]
-
-    invert = (-hessian) / ((gamma**2 * (pij) * (1-pij)))
-
-    hess_inv = np.linalg.inv(invert)
-
-    x_i = X[i,:]
-    x_j = X[j,:]
-    x_k = X[k,:]
-    x_l = X[l,:]
-
-    xij_diff = (x_i - x_j).T
-
-    xlk_diff = (x_l - x_k)
-
-    return np.dot(np.dot(xij_diff, hess_inv), xlk_diff).squeeze()
-
-def get_explanations(i,j,s1,s2,embedding_dim,gamma,X,top_k,iter_data,hessians,probs,seed):
-
-    temp = []
-
-    for k,l in iter_data:
-
-        score = explaiNE(i,j,k,l,s1,s2,embedding_dim,gamma,X,hessians,probs,seed)
-
-        temp.append(((k,l),score))
-
-    sorted_scores = sorted(temp,key=lambda x:x[1], reverse=True)[0:top_k]
-
-    explanation = [np.array(tup) for tup,_ in sorted_scores]
-
-    return np.array(explanation)
-
-def jaccard_score(true_exp,pred_exp,top_k,return_scores=False):
-
-    assert len(true_exp) == len(pred_exp)
-
     scores = []
-
-    for i in range(len(true_exp)):
-
-        true_i = true_exp[i][:top_k,]
-        pred_i = pred_exp[i]
-
-        num_true_traces = true_i.shape[0]
-        num_pred_traces = pred_i.shape[0]
-
-        count = 0
-        for pred_row in pred_i:
-            for true_row in true_i:
-                if (pred_row == true_row).all():
-                    count +=1
-
-        score = count / (num_true_traces + num_pred_traces-count)
-
-        scores.append(score)
+    
+    for i in range(num_relations):
         
-    if return_scores:
-        return np.mean(scores), np.array(scores)
-    else:
-        return np.mean(scores)
+        adj_mat_i = adj_mats[i]
+        
+        for idx,score in enumerate(tape.gradient(pred,adj_mat_i.values).numpy()):
+            if score:
+                scores.append((idx,i,score))
+                
+    top_k_scores = sorted(scores, key=lambda x : x[2],reverse=True)[:top_k]
+    
+    pred_triples = []
+    
+    for idx,rel,score in top_k_scores:
+        
+        indices =  adj_mats[rel].indices.numpy()[idx,1:]
+
+        head,tail = indices
+
+        pred_triple = [head,rel,tail]
+
+        pred_triples.append(pred_triple)
+
+    return np.array(pred_triples)
 
 if __name__ == '__main__':
 
+    import tensorflow as tf
+    import os
+    import utils
+    import random as rn
+    import RGCN
     import argparse
     from sklearn.model_selection import KFold
-    import maxent
-    import RGCN
 
     SEED = 123
     os.environ['PYTHONHASHSEED'] = str(SEED)
+    os.environ['TF_DETERMINISTIC_OPS'] = '1'
+    tf.random.set_seed(SEED)
     np.random.seed(SEED)
     rn.seed(SEED)
-
-    print(f'CPU count: {joblib.cpu_count()}')
 
     parser = argparse.ArgumentParser()
 
     parser.add_argument('rule',type=str,help=
         'Enter which rule to use spouse,successor,...etc (str), full_data for full dataset')
-    parser.add_argument('top_k', type=int)
+    parser.add_argument('top_k',type=int)
     args = parser.parse_args()
 
     RULE = args.rule
@@ -176,13 +96,11 @@ if __name__ == '__main__':
     EMBEDDING_DIM = 50
     OUTPUT_DIM = 50
 
+    ALL_INDICES = tf.reshape(tf.range(0,NUM_ENTITIES,1,dtype=tf.int64), (1,-1))
+
     ent2idx = dict(zip(entities, range(NUM_ENTITIES)))
     rel2idx = dict(zip(relations, range(NUM_RELATIONS)))
 
-    #cne_data = np.load(os.path.join('..','data','weights','cne_embeddings_'+RULE+'.npz'))
-    # X = cne_data['embeddings']
-    # S1 = cne_data['s1']
-    # S2 = cne_data['s2']
     model = RGCN.get_RGCN_Model(
         num_entities=NUM_ENTITIES,
         num_relations=NUM_RELATIONS,
@@ -193,77 +111,83 @@ if __name__ == '__main__':
 
     model.load_weights(os.path.join('..','data','weights',RULE+'.h5'))
 
-    X = model.get_layer('entity_embeddings').get_weights()[0]
-
-    EMBEDDING_DIM = X.shape[1]
-    GAMMA = (1/(S1**2)) - (1/(S2**2))
-
     kf = KFold(n_splits=3,shuffle=True,random_state=SEED)
 
     cv_scores = []
-    preds = []
+    cv_preds = []
+    test_indicies = []
 
-    for train_idx, test_idx in kf.split(X=triples):
+    for train_idx,test_idx in kf.split(X=triples):
 
         #test_idx = test_idx[0:10]
+
+        pred_exps = []
+        cv_jaccard = 0.0
 
         train2idx = utils.array2idx(triples[train_idx],ent2idx,rel2idx)
         trainexp2idx = utils.array2idx(traces[train_idx],ent2idx,rel2idx)
         nopred2idx = utils.array2idx(nopred,ent2idx,rel2idx)
 
-        adjacency_data = np.concatenate([train2idx,trainexp2idx.reshape(-1,3),nopred2idx],axis=0)
-
         test2idx = utils.array2idx(triples[test_idx],ent2idx,rel2idx)
         testexp2idx = utils.array2idx(traces[test_idx],ent2idx,rel2idx)
 
-        A = utils.get_adjacency_matrix(np.unique(adjacency_data,axis=0),NUM_ENTITIES)
-
-        # prior = maxent.BGDistr(A) 
-        # prior.fit()
-
-        #trainexp2idx = trainexp2idx[:,:,[0,2]]
-
-        testexp2idx = testexp2idx[:,:,[0,2]]
-        
-        A = utils.get_adjacency_matrix(test2idx,NUM_ENTITIES)
-
-        PROBS = joblib.Parallel(n_jobs=-2, verbose=20)(
-            joblib.delayed(compute_prob)(
-                i,S1,S2,X,NUM_ENTITIES,prior,SEED
-                ) for i in range(NUM_ENTITIES)
-            )
-
-        PROBS = np.array(PROBS)
-
-        HESSIANS = joblib.Parallel(n_jobs=-2, verbose=20)(
-            joblib.delayed(get_hessian)(
-                i,S1,S2,GAMMA,X,A,EMBEDDING_DIM,PROBS,SEED
-            ) for i in range(NUM_ENTITIES)
+        ADJACENCY_DATA = tf.concat([
+            train2idx,
+            trainexp2idx.reshape(-1,3),
+            nopred2idx,
+            test2idx,
+            testexp2idx.reshape(-1,3)
+            ],axis=0
         )
 
-        HESSIANS = np.array(HESSIANS)
+        adj_mats = utils.get_adj_mats(ADJACENCY_DATA,NUM_ENTITIES,NUM_RELATIONS)
 
-        ITER_DATA = np.concatenate([test2idx,np.unique(testexp2idx.reshape(-1,2), axis=0)],axis=0)
+        tf_data = tf.data.Dataset.from_tensor_slices(
+                (test2idx[:,0],test2idx[:,1],test2idx[:,2],testexp2idx)).batch(1)
 
-        explanations = joblib.Parallel(n_jobs=-2, verbose=20)(
-            joblib.delayed(get_explanations)(
-                i,j,S1,S2,EMBEDDING_DIM,GAMMA,X,TOP_K,ITER_DATA,HESSIANS,PROBS,SEED
-                ) for i,_,j in test2idx
-            )
+        for head, rel, tail, true_exp in tf_data:
 
-        explanations = np.array(explanations)
+            with tf.GradientTape(watch_accessed_variables=False,persistent=True) as tape:
 
-        jaccard = jaccard_score(testexp2idx,explanations,TOP_K)
+                tape.watch(adj_mats)
+        
+                pred = model([
+                    ALL_INDICES,
+                    tf.reshape(head,(1,-1)),
+                    tf.reshape(rel,(1,-1)),
+                    tf.reshape(tail,(1,-1)),
+                    adj_mats
+                    ]
+                )
 
-        cv_scores.append(jaccard)
-        preds.append(explanations)
+            pred_exp = get_preds(adj_mats,NUM_RELATIONS,TOP_K,tape,pred)
+  
+            pred_exps.append(pred_exp)
 
-    best_idx = np.argmin(cv_scores)
-    best_preds = preds[best_idx]
+            jaccard = jaccard_score(true_exp.numpy()[0],pred_exp,TOP_K)
+            cv_jaccard += jaccard
+
+        cv_preds.append(pred_exps)
+        cv_scores.append(cv_jaccard / test2idx.shape[0])
+        test_indicies.append(test_idx)
+
+    best_idx = np.argmax(cv_scores)
+    best_preds = np.array(cv_preds[best_idx])
+    best_test_indices = test_indicies[best_idx]
+
+    print(f"{RULE} jaccard: {cv_scores[best_idx]}")
 
     np.savez(os.path.join('..','data','preds','explaine_'+RULE+'_preds.npz'),
-        preds=best_preds,embedding_dim=EMBEDDING_DIM,s1=S1,s2=S2,best_idx=best_idx
+        preds=best_preds,cv_idx=best_idx,test_idx=best_test_indices
         )
 
-    print(f"{RULE} jaccard score={np.mean(cv_scores)} using:")
-    print(f"embedding dimensions={EMBEDDING_DIM},s1={S1},s2={S2}")
+    # d = np.load(os.path.join('..','data','preds','explaine_'+RULE+'_preds.npz'))
+
+    # new_traces = utils.array2idx(traces[d['test_idx']],ent2idx,rel2idx)
+
+    # j = 0
+    # num = d['preds'].shape[0]
+    # for i in range(num):
+    #     j += jaccard_score(new_traces[i],d['preds'][i],1)
+    # print(j/num)
+
