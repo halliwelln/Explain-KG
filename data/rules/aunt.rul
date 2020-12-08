@@ -28,7 +28,7 @@ CONSTRUCT {
     ?a dbo:aunt ?myaunt .
 }
 WHERE {
-    ?myaunt dbo:sister ?myparent .
+    ?myparent dbo:sister ?myaunt .
     ?a dbo:parent ?myparent . 
     
     FILTER (!EXISTS {?a dbo:aunt ?myaunt})
