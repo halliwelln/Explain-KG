@@ -62,5 +62,68 @@ Accuracy: 0.703778677462888
 ExplaiNE
 
 Rule: spouse
-Job ID: 11117668
+Job ID: 11120476
+Jaccard: 0.21929824561403508
+
+Rule: uncle
+Job ID: 11120489
+Jaccard: 0.04259730468381865
+
+Rule: aunt
+Job ID: 11120491
+Jaccard: 0.04983388704318912
+
+Rule: successor
+Job ID: 11120493
+Jaccard: 0.10869174014756164
+
+Rule: predecessor
+Job ID: 11120802
+Jaccard: 0.10243747012904253
+
+Rule: grandparent
+Job ID: 11120823
+Jaccard: 0.032570763861961956
+
+Rule: full_data
+Job ID: 
 Jaccard: 
+
+########################################
+
+Gnn Explainer
+
+EMBEDDING_DIM = 50
+OUTPUT_DIM = 50
+LEARNING_RATE = .001
+NUM_EPOCHS = 10
+THRESHOLD = .01
+K = 1
+
+Rule: spouse
+Job ID: 11120804
+Jaccard: 0.38773217611734445
+
+Rule: uncle
+Job ID: 
+Jaccard:
+
+Rule: aunt
+Job ID: 
+Jaccard:
+
+Rule: successor
+Job ID: 
+Jaccard:
+
+Rule: predecessor
+Job ID: 
+Jaccard:
+
+Rule: grandparent
+Job ID: 
+Jaccard:
+
+Rule: full_data
+Job ID: 
+Jaccard:

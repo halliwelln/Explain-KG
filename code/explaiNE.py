@@ -119,8 +119,6 @@ if __name__ == '__main__':
 
     for train_idx,test_idx in kf.split(X=triples):
 
-        #test_idx = test_idx[0:10]
-
         pred_exps = []
         cv_jaccard = 0.0
 

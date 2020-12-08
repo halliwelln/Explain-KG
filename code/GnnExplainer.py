@@ -165,8 +165,6 @@ if __name__ == '__main__':
         for mask in masks:
             mask.assign(value=init_value)
 
-        print('current_preds', current_preds)
-
         return total_loss, total_jaccard, current_preds
 
     def distributed_replica_step(head,rel,tail,explanation):
@@ -202,7 +200,7 @@ if __name__ == '__main__':
     EMBEDDING_DIM = 50
     OUTPUT_DIM = 50
     LEARNING_RATE = .001
-    NUM_EPOCHS = 1
+    NUM_EPOCHS = 10
     THRESHOLD = .01
     K = 1
 
@@ -250,7 +248,7 @@ if __name__ == '__main__':
 
     for train_idx,test_idx in kf.split(X=triples):
 
-        test_idx = test_idx[0:3]
+        #test_idx = test_idx[0:3]
 
         preds = []
 
