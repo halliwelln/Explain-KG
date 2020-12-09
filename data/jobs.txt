@@ -3,31 +3,31 @@ Jobs:
 RGCN
 ########################################
 Rule: spouse
-Job ID: 11116378
+Job ID: 11121784
 EMBEDDING_DIM = 50
 OUTPUT_DIM = 50    
 LEARNING_RATE = 1e-3
 NUM_EPOCHS = 50
-Accuracy 0.9694352159468439
+Accuracy: 0.9694352159468439
 
 Rule: uncle
-Job ID: 11116379
+Job ID: 11121785
 EMBEDDING_DIM = 50
 OUTPUT_DIM = 50    
 LEARNING_RATE = 1e-3
 NUM_EPOCHS = 2000
-Accuracy: 0.7969136529626576
+Accuracy: 0.7787458934437937
 
 Rule: aunt
-Job ID: 11116380
+Job ID: 11121786
 EMBEDDING_DIM = 50
 OUTPUT_DIM = 50    
 LEARNING_RATE = 1e-3
 NUM_EPOCHS = 2000
-Accuracy: 0.7414350355526826
+Accuracy: 0.7759318721206199
 
 Rule: successor
-Job ID: 11116400
+Job ID: 11121787
 EMBEDDING_DIM = 50
 OUTPUT_DIM = 50    
 LEARNING_RATE = 1e-3
@@ -35,7 +35,7 @@ NUM_EPOCHS = 2000
 Accuracy: 0.7762615280797781
 
 Rule: predecessor
-Job ID: 11116382
+Job ID: 11121788
 EMBEDDING_DIM = 50
 OUTPUT_DIM = 50    
 LEARNING_RATE = 1e-3
@@ -43,7 +43,7 @@ NUM_EPOCHS = 2000
 Accuracy: 0.7731014338821031
 
 Rule: grandparent
-Job ID: 11116383
+Job ID: 11121789
 EMBEDDING_DIM = 50
 OUTPUT_DIM = 50    
 LEARNING_RATE = 1e-3
@@ -51,42 +51,42 @@ NUM_EPOCHS = 2000
 Accuracy: 0.7414350355526826
 
 Rule: full_data
-Job ID: N/A
+Job ID: 11121790
 EMBEDDING_DIM = 50
 OUTPUT_DIM = 50    
 LEARNING_RATE = 1e-3
-NUM_EPOCHS = 2000
-Accuracy: 0.703778677462888
+NUM_EPOCHS = 50
+Accuracy: 0.7022176718309315
 ########################################
 
 ExplaiNE
 
 Rule: spouse
-Job ID: 11120476
+Job ID: 11121792
 Jaccard: 0.21929824561403508
 
 Rule: uncle
-Job ID: 11120489
-Jaccard: 0.04259730468381865
+Job ID: 11121793
+Jaccard: 0.03232807859264327
 
 Rule: aunt
-Job ID: 11120491
-Jaccard: 0.04983388704318912
+Job ID: 11121794
+Jaccard: 0.026242322724734774
 
 Rule: successor
-Job ID: 11120493
+Job ID: 11121795
 Jaccard: 0.10869174014756164
 
 Rule: predecessor
-Job ID: 11120802
+Job ID: 11121796
 Jaccard: 0.10243747012904253
 
 Rule: grandparent
-Job ID: 11120823
+Job ID: 11121797
 Jaccard: 0.032570763861961956
 
 Rule: full_data
-Job ID: 
+Job ID: 11121798
 Jaccard: 
 
 ########################################
@@ -101,29 +101,29 @@ THRESHOLD = .01
 K = 1
 
 Rule: spouse
-Job ID: 11120804
-Jaccard: 0.38773217611734445
+Job ID: 11121803
+Jaccard: 
 
 Rule: uncle
-Job ID: 
+Job ID: 11121804
 Jaccard:
 
 Rule: aunt
-Job ID: 
+Job ID: 11121805
 Jaccard:
 
 Rule: successor
-Job ID: 
+Job ID: 11121806
 Jaccard:
 
 Rule: predecessor
-Job ID: 
+Job ID: 11121807
 Jaccard:
 
 Rule: grandparent
-Job ID: 
+Job ID: 11121808
 Jaccard:
 
 Rule: full_data
-Job ID: 
+Job ID: 11121809
 Jaccard:

@@ -4,7 +4,7 @@ import numpy as np
 
 def jaccard_score(true_exp,pred_exp,top_k):
 
-    true_exp = true_exp[:top_k]
+    true_exp = true_exp[:top_k]#remove padding
 
     num_true_traces = true_exp.shape[0]
     num_pred_traces = pred_exp.shape[0]
