@@ -301,7 +301,7 @@ if __name__ == '__main__':
     best_preds = np.array(cv_preds[best_idx])
     best_test_indices = test_indices[best_idx]
 
-    print(f"Jaccard score: {cv_scores[best_idx]}")
+    print(f"{RULE} jaccard score: {cv_scores[best_idx]}")
     print(f"using learning rate: {LEARNING_RATE}, and {NUM_EPOCHS} epochs")
     print(f"threshold {THRESHOLD}, and k={K}")
 
