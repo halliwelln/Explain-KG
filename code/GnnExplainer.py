@@ -105,7 +105,6 @@ if __name__ == '__main__':
         true_subgraphs = utils.get_adj_mats(tf.squeeze(explanation,axis=0),NUM_ENTITIES,NUM_RELATIONS)
 
         total_loss = 0.0
-        total_jaccard = 0.0
 
         for epoch in range(NUM_EPOCHS):
 
@@ -136,7 +135,7 @@ if __name__ == '__main__':
             optimizer.apply_gradients(zip(grads,masks))
 
         current_preds = []
-        #num_rel = 0.0 
+        total_jaccard = 0.0
 
         for i in range(NUM_RELATIONS):
 
@@ -144,11 +143,6 @@ if __name__ == '__main__':
 
             non_masked_indices = mask_i.indices[mask_i.values > THRESHOLD]
 
-            # if (non_masked_indices.shape[0] > 0) and tf.math.reduce_all(true_subgraphs[i].values != tf.zeros((1,3))):
-
-            #     total_jaccard += tf_jaccard(true_subgraphs[i].indices,non_masked_indices)
-
-            #     num_rel += 1 
             if (non_masked_indices.shape[0] == 0) and (tf.math.reduce_all(true_subgraphs[i].values == tf.zeros((1,3)))):
                 total_jaccard += 1.
             else:

@@ -114,15 +114,15 @@ Jaccard: 0.07110331166747062
 
 Rule: successor
 Job ID: 11122810
-Jaccard:
+Jaccard: 0.33957987599440376
 
 Rule: predecessor
 Job ID: 11122811
-Jaccard:
+Jaccard: 0.33921259894122396
 
 Rule: grandparent
 Job ID: 11122812
-Jaccard:
+Jaccard: 0.07895403912928578
 
 Rule: full_data
 Job ID: 11122813
