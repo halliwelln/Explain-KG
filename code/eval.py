@@ -29,13 +29,14 @@ def eval(true_exps,preds,num_triples):
                 reversed_row = true_row[[2,1,0]]
                 
                 if (pred_row == true_row).all() or (pred_row == reversed_row).all():
+
                     current_tp += 1
                 #elif (pred_row != true_row).all() or (pred_row != reversed_row).all():
                 else:
                     current_fp += 1
                     
                 if (current_preds == true_row).all(axis=1).sum() >= 1:
-                    #this means true explanation triple is in set of predicitons
+                    #if true explanation triple is in set of predicitons
                     pass
                 else:
                     current_fn += 1
@@ -104,31 +105,35 @@ if __name__ == "__main__":
     ent2idx = dict(zip(entities, range(NUM_ENTITIES)))
     rel2idx = dict(zip(relations, range(NUM_RELATIONS)))
 
-    gnn_data = np.load(os.path.join('..','data','preds','gnn_explainer_'+RULE+'_preds.npz'),allow_pickle=True)
+    if RULE != 'full_data':
+
+        gnn_data = np.load(os.path.join('..','data','preds','gnn_explainer_'+RULE+'_preds.npz'),allow_pickle=True)
+
+        gnn_exp2idx = utils.array2idx(traces[gnn_data['test_idx']],ent2idx,rel2idx)
+        gnn_num_triples = gnn_exp2idx.shape[0]
+        
+        all_gnn_preds = gnn_data['preds']
+        
+        gnn_true_exps = get_true_exps(gnn_exp2idx,gnn_num_triples, TRACE_LENGTH)
+
+        gnn_preds = []
+        for i in range(all_gnn_preds.shape[0]):
+            preds_i = []
+            for idx, j in enumerate(all_gnn_preds[i]):
+                if j.shape[0] > 0:
+                    rel = np.ones((j.shape[0]),dtype=np.int64) * idx
+                    preds_i.append(np.column_stack((j[:,0],rel,j[:,1])))            
+            gnn_preds.append(np.concatenate(preds_i, axis=0))
+
+        gnn_precision, gnn_recall = eval(gnn_true_exps,gnn_preds,gnn_num_triples)
+        print(f"GnnExplainer precision {gnn_precision}, GnnExplainer recall {gnn_recall}")
+
     explaine_data = np.load(os.path.join('..','data','preds','explaine_'+RULE+'_preds.npz'),allow_pickle=True)
 
     explaine_exp2idx = utils.array2idx(traces[explaine_data['test_idx']],ent2idx,rel2idx)
     explaine_num_triples = explaine_exp2idx.shape[0]
 
-    gnn_exp2idx = utils.array2idx(traces[gnn_data['test_idx']],ent2idx,rel2idx)
-    gnn_num_triples = gnn_exp2idx.shape[0]
-
-    all_gnn_preds = gnn_data['preds']
-
     explaine_true_exps = get_true_exps(explaine_exp2idx,explaine_num_triples, TRACE_LENGTH)
-    gnn_true_exps = get_true_exps(gnn_exp2idx,gnn_num_triples, TRACE_LENGTH)
-
-    gnn_preds = []
-    for i in range(all_gnn_preds.shape[0]):
-        preds_i = []
-        for idx, j in enumerate(all_gnn_preds[i]):
-            if j.shape[0] > 0:
-                rel = np.ones((j.shape[0]),dtype=np.int64) * idx
-                preds_i.append(np.column_stack((j[:,0],rel,j[:,1])))            
-        gnn_preds.append(np.concatenate(preds_i, axis=0))
-
-    gnn_precision, gnn_recall = eval(gnn_true_exps,gnn_preds,gnn_num_triples)
-    print(f"GnnExplainer precision {gnn_precision}, GnnExplainer recall {gnn_recall}")
 
     explaine_precision, explaine_recall = eval(explaine_true_exps,explaine_data['preds'],explaine_num_triples)
     print(f"explaiNE precision {explaine_precision}, explaiNE recall {explaine_recall}")
