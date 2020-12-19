@@ -42,6 +42,7 @@ for triple in plot_triples:
 pos = nx.spring_layout(G,seed=SEED)
 
 plt.figure(figsize=(7,7))
+#plt.figure(figsize=(7,5))
 
 nx.draw(G, pos, edge_color='black', width=1, linewidths=1,
         node_size=500, node_color='skyblue', alpha=0.9,
