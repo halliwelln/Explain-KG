@@ -62,44 +62,44 @@ Accuracy: 0.6733113179225457
 ExplaiNE
 
 Rule: spouse
-Job ID: 11182902
-Jaccard: 0.13448489170836178
+Job ID: 11184233
+Jaccard: 0.22647527910685805
 Precision: 
 Recall: 
 
 Rule: uncle
-Job ID: 11182903
-Jaccard: 0.028239781747319056
+Job ID: 11184235
+Jaccard: 0.0283737024221453
 Precision: 
 Recall: 
 
 Rule: aunt
-Job ID: 11182904
-Jaccard: 0.026675573752635157
+Job ID: 11184236
+Jaccard: 0.027815163750560756
 Precision: 
 Recall: 
 
 Rule: successor
-Job ID: 11182905
-Jaccard: 0.08115708785263195
+Job ID: 11184237
+Jaccard: 0.12470138557095078
 Precision:
 Recall: 
 
 Rule: predecessor
-Job ID: 11182906
-Jaccard: 0.08121941161459002
+Job ID: 11184238
+Jaccard: 0.10803059273422562
 Precision: 
 Recall: 
 
 Rule: grandparent
-Job ID: 11182907
-Jaccard: 0.037130636906890446
+Job ID: 11184242
+Jaccard: 0.04654771140418905
 Precision: 
 Recall: 
 
 Rule: full_data
-Job ID: 11182908
-Jaccard: 0.04168690733235061
+Job ID: 11184243
+Jaccard: 0.037010351370174735
 Precision: 
 Recall:
 ########################################
@@ -115,7 +115,7 @@ K = 1
 
 Rule: spouse
 Job ID: 11182912
-Jaccard: 
+Jaccard: 0.3863475771968604
 Precision: 
 Recall: 
 
@@ -133,13 +133,13 @@ Recall:
 
 Rule: successor
 Job ID: 11182915
-Jaccard: 
+Jaccard: 0.3442814876786008
 Precision: 
 Recall: 
 
 Rule: predecessor
 Job ID: 11182916
-Jaccard: 
+Jaccard: 0.34217783170639066
 Precision: 
 Recall:
 

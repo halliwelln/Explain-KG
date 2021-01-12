@@ -159,7 +159,7 @@ if __name__ == '__main__':
                 )
 
             pred_exp = get_preds(adj_mats,NUM_RELATIONS,TOP_K,tape,pred)
-  
+
             pred_exps.append(pred_exp)
 
             jaccard = jaccard_score(true_exp.numpy()[0],pred_exp,TOP_K)
@@ -179,8 +179,11 @@ if __name__ == '__main__':
         preds=best_preds,cv_idx=best_idx,test_idx=best_test_indices
         )
 
-    # d = np.load(os.path.join('..','data','preds','explaine_'+RULE+'_preds.npz'))
+    d = np.load(os.path.join('..','data','preds','explaine_'+RULE+'_preds.npz'))
 
+    print(d['preds'].shape)
+    print(len(d['preds'][0]))
+    print(len(d['preds'][1]))
     # new_traces = utils.array2idx(traces[d['test_idx']],ent2idx,rel2idx)
 
     # j = 0

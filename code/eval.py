@@ -37,8 +37,15 @@ def eval(true_exps,preds,num_triples):
                 else:
                     current_fn += 1
 
-        current_precision = current_tp / (current_tp + current_fp)
-        current_recall = current_tp / (current_tp + current_fn)
+        if current_tp == 0 and current_fp == 0:
+            current_precision = 0.0
+        else:
+            current_precision = current_tp / (current_tp + current_fp)
+
+        if current_tp == 0  and current_fn == 0:
+            current_recall = 0.0
+        else:
+            current_recall = current_tp / (current_tp + current_fn)
         
         precision += current_precision
         recall += current_recall
