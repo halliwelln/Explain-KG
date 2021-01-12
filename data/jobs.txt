@@ -3,105 +3,105 @@ Jobs:
 RGCN
 ########################################
 Rule: spouse
-Job ID: 11121784
+Job ID: 11182893
 EMBEDDING_DIM = 50
 OUTPUT_DIM = 50    
 LEARNING_RATE = 1e-3
 NUM_EPOCHS = 50
-Accuracy: 0.9694352159468439
+Accuracy: 0.9700996677740864
 
 Rule: uncle
-Job ID: 11121785
+Job ID: 11182894
 EMBEDDING_DIM = 50
 OUTPUT_DIM = 50    
 LEARNING_RATE = 1e-3
-NUM_EPOCHS = 2000
-Accuracy: 0.7787458934437937
+NUM_EPOCHS = 200
+Accuracy: 0.7346408999134698
 
 Rule: aunt
-Job ID: 11121786
+Job ID: 11182895
 EMBEDDING_DIM = 50
 OUTPUT_DIM = 50    
 LEARNING_RATE = 1e-3
-NUM_EPOCHS = 2000
-Accuracy: 0.7759318721206199
+NUM_EPOCHS = 200
+Accuracy: 0.6514790410766859
 
 Rule: successor
-Job ID: 11121787
+Job ID: 11182896
 EMBEDDING_DIM = 50
 OUTPUT_DIM = 50    
 LEARNING_RATE = 1e-3
-NUM_EPOCHS = 2000
-Accuracy: 0.7762615280797781
+NUM_EPOCHS = 200
+Accuracy: 0.80601473809998
 
 Rule: predecessor
-Job ID: 11121788
+Job ID: 11182897
 EMBEDDING_DIM = 50
 OUTPUT_DIM = 50    
 LEARNING_RATE = 1e-3
-NUM_EPOCHS = 2000
-Accuracy: 0.7731014338821031
+NUM_EPOCHS = 200
+Accuracy: 0.8129854610635332
 
 Rule: grandparent
-Job ID: 11121789
+Job ID: 11182898
 EMBEDDING_DIM = 50
 OUTPUT_DIM = 50    
 LEARNING_RATE = 1e-3
-NUM_EPOCHS = 2000
-Accuracy: 0.7414350355526826
+NUM_EPOCHS = 200
+Accuracy: 0.7063671622495152
 
 Rule: full_data
-Job ID: 11121790
+Job ID: 11182899
 EMBEDDING_DIM = 50
 OUTPUT_DIM = 50    
 LEARNING_RATE = 1e-3
 NUM_EPOCHS = 50
-Accuracy: 0.7022176718309315
+Accuracy: 0.6733113179225457
 ########################################
 
 ExplaiNE
 
 Rule: spouse
-Job ID: 11121792
-Jaccard: 0.21929824561403508
-Precision: 0.4226475279106858
-Recall: 0.32097288676236047
+Job ID: 11182902
+Jaccard: 0.13448489170836178
+Precision: 
+Recall: 
 
 Rule: uncle
-Job ID: 11121793
-Jaccard: 0.03232807859264327
-Precision: 0.03649760109664153
-Recall: 0.042095042266392435
+Job ID: 11182903
+Jaccard: 0.028239781747319056
+Precision: 
+Recall: 
 
 Rule: aunt
-Job ID: 11121794
-Jaccard: 0.026242322724734774
-Precision: 0.034170854271356785
-Recall: 0.03775544388609713
+Job ID: 11182904
+Jaccard: 0.026675573752635157
+Precision: 
+Recall: 
 
 Rule: successor
-Job ID: 11121795
-Jaccard: 0.10869174014756164
-Precision: 0.22494151520604644
-Recall: 0.16681662767680402
+Job ID: 11182905
+Jaccard: 0.08115708785263195
+Precision:
+Recall: 
 
 Rule: predecessor
-Job ID: 11121796
-Jaccard: 0.10243747012904253
-Precision: 0.213637087780787
-Recall: 0.15803727895491476
+Job ID: 11182906
+Jaccard: 0.08121941161459002
+Precision: 
+Recall: 
 
 Rule: grandparent
-Job ID: 11121797
-Jaccard: 0.032570763861961956
-Precision: 0.04236138037999224
-Recall: 0.04676231097324539
+Job ID: 11182907
+Jaccard: 0.037130636906890446
+Precision: 
+Recall: 
 
 Rule: full_data
-Job ID: 11121798
-Jaccard: 0.04600738714513312
-Precision: 0.06883722008438035
-Recall: 0.0726969261440044
+Job ID: 11182908
+Jaccard: 0.04168690733235061
+Precision: 
+Recall:
 ########################################
 
 Gnn Explainer
@@ -114,43 +114,43 @@ THRESHOLD = .01
 K = 1
 
 Rule: spouse
-Job ID: 11122807
-Jaccard: 0.38773217611734445
-Precision: 0.3139187226164356
-Recall: 1.0
+Job ID: 11182912
+Jaccard: 
+Precision: 
+Recall: 
 
 Rule: uncle
-Job ID: 11122808
-Jaccard: 0.08030081569795325
-Precision: 0.03096487238354538
-Recall: 1.0
+Job ID: 11182913
+Jaccard: 0.08878890826726933
+Precision: 
+Recall: 
 
 Rule: aunt
-Job ID: 11122809
-Jaccard: 0.07110331166747062
-Precision: 0.028654833382038294
-Recall: 1.0
+Job ID: 11182914
+Jaccard: 0.08083867605557318
+Precision: 
+Recall: 
 
 Rule: successor
-Job ID: 11122810
-Jaccard: 0.33957987599440376
-Precision: 0.13609820188200672
-Recall: 1.0 
+Job ID: 11182915
+Jaccard: 
+Precision: 
+Recall: 
 
 Rule: predecessor
-Job ID: 11122811
-Jaccard: 0.33921259894122396
-Precision: 0.1365058590008446
-Recall: 1.0 
+Job ID: 11182916
+Jaccard: 
+Precision: 
+Recall:
 
 Rule: grandparent
-Job ID: 11122812
-Jaccard: 0.07895403912928578
-Precision: 0.04201357848442928
-Recall: 1.0
+Job ID: 11182917
+Jaccard: 0.08571295471682558
+Precision:
+Recall: 
 
 Rule: full_data
-Job ID: 11122813
+Job ID: 11182918
 Jaccard:
 Precision:
 Recall: 

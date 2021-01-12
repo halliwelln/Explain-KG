@@ -27,11 +27,10 @@ brother_entities = data['brother_entities'].tolist()
 entities = np.unique(data[RULE + '_entities'].tolist()+brother_entities+sister_entities).tolist()
 relations = np.unique(data[RULE + '_relations'].tolist()+brother_relations+sister_relations).tolist()
 
-i = -1
+i = 7274
 
 plot_triples = np.concatenate([triples[i].reshape(1,3),traces[i].reshape(-1,3)], axis=0)
 plot_triples = plot_triples[0:-1,:]
-plot_triples
 
 G = nx.MultiDiGraph()
 for triple in plot_triples:

@@ -6,6 +6,8 @@ from scipy import sparse
 
 def train_test_split_no_unseen(X, test_size=100, seed=0, allow_duplication=False, filtered_test_predicates=None):
 
+    '''Taken from https://github.com/Accenture/AmpliGraph/blob/master/ampligraph/evaluation/protocol.py'''
+
     if type(test_size) is float:
         test_size = int(len(X) * test_size)
 
@@ -129,19 +131,19 @@ def get_adjacency_matrix_list(num_relations,num_entities,data):
 
     return np.expand_dims(adj_mats,axis=0)
 
-def get_adjacency_matrix(data,num_entities):
+# def get_adjacency_matrix(data,num_entities):
 
-    row = []
-    col = []
+#     row = []
+#     col = []
 
-    for h,_,t in data:
+#     for h,_,t in data:
 
-        row.append(h)
-        col.append(t)
+#         row.append(h)
+#         col.append(t)
 
-    adj = np.ones(len(row))
+#     adj = np.ones(len(row))
 
-    return sparse.csr_matrix((adj,(row,col)),shape=(num_entities,num_entities))
+#     return sparse.csr_matrix((adj,(row,col)),shape=(num_entities,num_entities))
 
 def concat_triples(data, rules):
 

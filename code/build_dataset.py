@@ -38,6 +38,11 @@ for rule in rules:
         file_name=os.path.join('..','data','traces',rule_file+'.ttl'),
         max_padding=MAX_PADDING
     )
+
+    _, unique_idx = np.unique(triples, axis=0,return_index=True)
+
+    triples = triples[unique_idx]
+    traces = traces[unique_idx]
     
     #get indicies of triples for <rule>
     idx = triples[:,1] == rule
@@ -64,10 +69,10 @@ for rule in rules:
     data[rule + '_relations'] = np.unique(np.concatenate([triples[:,1], exp_relations],axis=0))
 
 all_triples = np.concatenate(all_triples,axis=0)
-print(f"all_triples shape: {all_triples.shape}")
+print(f"all_triples shape: {all_triples.shape}") #all_triples shape: (62457, 3)
 
 all_traces = np.concatenate(all_traces,axis=0)
-print(f"all_traces shape: {all_traces.shape}")
+print(f"all_traces shape: {all_traces.shape}") #all_traces shape: (62457, 3, 3)
 
 all_exp_entities = np.array([[all_traces[:,i,:][:,0],
     all_traces[:,i,:][:,2]] for i in range(MAX_PADDING)]).flatten()

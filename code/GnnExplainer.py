@@ -25,33 +25,33 @@ def get_computation_graph(head,rel,tail,k,data,num_relations):
 
     all_neighbors = tf.concat([neighbors_head,neighbors_tail],axis=0)
 
-    if k > 1:
-        num_indices = all_neighbors.shape[0]
+    # if k > 1:
+    #     num_indices = all_neighbors.shape[0]
 
-        seen_nodes = []
+    #     seen_nodes = []
         
-        for _ in range(k-1):#-1 since we already computed 1st degree neighbors above
+    #     for _ in range(k-1):#-1 since we already computed 1st degree neighbors above
 
-            for idx in range(num_indices):
+    #         for idx in range(num_indices):
 
-                head_neighbor_idx = all_neighbors[idx,0]
-                tail_neighbor_idx = all_neighbors[idx,2]
+    #             head_neighbor_idx = all_neighbors[idx,0]
+    #             tail_neighbor_idx = all_neighbors[idx,2]
 
-                if head_neighbor_idx not in seen_nodes:
+    #             if head_neighbor_idx not in seen_nodes:
                     
-                    seen_nodes.append(head_neighbor_idx)
+    #                 seen_nodes.append(head_neighbor_idx)
 
-                    more_head_neighbors = get_neighbors(data,head_neighbor_idx)
+    #                 more_head_neighbors = get_neighbors(data,head_neighbor_idx)
 
-                    all_neighbors = tf.concat([all_neighbors,more_head_neighbors],axis=0)
+    #                 all_neighbors = tf.concat([all_neighbors,more_head_neighbors],axis=0)
 
-                if tail_neighbor_idx not in seen_nodes:
+    #             if tail_neighbor_idx not in seen_nodes:
 
-                    seen_nodes.append(tail_neighbor_idx)
+    #                 seen_nodes.append(tail_neighbor_idx)
 
-                    more_tail_neighbors = get_neighbors(data,tail_neighbor_idx)
+    #                 more_tail_neighbors = get_neighbors(data,tail_neighbor_idx)
 
-                    all_neighbors = tf.concat([all_neighbors,more_tail_neighbors],axis=0)
+    #                 all_neighbors = tf.concat([all_neighbors,more_tail_neighbors],axis=0)
 
     return all_neighbors
 

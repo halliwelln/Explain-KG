@@ -19,9 +19,7 @@ def eval(true_exps,preds,num_triples):
         
         true_exp = true_exps[i]
         current_preds = preds[i]
-        
-        #print('pred size', current_preds.shape)
-        
+
         for pred_row in current_preds:
             
             for true_row in true_exp:
@@ -29,9 +27,7 @@ def eval(true_exps,preds,num_triples):
                 reversed_row = true_row[[2,1,0]]
                 
                 if (pred_row == true_row).all() or (pred_row == reversed_row).all():
-
                     current_tp += 1
-                #elif (pred_row != true_row).all() or (pred_row != reversed_row).all():
                 else:
                     current_fp += 1
                     
@@ -52,7 +48,7 @@ def eval(true_exps,preds,num_triples):
 
     return precision, recall
 
-def get_true_exps(exp2idx,num_triples, trace_length):
+def get_true_exps(exp2idx,num_triples,trace_length):
 
     true_exps = []
     for i in range(num_triples):
