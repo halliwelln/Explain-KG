@@ -4,6 +4,25 @@ import numpy as np
 import tensorflow as tf
 from scipy import sparse
 
+def get_data(data,rule):
+
+    if rule == 'full_data':
+        triples,traces,nopred = concat_triples(data, data['rules'])
+        entities = data['all_entities'].tolist()
+        relations = data['all_relations'].tolist()
+    else:
+        triples,traces,nopred = concat_triples(data, [rule,'brother','sister'])
+        sister_relations = data['sister_relations'].tolist()
+        sister_entities = data['sister_entities'].tolist()
+
+        brother_relations = data['brother_relations'].tolist()
+        brother_entities = data['brother_entities'].tolist()
+
+        entities = np.unique(data[rule + '_entities'].tolist()+brother_entities+sister_entities).tolist()
+        relations = np.unique(data[rule + '_relations'].tolist()+brother_relations+sister_relations).tolist()
+
+    return triples,traces,nopred,entities,relations
+
 def train_test_split_no_unseen(X, test_size=100, seed=0, allow_duplication=False, filtered_test_predicates=None):
 
     '''Taken from https://github.com/Accenture/AmpliGraph/blob/master/ampligraph/evaluation/protocol.py'''
@@ -78,9 +97,10 @@ def get_adj_mats(data,num_entities,num_relations):
 
         else:
 
-            indices = tf.concat([
-                    tf.gather(data_i,[0,2],axis=1),
-                    tf.gather(data_i,[2,0],axis=1)],axis=0)
+            # indices = tf.concat([
+            #         tf.gather(data_i,[0,2],axis=1),
+            #         tf.gather(data_i,[2,0],axis=1)],axis=0)
+            indices = tf.gather(data_i,[0,2],axis=1)
 
             indices = tf.py_function(distinct,[indices],indices.dtype)
             values = tf.ones((indices.shape[0]))
@@ -112,24 +132,22 @@ def get_negative_triples(head, rel, tail, num_entities, random_state=123):
 
     return neg_head, neg_tail
 
-def get_adjacency_matrix_list(num_relations,num_entities,data):
+# def get_adj_mats_list(num_relations,num_entities,data):
 
-    '''Construct adjacency matrix for RGCN'''
+#     adj_mats = []
 
-    adj_mats = []
+#     for i in range(num_relations):
 
-    for i in range(num_relations):
+#         adj = np.zeros((num_entities,num_entities))
 
-        adj = np.zeros((num_entities,num_entities))
+#         for h,_,t in (data[data[:,1] == i]):
 
-        for h,_,t in (data[data[:,1] == i]):
+#             adj[h,t] = 1
+#             adj[t,h] = 1
 
-            adj[h,t] = 1
-            adj[t,h] = 1
+#         adj_mats.append(adj)
 
-        adj_mats.append(adj)
-
-    return np.expand_dims(adj_mats,axis=0)
+#     return np.expand_dims(adj_mats,axis=0)
 
 # def get_adjacency_matrix(data,num_entities):
 
@@ -171,9 +189,9 @@ def concat_triples(data, rules):
 
     no_pred = np.concatenate([no_pred_triples,no_pred_traces.reshape(-1,3)],axis=0)
     
-    return triples, traces, no_pred#no_pred_triples,no_pred_traces
+    return triples, traces, no_pred
 
-def array2idx(dataset, ent2idx,rel2idx):
+def array2idx(dataset,ent2idx,rel2idx):
     
     if dataset.ndim == 2:
         
@@ -208,6 +226,48 @@ def array2idx(dataset, ent2idx,rel2idx):
                 rel_idx = rel2idx[rel]
 
                 temp_array.append((head_idx,rel_idx,tail_idx))
+
+            data.append(temp_array)
+            
+        data = np.array(data).reshape(-1,dataset.shape[1],3)
+
+    return data
+
+def idx2array(dataset,idx2ent,idx2rel):
+    
+    if dataset.ndim == 2:
+        
+        data = []
+        
+        for head_idx, rel_idx, tail_idx in dataset:
+            
+            head = idx2ent[head_idx]
+            tail = idx2ent[tail_idx]
+            rel = idx2rel[rel_idx]
+            
+            data.append((head, rel, tail))
+
+        data = np.array(data)
+
+    elif dataset.ndim == 3:
+        
+        data = []
+
+        for i in range(len(dataset)):
+            
+            temp_array = []
+        
+            for head_idx, rel_idx, tail_idx in dataset[i,:,:]:
+
+                # if (head == '0.0') or (tail == '0.0') or (rel == '0.0'):
+                #     temp_array.append((-1,-1,-1))
+                #     continue
+
+                head = idx2ent[head_idx]
+                tail = idx2ent[tail_idx]
+                rel = idx2rel[rel_idx]
+
+                temp_array.append((head,rel,tail))
 
             data.append(temp_array)
             

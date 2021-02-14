@@ -17,15 +17,7 @@ data = np.load(os.path.join('..','data','royalty.npz'))
 
 RULE = 'aunt'
 
-triples,traces,nopred = utils.concat_triples(data, [RULE,'brother','sister'])
-sister_relations = data['sister_relations'].tolist()
-sister_entities = data['sister_entities'].tolist()
-
-brother_relations = data['brother_relations'].tolist()
-brother_entities = data['brother_entities'].tolist()
-
-entities = np.unique(data[RULE + '_entities'].tolist()+brother_entities+sister_entities).tolist()
-relations = np.unique(data[RULE + '_relations'].tolist()+brother_relations+sister_relations).tolist()
+triples,traces,nopred,entities,relations = utils.get_data(data,RULE)
 
 i = 7274
 
@@ -48,12 +40,12 @@ nx.draw(G, pos, edge_color='black', width=1, linewidths=1,
         font_size=12,
         labels={node: node for node in G.nodes()})
 nx.draw_networkx_edge_labels(G,pos,edge_labels={('Princess_Clémentine_of_Belgium',
-                                                 'Archduchess_Hermine_of_Austria'):'aunt',
+                                                 'Archduchess_Hermine_of_Austria'):'hasAunt',
 ('Marie_Henriette_of_Austria',
- 'Archduchess_Hermine_of_Austria'):'sister',
-('Princess_Clémentine_of_Belgium','Marie_Henriette_of_Austria'):'parent'},
+ 'Archduchess_Hermine_of_Austria'):'hasSister',
+('Princess_Clémentine_of_Belgium','Marie_Henriette_of_Austria'):'hasParent'},
                              font_color='black',font_size=12)
 ax = plt.gca()
 ax.margins(0.25)
 plt.axis("off")
-#plt.savefig('../data/plots/explanation-plot.pdf',bbox_inches='tight')
+plt.savefig('../data/plots/explanation-plot.pdf',bbox_inches='tight')

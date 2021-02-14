@@ -76,20 +76,7 @@ if __name__ == '__main__':
 
     data = np.load(os.path.join('..','data','royalty.npz'))
 
-    if RULE == 'full_data':
-        triples,traces,nopred = utils.concat_triples(data, data['rules'])
-        entities = data['all_entities'].tolist()
-        relations = data['all_relations'].tolist()
-    else:
-        triples,traces,nopred = utils.concat_triples(data, [RULE,'brother','sister'])
-        sister_relations = data['sister_relations'].tolist()
-        sister_entities = data['sister_entities'].tolist()
-
-        brother_relations = data['brother_relations'].tolist()
-        brother_entities = data['brother_entities'].tolist()
-
-        entities = np.unique(data[RULE + '_entities'].tolist()+brother_entities+sister_entities).tolist()
-        relations = np.unique(data[RULE + '_relations'].tolist()+brother_relations+sister_relations).tolist()
+    triples,traces,nopred,entities,relations = utils.get_data(data,RULE)
 
     NUM_ENTITIES = len(entities)
     NUM_RELATIONS = len(relations)
@@ -179,11 +166,11 @@ if __name__ == '__main__':
         preds=best_preds,cv_idx=best_idx,test_idx=best_test_indices
         )
 
-    d = np.load(os.path.join('..','data','preds','explaine_'+RULE+'_preds.npz'))
+    # d = np.load(os.path.join('..','data','preds','explaine_'+RULE+'_preds.npz'))
 
-    print(d['preds'].shape)
-    print(len(d['preds'][0]))
-    print(len(d['preds'][1]))
+    # print(d['preds'].shape)
+    # print(len(d['preds'][0]))
+    # print(len(d['preds'][1]))
     # new_traces = utils.array2idx(traces[d['test_idx']],ent2idx,rel2idx)
 
     # j = 0

@@ -3,6 +3,137 @@ Jobs:
 RGCN
 ########################################
 Rule: spouse
+Job ID: 11262611
+EMBEDDING_DIM = 50
+OUTPUT_DIM = 50    
+LEARNING_RATE = 1e-3
+NUM_EPOCHS = 50
+Accuracy: 0.7230897009966777
+
+Rule: uncle
+Job ID: 11262612
+EMBEDDING_DIM = 50
+OUTPUT_DIM = 50    
+LEARNING_RATE = 1e-3
+NUM_EPOCHS = 200
+Accuracy: 0.7441592154600519
+
+Rule: aunt
+Job ID: 11262613
+EMBEDDING_DIM = 50
+OUTPUT_DIM = 50    
+LEARNING_RATE = 1e-3
+NUM_EPOCHS = 200
+Accuracy: 0.6621337445675032
+
+Rule: successor
+Job ID: 11262614
+EMBEDDING_DIM = 50
+OUTPUT_DIM = 50    
+LEARNING_RATE = 1e-3
+NUM_EPOCHS = 200
+Accuracy: 0.8147779326827326
+
+Rule: predecessor
+Job ID: 11262615
+EMBEDDING_DIM = 50
+OUTPUT_DIM = 50    
+LEARNING_RATE = 1e-3
+NUM_EPOCHS = 200
+Accuracy: 0.8084047002589125
+
+Rule: grandparent
+Job ID: 11262616
+EMBEDDING_DIM = 50
+OUTPUT_DIM = 50    
+LEARNING_RATE = 1e-3
+NUM_EPOCHS = 200
+Accuracy: 0.7191338073691015
+
+Rule: full_data
+Job ID: 11262617
+EMBEDDING_DIM = 50
+OUTPUT_DIM = 50    
+LEARNING_RATE = 1e-3
+NUM_EPOCHS = 50
+Accuracy: 0.6607378854625551
+
+########################################
+ExplaiNE
+
+Rule: spouse
+Job ID: 11262665
+Jaccard: 0.2551834130781499
+Precision: 
+Recall: 
+
+Rule: uncle
+Job ID: 11262666
+Jaccard:  0.04106113033448652
+Precision: 
+Recall: 
+
+Rule: aunt
+Job ID: 11262667
+Jaccard: 0.03712427097353057
+Precision: 
+Recall: 
+
+Rule: successor
+Job ID: 11262668
+Jaccard: 0.1963688485427616
+Precision:
+Recall: 
+
+Rule: predecessor
+Job ID: 11262669
+Jaccard: 0.1959847036328872
+Precision: 
+Recall: 
+
+Rule: grandparent
+Job ID: 11262670
+Jaccard: 0.06568399275924507
+Precision: 
+Recall: 
+
+Rule: full_data
+Job ID: 11262671
+Jaccard: 
+Precision: 
+Recall:
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+########################################
+Rule: spouse
 Job ID: 11182893
 EMBEDDING_DIM = 50
 OUTPUT_DIM = 50    
@@ -62,43 +193,43 @@ Accuracy: 0.6733113179225457
 ExplaiNE
 
 Rule: spouse
-Job ID: 11184233
+Job ID: 11186775
 Jaccard: 0.22647527910685805
 Precision: 
 Recall: 
 
 Rule: uncle
-Job ID: 11184235
+Job ID: 11186776
 Jaccard: 0.0283737024221453
 Precision: 
 Recall: 
 
 Rule: aunt
-Job ID: 11184236
+Job ID: 11186777
 Jaccard: 0.027815163750560756
 Precision: 
 Recall: 
 
 Rule: successor
-Job ID: 11184237
+Job ID: 11186778
 Jaccard: 0.12470138557095078
 Precision:
 Recall: 
 
 Rule: predecessor
-Job ID: 11184238
+Job ID: 11186779
 Jaccard: 0.10803059273422562
 Precision: 
 Recall: 
 
 Rule: grandparent
-Job ID: 11184242
+Job ID: 11186780
 Jaccard: 0.04654771140418905
 Precision: 
 Recall: 
 
 Rule: full_data
-Job ID: 11184243
+Job ID: 11186789
 Jaccard: 0.037010351370174735
 Precision: 
 Recall:
@@ -154,3 +285,92 @@ Job ID: 11182918
 Jaccard:
 Precision:
 Recall: 
+
+EMBEDDING_DIM = 50
+OUTPUT_DIM = 50
+LEARNING_RATE = .0001
+NUM_EPOCHS = 10
+THRESHOLD = .01
+K = 1
+
+Rule: spouse
+Job ID: 11190639
+Jaccard: 0.3863475771968604
+Precision: 
+Recall: 
+
+Rule: uncle
+Job ID: 11190640
+Jaccard: 0.08878890826726933
+Precision: 
+Recall: 
+
+Rule: aunt
+Job ID: 11190641
+Jaccard: 0.08083867605557318
+Precision: 
+Recall: 
+
+Rule: successor
+Job ID: 11190642
+Jaccard: 0.3442814876786008
+Precision: 
+Recall: 
+
+Rule: predecessor
+Job ID: 11190643
+Jaccard: 0.34217783170639066
+Precision: 
+Recall:
+
+Rule: grandparent
+Job ID: 11190644
+Jaccard: 0.08571295471682558
+Precision:
+Recall: 
+
+EMBEDDING_DIM = 50
+OUTPUT_DIM = 50
+LEARNING_RATE = 0.00001
+NUM_EPOCHS = 10
+THRESHOLD = .01
+K = 1
+
+Rule: spouse
+Job ID: 11194935
+Jaccard: 0.3863475771968604
+Precision: 
+Recall: 
+
+Rule: uncle
+Job ID: 11194936
+Jaccard: 0.08878890826726933
+Precision: 
+Recall: 
+
+Rule: aunt
+Job ID: 11194937
+Jaccard: 0.08083867605557318
+Precision: 
+Recall: 
+
+Rule: successor
+Job ID: 11194938
+Jaccard: 
+Precision: 
+Recall: 
+
+Rule: predecessor
+Job ID: 11194939
+Jaccard: 
+Precision: 
+Recall:
+
+Rule: grandparent
+Job ID: 11194940
+Jaccard: 0.08571295471682558
+Precision:
+Recall: 
+
+
+

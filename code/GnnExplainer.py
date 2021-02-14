@@ -75,6 +75,82 @@ def tf_jaccard(true_exp,pred_exp):
     
     return score
 
+def replica_step(head,rel,tail,explanation):
+    
+    comp_graph = get_computation_graph(head,rel,tail,K,ADJACENCY_DATA,NUM_RELATIONS)
+
+    adj_mats = utils.get_adj_mats(comp_graph, NUM_ENTITIES, NUM_RELATIONS)
+
+    true_subgraphs = utils.get_adj_mats(tf.squeeze(explanation,axis=0),NUM_ENTITIES,NUM_RELATIONS)
+
+    total_loss = 0.0
+
+    for epoch in range(NUM_EPOCHS):
+
+        with tf.GradientTape(watch_accessed_variables=False) as tape:
+
+            tape.watch(masks)
+
+            masked_adjs = [adj_mats[i] * tf.sigmoid(masks[i]) for i in range(NUM_RELATIONS)]
+
+            pred = model([
+                    ALL_INDICES,
+                    tf.reshape(head,(1,-1)),
+                    tf.reshape(rel,(1,-1)),
+                    tf.reshape(tail,(1,-1)),
+                    masked_adjs
+                    ]
+                )
+
+            penalty = [tf.reduce_sum(tf.cast(tf.sigmoid(i.values) > .5,dtype=tf.float32)) for i in masked_adjs]
+
+            loss = -1 * tf.math.log(pred+0.00001) + (0.0001 * tf.reduce_sum(penalty))
+
+            tf.print(f"current loss {loss}")
+
+            total_loss += loss
+
+        grads = tape.gradient(loss,masks)
+        optimizer.apply_gradients(zip(grads,masks))
+
+    current_preds = []
+    total_jaccard = 0.0
+
+    for i in range(NUM_RELATIONS):
+
+        mask_i = adj_mats[i] * tf.nn.sigmoid(masks[i])
+
+        non_masked_indices = mask_i.indices[mask_i.values > THRESHOLD]
+
+        if (non_masked_indices.shape[0] == 0) and (tf.math.reduce_all(true_subgraphs[i].values == tf.zeros((1,3)))):
+            total_jaccard += 1.
+        else:
+            total_jaccard += tf_jaccard(true_subgraphs[i].indices,non_masked_indices)
+
+        pred = non_masked_indices.numpy()
+
+        current_preds.append(pred[:,1:])
+
+    total_jaccard /= NUM_RELATIONS
+
+    #tf.print(f"per observation jaccard: {total_jaccard}")
+
+    for mask in masks:
+        mask.assign(value=init_value)
+
+    return total_loss, total_jaccard, current_preds
+
+def distributed_replica_step(head,rel,tail,explanation):
+
+    per_replica_losses, per_replica_jaccard, current_preds = strategy.run(replica_step, args=(head,rel,tail,explanation))
+
+    reduce_loss = per_replica_losses / NUM_EPOCHS
+
+    #tf.print(f"reduced loss {reduce_loss}")
+    #tf.print(f"reduced jaccard {per_replica_jaccard}")
+
+    return reduce_loss,per_replica_jaccard, current_preds
+
 if __name__ == '__main__':
 
     import argparse
@@ -96,104 +172,15 @@ if __name__ == '__main__':
 
     RULE = args.rule
 
-    def replica_step(head,rel,tail,explanation):
-        
-        comp_graph = get_computation_graph(head,rel,tail,K,ADJACENCY_DATA,NUM_RELATIONS)
-
-        adj_mats = utils.get_adj_mats(comp_graph, NUM_ENTITIES, NUM_RELATIONS)
-
-        true_subgraphs = utils.get_adj_mats(tf.squeeze(explanation,axis=0),NUM_ENTITIES,NUM_RELATIONS)
-
-        total_loss = 0.0
-
-        for epoch in range(NUM_EPOCHS):
-
-            with tf.GradientTape(watch_accessed_variables=False) as tape:
-
-                tape.watch(masks)
-
-                masked_adjs = [adj_mats[i] * tf.sigmoid(masks[i]) for i in range(NUM_RELATIONS)]
-
-                pred = model([
-                        ALL_INDICES,
-                        tf.reshape(head,(1,-1)),
-                        tf.reshape(rel,(1,-1)),
-                        tf.reshape(tail,(1,-1)),
-                        masked_adjs
-                        ]
-                    )
-
-                penalty = [tf.reduce_sum(tf.cast(tf.sigmoid(i.values) > .5,dtype=tf.float32)) for i in masked_adjs]
-
-                loss = -1 * tf.math.log(pred+0.00001) + (0.0001 * tf.reduce_sum(penalty))
-
-                tf.print(f"current loss {loss}")
-
-                total_loss += loss
-
-            grads = tape.gradient(loss,masks)
-            optimizer.apply_gradients(zip(grads,masks))
-
-        current_preds = []
-        total_jaccard = 0.0
-
-        for i in range(NUM_RELATIONS):
-
-            mask_i = adj_mats[i] * tf.nn.sigmoid(masks[i])
-
-            non_masked_indices = mask_i.indices[mask_i.values > THRESHOLD]
-
-            if (non_masked_indices.shape[0] == 0) and (tf.math.reduce_all(true_subgraphs[i].values == tf.zeros((1,3)))):
-                total_jaccard += 1.
-            else:
-                total_jaccard += tf_jaccard(true_subgraphs[i].indices,non_masked_indices)
-
-            pred = non_masked_indices.numpy()
-
-            current_preds.append(pred[:,1:])
-
-        total_jaccard /= NUM_RELATIONS
-
-        #tf.print(f"per observation jaccard: {total_jaccard}")
-
-        for mask in masks:
-            mask.assign(value=init_value)
-
-        return total_loss, total_jaccard, current_preds
-
-    def distributed_replica_step(head,rel,tail,explanation):
-
-        per_replica_losses, per_replica_jaccard, current_preds = strategy.run(replica_step, args=(head,rel,tail,explanation))
-
-        reduce_loss = per_replica_losses / NUM_EPOCHS
-
-        #tf.print(f"reduced loss {reduce_loss}")
-        #tf.print(f"reduced jaccard {per_replica_jaccard}")
-
-        return reduce_loss,per_replica_jaccard, current_preds
-
     data = np.load(os.path.join('..','data','royalty.npz'))
 
-    if RULE == 'full_data':
-        triples,traces,nopred = utils.concat_triples(data, data['rules'])
-        entities = data['all_entities'].tolist()
-        relations = data['all_relations'].tolist()
-    else:
-        triples,traces,nopred = utils.concat_triples(data, [RULE,'brother','sister'])
-        sister_relations = data['sister_relations'].tolist()
-        sister_entities = data['sister_entities'].tolist()
-
-        brother_relations = data['brother_relations'].tolist()
-        brother_entities = data['brother_entities'].tolist()
-
-        entities = np.unique(data[RULE + '_entities'].tolist()+brother_entities+sister_entities).tolist()
-        relations = np.unique(data[RULE + '_relations'].tolist()+brother_relations+sister_relations).tolist()
+    triples,traces,nopred,entities,relations = utils.get_data(data,RULE)
 
     NUM_ENTITIES = len(entities)
     NUM_RELATIONS = len(relations)
     EMBEDDING_DIM = 50
     OUTPUT_DIM = 50
-    LEARNING_RATE = .001
+    LEARNING_RATE = 0.001#0.00001#.0001
     NUM_EPOCHS = 10
     THRESHOLD = .01
     K = 1
@@ -242,7 +229,7 @@ if __name__ == '__main__':
 
     for train_idx,test_idx in kf.split(X=triples):
 
-        #test_idx = test_idx[0:3]
+        #test_idx = test_idx[0:2]
 
         preds = []
 
@@ -299,7 +286,7 @@ if __name__ == '__main__':
     print(f"using learning rate: {LEARNING_RATE}, and {NUM_EPOCHS} epochs")
     print(f"threshold {THRESHOLD}, and k={K}")
 
-    np.savez(os.path.join('..','data','preds','gnn_explainer_'+RULE+'_preds.npz'),
+    np.savez(os.path.join('..','data','preds','gnn_explainer_'+RULE+'_lr_' + str(LEARNING_RATE)+'_preds.npz'),
         best_idx=best_idx, preds=best_preds,test_idx=best_test_indices
         )
 

@@ -37,28 +37,6 @@ class RGCN_Layer(tf.keras.layers.Layer):
                 seed=self.seed
             )
         )
-    
-    # def call(self, inputs):
-        
-    #     embeddings,head_idx,head_e,tail_idx,tail_e,adj_mats = inputs
-            
-    #     head_output = tf.matmul(head_e,self.self_kernel)
-    #     tail_output = tf.matmul(tail_e,self.self_kernel)
-                
-    #     for i in range(self.num_relations):
-            
-    #         adj_i = adj_mats[i]
-            
-    #         head_adj = tf.nn.embedding_lookup(adj_i,head_idx)
-    #         tail_adj = tf.nn.embedding_lookup(adj_i,tail_idx)
-            
-    #         head_update = tf.matmul(head_adj,embeddings)
-    #         tail_update = tf.matmul(tail_adj,embeddings)
-
-    #         head_output += tf.matmul(head_update,self.relation_kernel[i])
-    #         tail_output += tf.matmul(tail_update,self.relation_kernel[i])
-       
-    #     return head_output, tail_output
 
     def call(self,inputs):
 
@@ -158,11 +136,6 @@ class RGCN_Model(tf.keras.Model):
             loss = self.compiled_loss(y_true,y_pred)
 
             loss *= (1/ self.num_entities)
-            
-            # pos_loss = self.compiled_loss(y_pos_true,y_pos_pred)
-            # neg_loss = self.compiled_loss(y_neg_true,y_neg_pred)
-
-            # loss = (pos_loss + neg_loss)
 
         grads = tape.gradient(loss, self.trainable_weights)
         self.optimizer.apply_gradients(zip(grads, self.trainable_weights))
@@ -262,20 +235,7 @@ if __name__ == '__main__':
 
     data = np.load(os.path.join('..','data','royalty.npz'))
 
-    if RULE == 'full_data':
-        triples,traces,nopred = utils.concat_triples(data, data['rules'])
-        entities = data['all_entities'].tolist()
-        relations = data['all_relations'].tolist()
-    else:
-        triples,traces,nopred = utils.concat_triples(data, [RULE,'brother','sister'])
-        sister_relations = data['sister_relations'].tolist()
-        sister_entities = data['sister_entities'].tolist()
-
-        brother_relations = data['brother_relations'].tolist()
-        brother_entities = data['brother_entities'].tolist()
-
-        entities = np.unique(data[RULE + '_entities'].tolist()+brother_entities+sister_entities).tolist()
-        relations = np.unique(data[RULE + '_relations'].tolist()+brother_relations+sister_relations).tolist()
+    triples,traces,nopred,entities,relations = utils.get_data(data,RULE)
 
     NUM_ENTITIES = len(entities)
     NUM_RELATIONS = len(relations)
@@ -298,7 +258,8 @@ if __name__ == '__main__':
         test_size=.2,
         seed=SEED, 
         allow_duplication=False, 
-        filtered_test_predicates=None)
+        filtered_test_predicates=None
+    )
 
     X_train = full_data[idx_train]
     X_train = np.concatenate([X_train,nopred2idx],axis=0)
@@ -343,7 +304,7 @@ if __name__ == '__main__':
         verbose=1
     )
 
-    model.save_weights(os.path.join('..','data','weights',RULE+'.h5'))
+    #model.save_weights(os.path.join('..','data','weights',RULE+'.h5'))
 
     preds = model.predict(
         x=[

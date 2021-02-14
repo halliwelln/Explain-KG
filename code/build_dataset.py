@@ -62,6 +62,14 @@ for rule in rules:
 
     all_triples.append(triples)
     all_traces.append(traces)
+
+    if rule == 'spouse':
+
+        swapped_triples = triples[:,[2,1,0]]
+        swapped_traces = traces[:,:,[2,1,0]]
+
+        triples = np.concatenate([triples,swapped_triples],axis=0)
+        traces = np.concatenate([traces,swapped_traces],axis=0)
     
     data[rule + '_triples'] = triples
     data[rule + '_traces'] = traces
@@ -69,10 +77,10 @@ for rule in rules:
     data[rule + '_relations'] = np.unique(np.concatenate([triples[:,1], exp_relations],axis=0))
 
 all_triples = np.concatenate(all_triples,axis=0)
-print(f"all_triples shape: {all_triples.shape}") #all_triples shape: (62457, 3)
+print(f"all_triples shape: {all_triples.shape}")
 
 all_traces = np.concatenate(all_traces,axis=0)
-print(f"all_traces shape: {all_traces.shape}") #all_traces shape: (62457, 3, 3)
+print(f"all_traces shape: {all_traces.shape}")
 
 all_exp_entities = np.array([[all_traces[:,i,:][:,0],
     all_traces[:,i,:][:,2]] for i in range(MAX_PADDING)]).flatten()
@@ -90,6 +98,8 @@ print('Saving numpy file...')
 
 np.savez(os.path.join('..','data','royalty.npz'),**data)
 
+print('Done')
+
 # ttl_dir = os.path.join('..','data','traces')
 # ttl_files = [f for f in os.listdir(ttl_dir) if f.endswith('.ttl')]
 # print(ttl_dir)
@@ -103,5 +113,3 @@ np.savez(os.path.join('..','data','royalty.npz'),**data)
 # print(len(g))
 #print('Saving rdf file...')
 # #g.serialize(destination=os.path.join('..','data','rules','royalty'),format='xml')
-
-print('Done')

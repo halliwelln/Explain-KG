@@ -85,20 +85,7 @@ if __name__ == "__main__":
 
     data = np.load(os.path.join('..','data','royalty.npz'))
 
-    if RULE == 'full_data':
-        triples,traces,nopred = utils.concat_triples(data, data['rules'])
-        entities = data['all_entities'].tolist()
-        relations = data['all_relations'].tolist()
-    else:
-        triples,traces,nopred = utils.concat_triples(data, [RULE,'brother','sister'])
-        sister_relations = data['sister_relations'].tolist()
-        sister_entities = data['sister_entities'].tolist()
-
-        brother_relations = data['brother_relations'].tolist()
-        brother_entities = data['brother_entities'].tolist()
-
-        entities = np.unique(data[RULE + '_entities'].tolist()+brother_entities+sister_entities).tolist()
-        relations = np.unique(data[RULE + '_relations'].tolist()+brother_relations+sister_relations).tolist()
+    triples,traces,nopred,entities,relations = utils.get_data(data,RULE)
 
     NUM_ENTITIES = len(entities)
     NUM_RELATIONS = len(relations)

@@ -4,4 +4,3 @@
 'successor'
 'predecessor'
 'grandparent'
-'full_data'
