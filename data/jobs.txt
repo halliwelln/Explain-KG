@@ -99,278 +99,83 @@ Recall:
 
 Rule: full_data
 Job ID: 11262671
-Jaccard: 
+Jaccard: 0.06629663891458817
 Precision: 
 Recall:
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-########################################
-Rule: spouse
-Job ID: 11182893
-EMBEDDING_DIM = 50
-OUTPUT_DIM = 50    
-LEARNING_RATE = 1e-3
-NUM_EPOCHS = 50
-Accuracy: 0.9700996677740864
-
-Rule: uncle
-Job ID: 11182894
-EMBEDDING_DIM = 50
-OUTPUT_DIM = 50    
-LEARNING_RATE = 1e-3
-NUM_EPOCHS = 200
-Accuracy: 0.7346408999134698
-
-Rule: aunt
-Job ID: 11182895
-EMBEDDING_DIM = 50
-OUTPUT_DIM = 50    
-LEARNING_RATE = 1e-3
-NUM_EPOCHS = 200
-Accuracy: 0.6514790410766859
-
-Rule: successor
-Job ID: 11182896
-EMBEDDING_DIM = 50
-OUTPUT_DIM = 50    
-LEARNING_RATE = 1e-3
-NUM_EPOCHS = 200
-Accuracy: 0.80601473809998
-
-Rule: predecessor
-Job ID: 11182897
-EMBEDDING_DIM = 50
-OUTPUT_DIM = 50    
-LEARNING_RATE = 1e-3
-NUM_EPOCHS = 200
-Accuracy: 0.8129854610635332
-
-Rule: grandparent
-Job ID: 11182898
-EMBEDDING_DIM = 50
-OUTPUT_DIM = 50    
-LEARNING_RATE = 1e-3
-NUM_EPOCHS = 200
-Accuracy: 0.7063671622495152
-
-Rule: full_data
-Job ID: 11182899
-EMBEDDING_DIM = 50
-OUTPUT_DIM = 50    
-LEARNING_RATE = 1e-3
-NUM_EPOCHS = 50
-Accuracy: 0.6733113179225457
-########################################
-
-ExplaiNE
-
-Rule: spouse
-Job ID: 11186775
-Jaccard: 0.22647527910685805
-Precision: 
-Recall: 
-
-Rule: uncle
-Job ID: 11186776
-Jaccard: 0.0283737024221453
-Precision: 
-Recall: 
-
-Rule: aunt
-Job ID: 11186777
-Jaccard: 0.027815163750560756
-Precision: 
-Recall: 
-
-Rule: successor
-Job ID: 11186778
-Jaccard: 0.12470138557095078
-Precision:
-Recall: 
-
-Rule: predecessor
-Job ID: 11186779
-Jaccard: 0.10803059273422562
-Precision: 
-Recall: 
-
-Rule: grandparent
-Job ID: 11186780
-Jaccard: 0.04654771140418905
-Precision: 
-Recall: 
-
-Rule: full_data
-Job ID: 11186789
-Jaccard: 0.037010351370174735
-Precision: 
-Recall:
 ########################################
 
 Gnn Explainer
 
 EMBEDDING_DIM = 50
 OUTPUT_DIM = 50
-LEARNING_RATE = .001
+LEARNING_RATE = 0.001
 NUM_EPOCHS = 10
 THRESHOLD = .01
 K = 1
 
 Rule: spouse
-Job ID: 11182912
-Jaccard: 0.3863475771968604
+Job ID: 11262718
+Jaccard: 0.322548514657921
 Precision: 
 Recall: 
 
 Rule: uncle
-Job ID: 11182913
-Jaccard: 0.08878890826726933
+Job ID: 11262719
+Jaccard: 0.07996430739548176
 Precision: 
 Recall: 
 
 Rule: aunt
-Job ID: 11182914
-Jaccard: 0.08083867605557318
+Job ID: 11262720
+Jaccard: 0.07316710153996989
 Precision: 
 Recall: 
 
 Rule: successor
-Job ID: 11182915
-Jaccard: 0.3442814876786008
+Job ID: 11262721
+Jaccard: 0.3432783849725822
 Precision: 
 Recall: 
 
 Rule: predecessor
-Job ID: 11182916
-Jaccard: 0.34217783170639066
+Job ID: 11262722
+Jaccard: 0.34120308172615066
 Precision: 
 Recall:
 
 Rule: grandparent
-Job ID: 11182917
+Job ID: 11262723
 Jaccard: 0.08571295471682558
 Precision:
 Recall: 
 
-Rule: full_data
-Job ID: 11182918
-Jaccard:
-Precision:
-Recall: 
 
-EMBEDDING_DIM = 50
-OUTPUT_DIM = 50
-LEARNING_RATE = .0001
-NUM_EPOCHS = 10
-THRESHOLD = .01
-K = 1
 
-Rule: spouse
-Job ID: 11190639
-Jaccard: 0.3863475771968604
-Precision: 
-Recall: 
 
-Rule: uncle
-Job ID: 11190640
-Jaccard: 0.08878890826726933
-Precision: 
-Recall: 
 
-Rule: aunt
-Job ID: 11190641
-Jaccard: 0.08083867605557318
-Precision: 
-Recall: 
 
-Rule: successor
-Job ID: 11190642
-Jaccard: 0.3442814876786008
-Precision: 
-Recall: 
 
-Rule: predecessor
-Job ID: 11190643
-Jaccard: 0.34217783170639066
-Precision: 
-Recall:
 
-Rule: grandparent
-Job ID: 11190644
-Jaccard: 0.08571295471682558
-Precision:
-Recall: 
 
-EMBEDDING_DIM = 50
-OUTPUT_DIM = 50
-LEARNING_RATE = 0.00001
-NUM_EPOCHS = 10
-THRESHOLD = .01
-K = 1
 
-Rule: spouse
-Job ID: 11194935
-Jaccard: 0.3863475771968604
-Precision: 
-Recall: 
 
-Rule: uncle
-Job ID: 11194936
-Jaccard: 0.08878890826726933
-Precision: 
-Recall: 
 
-Rule: aunt
-Job ID: 11194937
-Jaccard: 0.08083867605557318
-Precision: 
-Recall: 
 
-Rule: successor
-Job ID: 11194938
-Jaccard: 
-Precision: 
-Recall: 
 
-Rule: predecessor
-Job ID: 11194939
-Jaccard: 
-Precision: 
-Recall:
 
-Rule: grandparent
-Job ID: 11194940
-Jaccard: 0.08571295471682558
-Precision:
-Recall: 
+
+
+
+
+
+
+
+
+
+
+
 
 
 
