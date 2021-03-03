@@ -4,6 +4,21 @@ import numpy as np
 import tensorflow as tf
 from scipy import sparse
 
+def jaccard_score(true_exp,pred_exp):
+
+    num_true_traces = true_exp.shape[0]
+    num_pred_traces = pred_exp.shape[0]
+
+    count = 0
+    for pred_row in pred_exp:
+        for true_row in true_exp:
+            if (pred_row == true_row).all():
+                count +=1
+
+    score = count / (num_true_traces + num_pred_traces-count)
+    
+    return score
+
 def get_data(data,rule):
 
     if rule == 'full_data':
