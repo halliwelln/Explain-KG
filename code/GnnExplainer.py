@@ -93,6 +93,15 @@ def replica_step(head,rel,tail,explanation):
 
             masked_adjs = [adj_mats[i] * tf.sigmoid(masks[i]) for i in range(NUM_RELATIONS)]
 
+            before_pred = model([
+                    ALL_INDICES,
+                    tf.reshape(head,(1,-1)),
+                    tf.reshape(rel,(1,-1)),
+                    tf.reshape(tail,(1,-1)),
+                    adj_mats
+                    ]
+                )
+
             pred = model([
                     ALL_INDICES,
                     tf.reshape(head,(1,-1)),
@@ -102,9 +111,11 @@ def replica_step(head,rel,tail,explanation):
                     ]
                 )
 
-            penalty = [tf.reduce_sum(tf.cast(tf.sigmoid(i.values) > .5,dtype=tf.float32)) for i in masked_adjs]
+            #penalty = [tf.reduce_sum(tf.cast(tf.sigmoid(i.values) > .5,dtype=tf.float32)) for i in masked_adjs]
 
-            loss = -1 * tf.math.log(pred+0.00001) + (0.0001 * tf.reduce_sum(penalty))
+            #loss = -1 * tf.math.log(pred+0.00001) + (0.0001 * tf.reduce_sum(penalty))
+
+            loss = - before_pred * tf.math.log(pred+0.00001)
 
             tf.print(f"current loss {loss}")
 
@@ -286,7 +297,7 @@ if __name__ == '__main__':
     print(f"using learning rate: {LEARNING_RATE}, and {NUM_EPOCHS} epochs")
     print(f"threshold {THRESHOLD}, and k={K}")
 
-    np.savez(os.path.join('..','data','preds','gnn_explainer_'+RULE+'_lr_' + str(LEARNING_RATE)+'_preds.npz'),
+    np.savez(os.path.join('..','data','preds','gnn_explainer_'+RULE+'_preds.npz'),
         best_idx=best_idx, preds=best_preds,test_idx=best_test_indices
         )
 

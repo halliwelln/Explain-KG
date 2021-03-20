@@ -59,6 +59,8 @@ NUM_EPOCHS = 50
 Accuracy: 0.6607378854625551
 
 ########################################
+Eval jobs: 11316248 - 54
+
 ExplaiNE
 
 Rule: spouse
@@ -116,37 +118,37 @@ THRESHOLD = .01
 K = 1
 
 Rule: spouse
-Job ID: 11262718
+Job ID: 11312770
 Jaccard: 0.322548514657921
 Precision: 0.3613024913707455
 Recall: 1.0
 
 Rule: uncle
-Job ID: 11262719
+Job ID: 11314936
 Jaccard: 0.07996430739548176
 Precision: 0.03640153396326537
 Recall: 1.0
 
 Rule: aunt
-Job ID: 11262720
+Job ID: 11314937
 Jaccard: 0.07316710153996989
 Precision: 0.03199487255572849
 Recall: 1.0
 
 Rule: successor
-Job ID: 11262721
+Job ID: 11314938
 Jaccard: 0.3432783849725822
 Precision: 0.13662451479861482
 Recall: 1.0
 
 Rule: predecessor
-Job ID: 11262722
+Job ID: 11314939
 Jaccard: 0.34120308172615066
 Precision: 0.13636320940636787
 Recall: 1.0
 
 Rule: grandparent
-Job ID: 11262723
+Job ID: 11314940
 Jaccard: 0.08571295471682558
 Precision: 0.039025980358825194
 Recall: 1.0
@@ -156,20 +158,20 @@ Recall: 1.0
 
 Error analysis:
 ExplaiNE:
-Spouse: 11292184
-Uncle:
-Aunt:
-Successor:
-Predecessor:
-Grandparent:
+Spouse: 11316286
+Uncle: 11316287
+Aunt: 11316288
+Successor: 11316289
+Predecessor: 11316290
+Grandparent: 11316291
 
 GNNExplainer:
-Spouse: 11292110
-Uncle: 11292111
-Aunt: 11292112
-Successor: 11292113
-Predecessor: 11292114
-Grandparent: 11292115
+Spouse: 11316304
+Uncle: 11316305
+Aunt: 11316306
+Successor: 11316307
+Predecessor: 11316308
+Grandparent: 11316309
 
 
 
