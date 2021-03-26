@@ -73,7 +73,7 @@ for trip in plot_triples:
     
     head,rel,tail = trip
     
-    label_dict [(head,tail)] = 'has' + rel.title()
+    label_dict[(head,tail)] = 'has' + rel.title()
 
 plt.figure(figsize=(10,10))
 
