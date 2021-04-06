@@ -1,6 +1,0 @@
-'spouse'
-'uncle'
-'aunt'
-'successor'
-'predecessor'
-'grandparent'

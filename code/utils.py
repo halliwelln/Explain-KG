@@ -19,24 +19,45 @@ def jaccard_score(true_exp,pred_exp):
     
     return score
 
+# def get_data(data,rule):
+
+#     if rule == 'full_data':
+#         triples,traces,nopred = concat_triples(data, data['rules'])
+#         entities = data['all_entities'].tolist()
+#         relations = data['all_relations'].tolist()
+#     elif rule != 'grandparent':
+#         triples,traces,nopred = concat_triples(data, [rule,'brother','sister'])
+#         sister_relations = data['sister_relations'].tolist()
+#         sister_entities = data['sister_entities'].tolist()
+
+#         brother_relations = data['brother_relations'].tolist()
+#         brother_entities = data['brother_entities'].tolist()
+
+#         entities = np.unique(data[rule + '_entities'].tolist()+brother_entities+sister_entities).tolist()
+#         relations = np.unique(data[rule + '_relations'].tolist()+brother_relations+sister_relations).tolist()
+
+#     elif rule == 'grandparent':
+#         triples,traces = data[rule + '_triples'],data[rule + '_traces']
+#         entities = data[rule+'_entities'].tolist()
+#         relations = data[rule+'_relations'].tolist()
+#         nopred = []
+
+#     return triples,traces,nopred,entities,relations
+
 def get_data(data,rule):
 
     if rule == 'full_data':
-        triples,traces,nopred = concat_triples(data, data['rules'])
+
+        triples,traces = concat_triples(data, data['rules'])
         entities = data['all_entities'].tolist()
         relations = data['all_relations'].tolist()
+
     else:
-        triples,traces,nopred = concat_triples(data, [rule,'brother','sister'])
-        sister_relations = data['sister_relations'].tolist()
-        sister_entities = data['sister_entities'].tolist()
+        triples,traces = concat_triples(data, [rule])
+        entities = data[rule+'_entities'].tolist()
+        relations = data[rule+'_relations'].tolist()
 
-        brother_relations = data['brother_relations'].tolist()
-        brother_entities = data['brother_entities'].tolist()
-
-        entities = np.unique(data[rule + '_entities'].tolist()+brother_entities+sister_entities).tolist()
-        relations = np.unique(data[rule + '_relations'].tolist()+brother_relations+sister_relations).tolist()
-
-    return triples,traces,nopred,entities,relations
+    return triples,traces,entities,relations
 
 def train_test_split_no_unseen(X, test_size=100, seed=0, allow_duplication=False, filtered_test_predicates=None):
 
@@ -182,29 +203,47 @@ def concat_triples(data, rules):
 
     triples = []
     traces = []
-    no_pred_triples = []
-    no_pred_traces = []
 
     for rule in rules:
 
         triple_name = rule + '_triples'
         traces_name = rule + '_traces'
 
-        if ('brother' in rule) or ('sister' in rule):
-            no_pred_triples.append(data[triple_name])
-            no_pred_traces.append(data[traces_name])
-        else:
-            triples.append(data[triple_name])
-            traces.append(data[traces_name])
+        triples.append(data[triple_name])
+        traces.append(data[traces_name])
 
     triples = np.concatenate(triples, axis=0)
     traces = np.concatenate(traces, axis=0)
-    no_pred_triples = np.concatenate(no_pred_triples, axis=0)
-    no_pred_traces = np.concatenate(no_pred_traces, axis=0)
-
-    no_pred = np.concatenate([no_pred_triples,no_pred_traces.reshape(-1,3)],axis=0)
     
-    return triples, traces, no_pred
+    return triples, traces
+
+# def concat_triples(data, rules):
+
+#     triples = []
+#     traces = []
+#     no_pred_triples = []
+#     no_pred_traces = []
+
+#     for rule in rules:
+
+#         triple_name = rule + '_triples'
+#         traces_name = rule + '_traces'
+
+#         if ('brother' in rule) or ('sister' in rule):
+#             no_pred_triples.append(data[triple_name])
+#             no_pred_traces.append(data[traces_name])
+#         else:
+#             triples.append(data[triple_name])
+#             traces.append(data[traces_name])
+
+#     triples = np.concatenate(triples, axis=0)
+#     traces = np.concatenate(traces, axis=0)
+#     no_pred_triples = np.concatenate(no_pred_triples, axis=0)
+#     no_pred_traces = np.concatenate(no_pred_traces, axis=0)
+
+#     no_pred = np.concatenate([no_pred_triples,no_pred_traces.reshape(-1,3)],axis=0)
+    
+#     return triples, traces, no_pred
 
 def array2idx(dataset,ent2idx,rel2idx):
     

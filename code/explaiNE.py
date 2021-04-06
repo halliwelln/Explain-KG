@@ -80,8 +80,8 @@ if __name__ == '__main__':
 
     NUM_ENTITIES = len(entities)
     NUM_RELATIONS = len(relations)
-    EMBEDDING_DIM = 50
-    OUTPUT_DIM = 50
+    EMBEDDING_DIM = 25
+    OUTPUT_DIM = 25
 
     ALL_INDICES = tf.reshape(tf.range(0,NUM_ENTITIES,1,dtype=tf.int64), (1,-1))
 
@@ -163,7 +163,7 @@ if __name__ == '__main__':
     print(f"{RULE} jaccard: {cv_scores[best_idx]}")
 
     np.savez(os.path.join('..','data','preds','explaine_'+RULE+'_preds.npz'),
-        preds=best_preds,cv_idx=best_idx,test_idx=best_test_indices
+        preds=best_preds,best_idx=best_idx,test_idx=best_test_indices
         )
 
     # d = np.load(os.path.join('..','data','preds','explaine_'+RULE+'_preds.npz'))

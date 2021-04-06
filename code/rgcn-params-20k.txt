@@ -1,0 +1,4 @@
+'spouse' 50 25 1e-3
+'successor' 200 25 1e-3
+'predecessor' 200 25 1e-3
+'full_data' 50 25 1e-3

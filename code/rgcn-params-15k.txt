@@ -1,0 +1,3 @@
+'royalty_15k' 'spouse' 200 25 1e-3
+'royalty_15k' 'grandparent' 2000 25 1e-3
+'royalty_15k' 'full_data' 2000 25 1e-3

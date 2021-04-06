@@ -1,7 +1,0 @@
-'spouse' 50
-'uncle' 200
-'aunt' 200
-'successor' 200
-'predecessor' 200
-'grandparent' 200
-'full_data' 50

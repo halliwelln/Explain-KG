@@ -224,32 +224,35 @@ if __name__ == '__main__':
     rn.seed(SEED)
 
     parser = argparse.ArgumentParser()
-
-    parser.add_argument('rule',type=str,help=
-        'Enter which rule to use spouse,successor,...etc (str), -1 (str) for full dataset')
+    parser.add_argument('dataset', type=str,
+        help='royalty_15k or royalty_20k')
+    parser.add_argument('rule',type=str,
+        help='spouse,successor,...,full_data')
     parser.add_argument('num_epochs',type=int)
+    parser.add_argument('embedding_dim',type=int)
+    parser.add_argument('learning_rate',type=float)
 
     args = parser.parse_args()
 
+    DATASET = args.dataset
     RULE = args.rule
+    NUM_EPOCHS = args.num_epochs
+    EMBEDDING_DIM = args.embedding_dim#25
+    LEARNING_RATE = args.learning_rate#1e-3
+    OUTPUT_DIM = EMBEDDING_DIM
 
-    data = np.load(os.path.join('..','data','royalty.npz'))
+    data = np.load(os.path.join('..','data',DATASET+'.npz'))
 
-    triples,traces,nopred,entities,relations = utils.get_data(data,RULE)
+    triples,traces,entities,relations = utils.get_data(data,RULE)
 
     NUM_ENTITIES = len(entities)
     NUM_RELATIONS = len(relations)
-    EMBEDDING_DIM = 50
-    OUTPUT_DIM = 50    
-    LEARNING_RATE = 1e-3
-    NUM_EPOCHS = args.num_epochs
 
     ent2idx = dict(zip(entities, range(NUM_ENTITIES)))
     rel2idx = dict(zip(relations, range(NUM_RELATIONS)))
 
     triples2idx = utils.array2idx(triples,ent2idx,rel2idx)
     traces2idx = utils.array2idx(traces,ent2idx,rel2idx)
-    nopred2idx = utils.array2idx(nopred,ent2idx,rel2idx)
 
     full_data = np.concatenate([triples2idx,traces2idx.reshape(-1,3)],axis=0)
 
@@ -262,8 +265,6 @@ if __name__ == '__main__':
     )
 
     X_train = full_data[idx_train]
-    X_train = np.concatenate([X_train,nopred2idx],axis=0)
-
     X_test = full_data[idx_test]
 
     adj_mats = utils.get_adj_mats(X_train,NUM_ENTITIES,NUM_RELATIONS)
@@ -271,8 +272,8 @@ if __name__ == '__main__':
     X_train = np.expand_dims(X_train,axis=0)
     X_test = np.expand_dims(X_test,axis=0)
 
-    all_indices = np.arange(NUM_ENTITIES).reshape(1,-1)
-    
+    ALL_INDICES = np.arange(NUM_ENTITIES).reshape(1,-1)
+
     # strategy = tf.distribute.MirroredStrategy()
     # print(f'Number of devices: {strategy.num_replicas_in_sync}')
 
@@ -292,7 +293,7 @@ if __name__ == '__main__':
 
     model.fit(
         x=[
-            all_indices,
+            ALL_INDICES,
             X_train[:,:,0],
             X_train[:,:,1],
             X_train[:,:,2],
@@ -304,15 +305,21 @@ if __name__ == '__main__':
         verbose=1
     )
 
-    #model.save_weights(os.path.join('..','data','weights',RULE+'.h5'))
+    model.save_weights(os.path.join('..','data','weights',DATASET,DATASET + '_'+RULE+'.h5'))
 
     preds = model.predict(
         x=[
-            all_indices,
+            ALL_INDICES,
             X_test[:,:,0],
             X_test[:,:,1],
             X_test[:,:,2],
             adj_mats
         ]
     )
-    print(f'{RULE} Accuracy {(preds > .5).sum()/X_test.shape[1]}')
+
+    acc = (preds > .5).sum()/X_test.shape[1]
+
+    print(f'Num epochs: {NUM_EPOCHS}')
+    print(f'Embedding dim: {EMBEDDING_DIM}')
+    print(f'learning_rate: {LEARNING_RATE}')
+    print(f'{DATASET} {RULE} accuracy {acc}')

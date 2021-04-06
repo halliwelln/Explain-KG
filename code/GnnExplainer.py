@@ -177,27 +177,37 @@ if __name__ == '__main__':
 
     parser = argparse.ArgumentParser()
 
-    parser.add_argument('rule',type=str,help=
-        'Enter which rule to use spouse,successor,...etc (str), full_data for full dataset')
+    parser.add_argument('dataset', type=str,
+        help='royalty_15k or royalty_20k')
+    parser.add_argument('rule',type=str,
+        help='spouse,successor,...,full_data')
+    parser.add_argument('num_epochs',type=int)
+    parser.add_argument('embedding_dim',type=int)
+    parser.add_argument('learning_rate',type=float)
+
     args = parser.parse_args()
 
+    DATASET = args.dataset
     RULE = args.rule
+    NUM_EPOCHS = args.num_epochs#10
+    EMBEDDING_DIM = args.embedding_dim#25
+    LEARNING_RATE = args.learning_rate#0.001#0.00001#.0001
 
-    data = np.load(os.path.join('..','data','royalty.npz'))
+    data = np.load(os.path.join('..','data',DATASET+'.npz'))
 
-    triples,traces,nopred,entities,relations = utils.get_data(data,RULE)
+    triples,traces,entities,relations = utils.get_data(data,RULE)
 
     NUM_ENTITIES = len(entities)
     NUM_RELATIONS = len(relations)
-    EMBEDDING_DIM = 50
-    OUTPUT_DIM = 50
-    LEARNING_RATE = 0.001#0.00001#.0001
-    NUM_EPOCHS = 10
+    OUTPUT_DIM = EMBEDDING_DIM
     THRESHOLD = .01
     K = 1
 
     ent2idx = dict(zip(entities, range(NUM_ENTITIES)))
     rel2idx = dict(zip(relations, range(NUM_RELATIONS)))
+
+    idx2ent = dict(zip(range(NUM_ENTITIES),entities))
+    idx2rel = dict(zip(range(NUM_RELATIONS),relations))
 
     ALL_INDICES = tf.reshape(tf.range(0,NUM_ENTITIES,1,dtype=tf.int64), (1,-1))
 
@@ -216,7 +226,7 @@ if __name__ == '__main__':
             seed=SEED
         )
 
-        model.load_weights(os.path.join('..','data','weights',RULE+'.h5'))
+        model.load_weights(os.path.join('..','data','weights',DATASET,DATASET+'_'+RULE+'.h5'))
 
         optimizer = tf.keras.optimizers.Adam(learning_rate=LEARNING_RATE)
 
@@ -246,7 +256,6 @@ if __name__ == '__main__':
 
         train2idx = utils.array2idx(triples[train_idx],ent2idx,rel2idx)
         trainexp2idx = utils.array2idx(traces[train_idx],ent2idx,rel2idx)
-        nopred2idx = utils.array2idx(nopred,ent2idx,rel2idx)
         
         test2idx = utils.array2idx(triples[test_idx],ent2idx,rel2idx)
         testexp2idx = utils.array2idx(traces[test_idx],ent2idx,rel2idx)
@@ -254,7 +263,6 @@ if __name__ == '__main__':
         ADJACENCY_DATA = tf.concat([
             train2idx,
             trainexp2idx.reshape(-1,3),
-            nopred2idx,
             test2idx,
             testexp2idx.reshape(-1,3)
             ],axis=0
@@ -262,7 +270,6 @@ if __name__ == '__main__':
 
         del train2idx
         del trainexp2idx
-        del nopred2idx
 
         TEST_SIZE = test2idx.shape[0]
 
@@ -290,14 +297,37 @@ if __name__ == '__main__':
         test_indices.append(test_idx)
 
     best_idx = np.argmax(cv_scores)
-    best_preds = np.array(cv_preds[best_idx])
     best_test_indices = test_indices[best_idx]
 
-    print(f"{RULE} jaccard score: {cv_scores[best_idx]}")
-    print(f"using learning rate: {LEARNING_RATE}, and {NUM_EPOCHS} epochs")
-    print(f"threshold {THRESHOLD}, and k={K}")
+    best_preds = []
 
-    np.savez(os.path.join('..','data','preds','gnn_explainer_'+RULE+'_preds.npz'),
+    all_preds = np.array(cv_preds[best_idx])
+
+    for i in range(len(all_preds)):
+
+        preds_i = []
+
+        for rel_idx in range(NUM_RELATIONS):
+
+            triples_i = all_preds[i][rel_idx]
+
+            if triples_i.shape[0]:
+                rel_indices = (np.ones((triples_i.shape[0],1)) * rel_idx).astype(np.int64)
+                concat = np.concatenate([triples_i,rel_indices],axis=1)
+                preds_i.append(concat[:,[0,2,1]])
+        preds_i = np.concatenate(preds_i,axis=0)
+        best_preds.append(utils.idx2array(preds_i,idx2ent,idx2rel))
+
+    best_preds = np.array(best_preds,dtype=object)
+
+    print(f'Num epochs: {NUM_EPOCHS}')
+    print(f'Embedding dim: {EMBEDDING_DIM}')
+    print(f'learning_rate: {LEARNING_RATE}')
+    print(f'threshold {THRESHOLD}')
+
+    print(f"{DATASET} {RULE} jaccard score: {cv_scores[best_idx]}")
+
+    np.savez(os.path.join('..','data','preds',DATASET,'gnn_explainer_'+DATASET+'_'+RULE+'_preds.npz'),
         best_idx=best_idx, preds=best_preds,test_idx=best_test_indices
         )
 

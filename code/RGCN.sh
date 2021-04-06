@@ -2,7 +2,7 @@
 
 conda activate kg_env_new
 
-./RGCN.py $1 $2
+./RGCN.py $1 $2 $3 $4 $5
 #./RGCN.py 'spouse' 50
 #./RGCN.py 'uncle' 200
 #./RGCN.py 'aunt' 200

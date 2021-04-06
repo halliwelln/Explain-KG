@@ -1,0 +1,55 @@
+Jobs: 
+
+########################################
+RGCN
+Rule: spouse
+Job ID: 11330765
+EMBEDDING_DIM = 25
+LEARNING_RATE = 1e-3
+NUM_EPOCHS = 200
+Accuracy: 0.8024363233665559
+
+Rule: grandparent
+Job ID: 11330766
+EMBEDDING_DIM = 25
+LEARNING_RATE = 1e-3
+NUM_EPOCHS = 2000
+Accuracy: 0.7500538677009265
+
+Rule: full_data
+Job ID: 11330767
+EMBEDDING_DIM = 25
+LEARNING_RATE = 1e-3
+NUM_EPOCHS = 2000
+Accuracy: 0.7032871027629136
+
+
+########################################
+GNNExplainer
+
+RULE = spouse
+NUM_EPOCHS = 10
+EMBEDDING_DIM = 25
+LEARNING_RATE = 0.001
+Jaccard:
+Precision:
+Recall:
+F1: 
+
+RULE = grandparent
+NUM_EPOCHS = 10
+EMBEDDING_DIM = 25
+LEARNING_RATE = 0.001
+Jaccard:
+Precision:
+Recall:
+F1: 
+
+RULE = full_data
+NUM_EPOCHS = 10
+EMBEDDING_DIM = 25
+LEARNING_RATE = 0.001
+Jaccard:
+Precision:
+Recall:
+F1: 

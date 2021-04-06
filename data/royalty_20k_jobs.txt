@@ -1,0 +1,39 @@
+Jobs: 
+
+RGCN
+########################################
+Rule: spouse
+Job ID:
+EMBEDDING_DIM = 25
+LEARNING_RATE = 1e-3
+NUM_EPOCHS = 50
+Accuracy: 
+
+Rule: successor
+Job ID:
+EMBEDDING_DIM = 25
+LEARNING_RATE = 1e-3
+NUM_EPOCHS = 200
+Accuracy:
+
+Rule: predecessor
+Job ID:
+EMBEDDING_DIM = 25
+LEARNING_RATE = 1e-3
+NUM_EPOCHS = 200
+Accuracy: 
+
+Rule: grandparent
+Job ID:
+EMBEDDING_DIM = 25
+LEARNING_RATE = 1e-3
+NUM_EPOCHS = 200
+Accuracy: 
+
+Rule: full_data
+Job ID:
+EMBEDDING_DIM = 50
+LEARNING_RATE = 1e-3
+NUM_EPOCHS = 50
+Accuracy: 
+

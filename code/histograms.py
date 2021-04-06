@@ -17,7 +17,7 @@ d = {'spouse':1,'uncle':2,
 
 data = np.load(os.path.join('..','data','royalty.npz'))
 
-MODEL = 'explaine'
+MODEL = 'gnn_explainer'
 
 for rule,trace_length in d.items():
 
@@ -34,7 +34,31 @@ for rule,trace_length in d.items():
     idx2ent = dict(zip(range(NUM_ENTITIES),entities))
     idx2rel = dict(zip(range(NUM_RELATIONS),relations))
 
-    pred_traces = utils.idx2array(pred_data['preds'],idx2ent,idx2rel)
+    if MODEL == 'gnn_explainer':
+
+        pred_traces = []
+
+        all_preds = pred_data['preds']
+
+        for i in range(len(all_preds)):
+
+            preds_i = []
+
+            for rel_idx in range(NUM_RELATIONS):
+
+                triples_i = all_preds[i][rel_idx]
+
+                if triples_i.shape[0]:
+                    rel_indices = (np.ones((triples_i.shape[0],1)) * rel_idx).astype(np.int64)
+                    concat = np.concatenate([triples_i,rel_indices],axis=1)
+                    preds_i.append(concat[:,[0,2,1]])
+            preds_i = np.concatenate(preds_i,axis=0)
+            pred_traces.append(utils.idx2array(preds_i,idx2ent,idx2rel))
+
+        pred_traces = np.array(pred_traces,dtype=object)
+
+    else:
+        pred_traces = utils.idx2array(pred_data['preds'],idx2ent,idx2rel)
 
     true_triples = triples[pred_data['test_idx']]
     true_traces = traces[pred_data['test_idx']][:,0:trace_length,:]
@@ -47,7 +71,6 @@ for rule,trace_length in d.items():
     counts = {}
 
     for pred in pred_traces[error_idx]:
-        
         for triple in pred:
             if triple[1] in counts:
                 counts[triple[1]] += 1
@@ -60,7 +83,6 @@ for rule,trace_length in d.items():
 
     fig, ax = plt.subplots(figsize=(3,3))
     ax.bar(keys,values)
-    #ax.set_title(rule.capitalize())
     ax.set_xticklabels(labels=keys,rotation = (45), fontsize = 10)
     # rects = ax.patches
     # count_labels = [str(v) for v in values]

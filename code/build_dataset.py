@@ -11,13 +11,22 @@ os.environ['PYTHONHASHSEED'] = str(SEED)
 np.random.seed(SEED)
 rn.seed(SEED)
 
-rules = [
-    'spouse', 'uncle',
-    'aunt', 'brother','sister',
-    'successor','predecessor', 'grandparent'
-]
+# rules = [
+#     'spouse', 'uncle',
+#     'aunt', 'brother','sister',
+#     'successor','predecessor', 'grandparent'
+# ]
 
-MAX_PADDING = 3
+# MAX_PADDING = 3
+
+parser = argparse.ArgumentParser()
+parser.add_argument("list", nargs="+", 
+    help='grandparent spouse, or spouse successor predecessor')
+args = parser.parse_args()
+
+MAX_PADDING = 2
+
+rules = args.list
 
 data = dict()
 all_triples = []
@@ -60,9 +69,6 @@ for rule in rules:
 
     exp_relations = np.array([traces[:,i,:][:,1] for i in range(MAX_PADDING)]).flatten()
 
-    all_triples.append(triples)
-    all_traces.append(traces)
-
     if rule == 'spouse':
 
         swapped_triples = triples[:,[2,1,0]]
@@ -71,6 +77,9 @@ for rule in rules:
         triples = np.concatenate([triples,swapped_triples],axis=0)
         traces = np.concatenate([traces,swapped_traces],axis=0)
     
+    all_triples.append(triples)
+    all_traces.append(traces)
+
     data[rule + '_triples'] = triples
     data[rule + '_traces'] = traces
     data[rule + '_entities'] = np.unique(np.concatenate([triples[:,0], triples[:,2], exp_entities],axis=0))
@@ -96,7 +105,9 @@ data['rules'] = rules
 
 print('Saving numpy file...')
 
-np.savez(os.path.join('..','data','royalty.npz'),**data)
+round_number = str(round(all_triples.shape[0],-3))[0:2]
+
+np.savez(os.path.join('..','data',f'royalty_{round_number}k.npz'),**data)
 
 print('Done')
 
