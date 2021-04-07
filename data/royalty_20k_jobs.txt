@@ -3,37 +3,110 @@ Jobs:
 RGCN
 ########################################
 Rule: spouse
-Job ID:
+Job ID: 11331945
 EMBEDDING_DIM = 25
 LEARNING_RATE = 1e-3
-NUM_EPOCHS = 50
-Accuracy: 
+NUM_EPOCHS = 200
+Accuracy: 0.802
 
 Rule: successor
-Job ID:
+Job ID: 11331946
 EMBEDDING_DIM = 25
 LEARNING_RATE = 1e-3
-NUM_EPOCHS = 200
-Accuracy:
+NUM_EPOCHS = 2000
+Accuracy: 0.74
 
 Rule: predecessor
-Job ID:
+Job ID: 11331947
 EMBEDDING_DIM = 25
 LEARNING_RATE = 1e-3
-NUM_EPOCHS = 200
-Accuracy: 
-
-Rule: grandparent
-Job ID:
-EMBEDDING_DIM = 25
-LEARNING_RATE = 1e-3
-NUM_EPOCHS = 200
-Accuracy: 
+NUM_EPOCHS = 2000
+Accuracy: 0.75
 
 Rule: full_data
-Job ID:
+Job ID: -
 EMBEDDING_DIM = 50
 LEARNING_RATE = 1e-3
 NUM_EPOCHS = 50
-Accuracy: 
+Accuracy: 0.746
+
+########################################
+
+GNNExplainer
+
+Job ID: 11331953
+RULE = spouse
+NUM_EPOCHS = 10
+EMBEDDING_DIM = 25
+LEARNING_RATE = 0.001
+Jaccard: 
+Precision:
+Recall:
+F1: 
+
+Job ID: 11331954
+RULE = successor
+NUM_EPOCHS = 10
+EMBEDDING_DIM = 25
+LEARNING_RATE = 0.001
+Jaccard: 
+Precision:
+Recall:
+F1: 
+
+Job ID: 11331955
+RULE = predecessor
+NUM_EPOCHS = 10
+EMBEDDING_DIM = 25
+LEARNING_RATE = 0.001
+Jaccard: 
+Precision:
+Recall:
+F1: 
+
+
+Job ID: 11332060
+RULE = full_data
+NUM_EPOCHS = 10
+EMBEDDING_DIM = 25
+LEARNING_RATE = 0.001
+Jaccard: 
+Precision:
+Recall:
+F1: 
+
+########################################
+ExplaiNE:
+
+Job ID:11333045
+RULE = spouse
+EMBEDDING_DIM = 25
+Jaccard:
+Precision:
+Recall:
+F1: 
+
+Job ID: 11333046
+RULE = successor
+EMBEDDING_DIM = 25
+Jaccard:
+Precision:
+Recall:
+F1: 
+
+Job ID: 11333047
+RULE = predecessor
+EMBEDDING_DIM = 25
+Jaccard:
+Precision:
+Recall:
+F1: 
+
+Job ID: 11333048
+RULE = full_data
+EMBEDDING_DIM = 25
+Jaccard:
+Precision:
+Recall:
+F1: 
 

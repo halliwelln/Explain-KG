@@ -325,7 +325,7 @@ if __name__ == '__main__':
     print(f'learning_rate: {LEARNING_RATE}')
     print(f'threshold {THRESHOLD}')
 
-    print(f"{DATASET} {RULE} jaccard score: {cv_scores[best_idx]}")
+    #print(f"{DATASET} {RULE} jaccard score: {cv_scores[best_idx]}")
 
     np.savez(os.path.join('..','data','preds',DATASET,'gnn_explainer_'+DATASET+'_'+RULE+'_preds.npz'),
         best_idx=best_idx, preds=best_preds,test_idx=best_test_indices

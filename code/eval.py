@@ -1,130 +1,120 @@
 #!/usr/bin/env python3
-
-import numpy as np
+    
 import os
 import utils
 import random as rn
 import argparse
+import numpy as np
 
-def eval(true_exps,preds,num_triples):
+SEED = 123
+os.environ['PYTHONHASHSEED'] = str(SEED)
+np.random.seed(SEED)
+rn.seed(SEED)
 
-    precision = 0.0
-    recall = 0.0
+parser = argparse.ArgumentParser()
 
-    for i in range(num_triples):
-        
-        current_tp = 0.0
-        current_fp = 0.0
-        current_fn = 0.0
-        
-        true_exp = true_exps[i]
-        current_preds = preds[i]
+parser.add_argument('dataset', type=str,
+    help='royalty_15k or royalty_20k')
+parser.add_argument('rule',type=str,
+    help='spouse,successor,...,full_data')
+parser.add_argument('embedding_dim',type=int)
+parser.add_argument('trace_length',type=int)
 
-        for pred_row in current_preds:
-            
-            for true_row in true_exp:
-                
-                reversed_row = true_row[[2,1,0]]
-                
-                if (pred_row == true_row).all() or (pred_row == reversed_row).all():
-                    current_tp += 1
-                else:
-                    current_fp += 1
-                    
-                if (current_preds == true_row).all(axis=1).sum() >= 1:
-                    #if true explanation triple is in set of predicitons
-                    pass
-                else:
-                    current_fn += 1
+args = parser.parse_args()
 
-        if current_tp == 0 and current_fp == 0:
-            current_precision = 0.0
-        else:
-            current_precision = current_tp / (current_tp + current_fp)
+DATASET = args.dataset
+RULE = args.rule
+TRACE_LENGTH = args.trace_length
 
-        if current_tp == 0  and current_fn == 0:
-            current_recall = 0.0
-        else:
-            current_recall = current_tp / (current_tp + current_fn)
-        
-        precision += current_precision
-        recall += current_recall
-        
-    precision /= num_triples
-    recall /= num_triples
+data = np.load(os.path.join('..','data',DATASET+'.npz'))
 
-    return precision, recall
+triples,traces,entities,relations = utils.get_data(data,RULE)
+###################################################
+gnn_data = np.load(
+    os.path.join('..','data','preds',DATASET,
+        'gnn_explainer_'+DATASET+'_'+RULE+'_preds.npz'),allow_pickle=True)
 
-def get_true_exps(exp2idx,num_triples,trace_length):
+gnn_true_exps = traces[gnn_data['test_idx']]
 
-    true_exps = []
-    for i in range(num_triples):
-        
-        true_exps.append(exp2idx[i][0:trace_length,:])
+gnn_preds = gnn_data['preds']
 
-    true_exps = np.array(true_exps)
+num_gnn_triples = gnn_true_exps.shape[0]
+gnn_jaccard = 0.0
+for i in range(num_gnn_triples):
+    gnn_jaccard += utils.jaccard_score(gnn_true_exps[i],gnn_preds[i])
+gnn_jaccard /= num_gnn_triples
 
-    return true_exps
+gnn_precision, gnn_recall = utils.precision_recall(gnn_true_exps,gnn_preds)
+gnn_f1 = utils.f1(gnn_precision,gnn_recall)
 
-if __name__ == "__main__":
+print(f'{DATASET} {RULE} GnnExplainer')
+print(f'jaccard score: {round(gnn_jaccard,3)}')
+print(f'precision {round(gnn_precision,3)}')
+print(f'recall {round(gnn_recall,3)}')
+print(f'f1 {round(gnn_f1,3)}')
 
-    SEED = 123
-    os.environ['PYTHONHASHSEED'] = str(SEED)
-    np.random.seed(SEED)
-    rn.seed(SEED)
+###################################################
 
-    parser = argparse.ArgumentParser()
+explaine_data = np.load(
+    os.path.join('..','data','preds',DATASET,
+        'explaine_'+DATASET+'_'+RULE+'_preds.npz'),allow_pickle=True)
 
-    parser.add_argument('rule',type=str,help=
-        'Enter which rule to use spouse,successor,...etc (str), full_data for full dataset')
-    parser.add_argument('trace_len',type=int)
-    args = parser.parse_args()
+explaine_true_exps = traces[explaine_data['test_idx']]
 
-    RULE = args.rule
-    TRACE_LENGTH = args.trace_len
+explaine_preds = explaine_data['preds']
 
-    data = np.load(os.path.join('..','data','royalty.npz'))
+num_explaine_triples = explaine_true_exps.shape[0]
+explaine_jaccard = 0.0
+for i in range(num_explaine_triples):
+    explaine_jaccard += utils.jaccard_score(explaine_true_exps[i],explaine_preds[i])
+explaine_jaccard /= num_explaine_triples
 
-    triples,traces,nopred,entities,relations = utils.get_data(data,RULE)
+explaine_precision, explaine_recall = utils.precision_recall(explaine_true_exps,explaine_preds)
+explaine_f1 = utils.f1(explaine_precision,explaine_recall)
 
-    NUM_ENTITIES = len(entities)
-    NUM_RELATIONS = len(relations)
-    EMBEDDING_DIM = 50
-    OUTPUT_DIM = 50
+print(f'{DATASET} {RULE} ExplaiNE')
+print(f'jaccard score: {round(explaine_jaccard,3)}')
+print(f'precision {round(explaine_precision,3)}')
+print(f'recall {round(explaine_recall,3)}')
+print(f'f1 {round(explaine_f1,3)}')
 
-    ent2idx = dict(zip(entities, range(NUM_ENTITIES)))
-    rel2idx = dict(zip(relations, range(NUM_RELATIONS)))
 
-    if RULE != 'full_data':
+# NUM_ENTITIES = len(entities)
+# NUM_RELATIONS = len(relations)
 
-        gnn_data = np.load(os.path.join('..','data','preds','gnn_explainer_'+RULE+'_preds.npz'),allow_pickle=True)
+# ent2idx = dict(zip(entities, range(NUM_ENTITIES)))
+# rel2idx = dict(zip(relations, range(NUM_RELATIONS)))
 
-        gnn_exp2idx = utils.array2idx(traces[gnn_data['test_idx']],ent2idx,rel2idx)
-        gnn_num_triples = gnn_exp2idx.shape[0]
-        
-        all_gnn_preds = gnn_data['preds']
-        
-        gnn_true_exps = get_true_exps(gnn_exp2idx,gnn_num_triples, TRACE_LENGTH)
+# if RULE != 'full_data':
 
-        gnn_preds = []
-        for i in range(all_gnn_preds.shape[0]):
-            preds_i = []
-            for idx, j in enumerate(all_gnn_preds[i]):
-                if j.shape[0] > 0:
-                    rel = np.ones((j.shape[0]),dtype=np.int64) * idx
-                    preds_i.append(np.column_stack((j[:,0],rel,j[:,1])))            
-            gnn_preds.append(np.concatenate(preds_i, axis=0))
+#     gnn_data = np.load(os.path.join('..','data','preds','gnn_explainer_'+RULE+'_preds.npz'),allow_pickle=True)
 
-        gnn_precision, gnn_recall = eval(gnn_true_exps,gnn_preds,gnn_num_triples)
-        print(f"GnnExplainer precision {gnn_precision}, GnnExplainer recall {gnn_recall}")
+#     gnn_exp2idx = utils.array2idx(traces[gnn_data['test_idx']],ent2idx,rel2idx)
+#     gnn_num_triples = gnn_exp2idx.shape[0]
+    
+#     all_gnn_preds = gnn_data['preds']
+    
+#     gnn_true_exps = get_true_exps(gnn_exp2idx,gnn_num_triples, TRACE_LENGTH)
 
-    explaine_data = np.load(os.path.join('..','data','preds','explaine_'+RULE+'_preds.npz'),allow_pickle=True)
+#     gnn_preds = []
+#     for i in range(all_gnn_preds.shape[0]):
+#         preds_i = []
+#         for idx, j in enumerate(all_gnn_preds[i]):
+#             if j.shape[0] > 0:
+#                 rel = np.ones((j.shape[0]),dtype=np.int64) * idx
+#                 preds_i.append(np.column_stack((j[:,0],rel,j[:,1])))            
+#         gnn_preds.append(np.concatenate(preds_i, axis=0))
 
-    explaine_exp2idx = utils.array2idx(traces[explaine_data['test_idx']],ent2idx,rel2idx)
-    explaine_num_triples = explaine_exp2idx.shape[0]
+#     gnn_precision, gnn_recall = eval(gnn_true_exps,gnn_preds,gnn_num_triples)
+#     print(f"GnnExplainer precision {gnn_precision}, GnnExplainer recall {gnn_recall}")
 
-    explaine_true_exps = get_true_exps(explaine_exp2idx,explaine_num_triples, TRACE_LENGTH)
+# explaine_data = np.load(os.path.join('..','data','preds','explaine_'+RULE+'_preds.npz'),allow_pickle=True)
 
-    explaine_precision, explaine_recall = eval(explaine_true_exps,explaine_data['preds'],explaine_num_triples)
-    print(f"explaiNE precision {explaine_precision}, explaiNE recall {explaine_recall}")
+# explaine_exp2idx = utils.array2idx(traces[explaine_data['test_idx']],ent2idx,rel2idx)
+# explaine_num_triples = explaine_exp2idx.shape[0]
+
+# explaine_true_exps = get_true_exps(explaine_exp2idx,explaine_num_triples, TRACE_LENGTH)
+
+# explaine_precision, explaine_recall = eval(explaine_true_exps,explaine_data['preds'],explaine_num_triples)
+# print(f"explaiNE precision {explaine_precision}, explaiNE recall {explaine_recall}")
 

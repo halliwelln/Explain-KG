@@ -4,8 +4,15 @@ import numpy as np
 import tensorflow as tf
 from scipy import sparse
 
+def f1(precision,recall):
+    return 2 * (precision*recall) / (precision + recall)
+
 def jaccard_score(true_exp,pred_exp):
 
+    rels = set(true_exp[:,1])
+    if ('spouse' in rels) or ('successor' in rels) or ('predecessor' in rels):
+        true_exp = true_exp[0:1,:]
+        
     num_true_traces = true_exp.shape[0]
     num_pred_traces = pred_exp.shape[0]
 
@@ -18,6 +25,77 @@ def jaccard_score(true_exp,pred_exp):
     score = count / (num_true_traces + num_pred_traces-count)
     
     return score
+
+def precision_recall(true_exps,preds):
+
+    num_triples = true_exps.shape[0]
+
+    precision = 0.0
+    recall = 0.0
+
+    for i in range(num_triples):
+        
+        current_tp = 0.0
+        current_fp = 0.0
+        current_fn = 0.0
+        
+        true_exp = true_exps[i]
+        current_preds = preds[i]
+
+        rels = set(true_exp[:,1])
+        #remove padding triple
+        if ('spouse' in rels) or ('successor' in rels) or ('predecessor' in rels):
+            true_exp = true_exp[0:1,:]
+
+        for pred_row in current_preds:
+            
+            for true_row in true_exp:
+                
+                reversed_row = true_row[[2,1,0]]
+                
+                if (pred_row == true_row).all() or (pred_row == reversed_row).all():
+                    current_tp += 1
+                else:
+                    current_fp += 1
+                    
+                if (current_preds == true_row).all(axis=1).sum() >= 1:
+                    #if true explanation triple is in set of predicitons
+                    pass
+                else:
+                    current_fn += 1
+
+        if current_tp == 0 and current_fp == 0:
+            current_precision = 0.0
+        else:
+            current_precision = current_tp / (current_tp + current_fp)
+
+        if current_tp == 0  and current_fn == 0:
+            current_recall = 0.0
+        else:
+            current_recall = current_tp / (current_tp + current_fn)
+        
+        precision += current_precision
+        recall += current_recall
+        
+    precision /= num_triples
+    recall /= num_triples
+
+    return precision, recall
+
+# def jaccard_score(true_exp,pred_exp):
+
+#     num_true_traces = true_exp.shape[0]
+#     num_pred_traces = pred_exp.shape[0]
+
+#     count = 0
+#     for pred_row in pred_exp:
+#         for true_row in true_exp:
+#             if (pred_row == true_row).all():
+#                 count +=1
+
+#     score = count / (num_true_traces + num_pred_traces-count)
+    
+#     return score
 
 # def get_data(data,rule):
 

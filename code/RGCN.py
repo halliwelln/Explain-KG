@@ -322,4 +322,4 @@ if __name__ == '__main__':
     print(f'Num epochs: {NUM_EPOCHS}')
     print(f'Embedding dim: {EMBEDDING_DIM}')
     print(f'learning_rate: {LEARNING_RATE}')
-    print(f'{DATASET} {RULE} accuracy {acc}')
+    print(f'{DATASET} {RULE} accuracy {round(acc,3)}')

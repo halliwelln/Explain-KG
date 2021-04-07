@@ -2,24 +2,7 @@
 
 import numpy as np
 
-def jaccard_score(true_exp,pred_exp,top_k):
-
-    true_exp = true_exp[:top_k]#remove padding
-
-    num_true_traces = true_exp.shape[0]
-    num_pred_traces = pred_exp.shape[0]
-
-    count = 0
-    for pred_row in pred_exp:
-        for true_row in true_exp:
-            if (pred_row == true_row).all():
-                count +=1
-
-    score = count / (num_true_traces + num_pred_traces-count)
-    
-    return score
-
-def get_preds(adj_mats,num_relations,top_k,tape,pred):
+def get_preds(adj_mats,num_relations,trace_length,tape,pred):
     
     scores = []
     
@@ -31,7 +14,7 @@ def get_preds(adj_mats,num_relations,top_k,tape,pred):
             if score:
                 scores.append((idx,i,score))
                 
-    top_k_scores = sorted(scores, key=lambda x : x[2],reverse=True)[:top_k]
+    top_k_scores = sorted(scores, key=lambda x : x[2],reverse=True)[:trace_length]
     
     pred_triples = []
     
@@ -66,27 +49,35 @@ if __name__ == '__main__':
 
     parser = argparse.ArgumentParser()
 
-    parser.add_argument('rule',type=str,help=
-        'Enter which rule to use spouse,successor,...etc (str), full_data for full dataset')
-    parser.add_argument('top_k',type=int)
+    parser.add_argument('dataset', type=str,
+        help='royalty_15k or royalty_20k')
+    parser.add_argument('rule',type=str,
+        help='spouse,successor,...,full_data')
+    parser.add_argument('embedding_dim',type=int)
+    parser.add_argument('trace_length',type=int)
+
     args = parser.parse_args()
 
+    DATASET = args.dataset
     RULE = args.rule
-    TOP_K = args.top_k
+    EMBEDDING_DIM = args.embedding_dim
+    TRACE_LENGTH = args.trace_length
 
-    data = np.load(os.path.join('..','data','royalty.npz'))
+    data = np.load(os.path.join('..','data',DATASET+'.npz'))
 
-    triples,traces,nopred,entities,relations = utils.get_data(data,RULE)
+    triples,traces,entities,relations = utils.get_data(data,RULE)
 
     NUM_ENTITIES = len(entities)
     NUM_RELATIONS = len(relations)
-    EMBEDDING_DIM = 25
-    OUTPUT_DIM = 25
+    OUTPUT_DIM = EMBEDDING_DIM
 
     ALL_INDICES = tf.reshape(tf.range(0,NUM_ENTITIES,1,dtype=tf.int64), (1,-1))
 
     ent2idx = dict(zip(entities, range(NUM_ENTITIES)))
     rel2idx = dict(zip(relations, range(NUM_RELATIONS)))
+
+    idx2ent = dict(zip(range(NUM_ENTITIES),entities))
+    idx2rel = dict(zip(range(NUM_RELATIONS),relations))
 
     model = RGCN.get_RGCN_Model(
         num_entities=NUM_ENTITIES,
@@ -96,7 +87,7 @@ if __name__ == '__main__':
         seed=SEED
     )
 
-    model.load_weights(os.path.join('..','data','weights',RULE+'.h5'))
+    model.load_weights(os.path.join('..','data','weights',DATASET,DATASET+'_'+RULE+'.h5'))
 
     kf = KFold(n_splits=3,shuffle=True,random_state=SEED)
 
@@ -111,7 +102,6 @@ if __name__ == '__main__':
 
         train2idx = utils.array2idx(triples[train_idx],ent2idx,rel2idx)
         trainexp2idx = utils.array2idx(traces[train_idx],ent2idx,rel2idx)
-        nopred2idx = utils.array2idx(nopred,ent2idx,rel2idx)
 
         test2idx = utils.array2idx(triples[test_idx],ent2idx,rel2idx)
         testexp2idx = utils.array2idx(traces[test_idx],ent2idx,rel2idx)
@@ -119,7 +109,6 @@ if __name__ == '__main__':
         ADJACENCY_DATA = tf.concat([
             train2idx,
             trainexp2idx.reshape(-1,3),
-            nopred2idx,
             test2idx,
             testexp2idx.reshape(-1,3)
             ],axis=0
@@ -145,11 +134,11 @@ if __name__ == '__main__':
                     ]
                 )
 
-            pred_exp = get_preds(adj_mats,NUM_RELATIONS,TOP_K,tape,pred)
+            pred_exp = get_preds(adj_mats,NUM_RELATIONS,TRACE_LENGTH,tape,pred)
 
             pred_exps.append(pred_exp)
 
-            jaccard = jaccard_score(true_exp.numpy()[0],pred_exp,TOP_K)
+            jaccard = utils.jaccard_score(true_exp.numpy()[0],pred_exp)
             cv_jaccard += jaccard
 
         cv_preds.append(pred_exps)
@@ -157,15 +146,21 @@ if __name__ == '__main__':
         test_indicies.append(test_idx)
 
     best_idx = np.argmax(cv_scores)
-    best_preds = np.array(cv_preds[best_idx])
+    #best_preds = np.array(cv_preds[best_idx])
     best_test_indices = test_indicies[best_idx]
 
-    print(f"{RULE} jaccard: {cv_scores[best_idx]}")
+    preds = np.array(cv_preds[best_idx])
 
-    np.savez(os.path.join('..','data','preds','explaine_'+RULE+'_preds.npz'),
+    best_preds = utils.idx2array(preds,idx2ent,idx2rel)
+
+    print(f'Embedding dim: {EMBEDDING_DIM}')
+    #print(f"{DATASET} {RULE} jaccard score: {cv_scores[best_idx]}")
+
+    np.savez(os.path.join('..','data','preds',DATASET,'explaine_'+DATASET+'_'+RULE+'_preds.npz'),
         preds=best_preds,best_idx=best_idx,test_idx=best_test_indices
         )
 
+    print('Done.')
     # d = np.load(os.path.join('..','data','preds','explaine_'+RULE+'_preds.npz'))
 
     # print(d['preds'].shape)
