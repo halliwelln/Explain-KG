@@ -33,10 +33,10 @@ RULE = spouse
 NUM_EPOCHS = 10
 EMBEDDING_DIM = 25
 LEARNING_RATE = 0.001
-Jaccard: 
-Precision:
-Recall:
-F1: 
+Jaccard: 0.328
+Precision: 0.656
+Recall: 1.0
+F1: 0.792
 
 Job ID: 11330772
 RULE = grandparent
@@ -64,10 +64,10 @@ ExplaiNE:
 Job ID: 11331930
 RULE = spouse
 EMBEDDING_DIM = 25
-Jaccard:
-Precision:
-Recall:
-F1: 
+Jaccard: 0.388
+Precision: 0.754
+Recall: 0.571
+F1: 0.65
 
 Job ID: 11331931
 RULE = grandparent

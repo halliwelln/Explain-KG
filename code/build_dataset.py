@@ -105,9 +105,12 @@ data['rules'] = rules
 
 print('Saving numpy file...')
 
-round_number = str(round(all_triples.shape[0],-3))[0:2]
+if rules == ['grandparent', 'spouse']:
+    number = str(30)
+elif rules == ['spouse', 'successor', 'predecessor']:
+    number = str(20)
 
-np.savez(os.path.join('..','data',f'royalty_{round_number}k.npz'),**data)
+np.savez(os.path.join('..','data',f'royalty_{number}k.npz'),**data)
 
 print('Done')
 

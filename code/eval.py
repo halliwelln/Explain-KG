@@ -30,28 +30,30 @@ data = np.load(os.path.join('..','data',DATASET+'.npz'))
 
 triples,traces,entities,relations = utils.get_data(data,RULE)
 ###################################################
-gnn_data = np.load(
-    os.path.join('..','data','preds',DATASET,
-        'gnn_explainer_'+DATASET+'_'+RULE+'_preds.npz'),allow_pickle=True)
 
-gnn_true_exps = traces[gnn_data['test_idx']]
+if RULE != 'full_data':
+    gnn_data = np.load(
+        os.path.join('..','data','preds',DATASET,
+            'gnn_explainer_'+DATASET+'_'+RULE+'_preds.npz'),allow_pickle=True)
 
-gnn_preds = gnn_data['preds']
+    gnn_true_exps = traces[gnn_data['test_idx']]
 
-num_gnn_triples = gnn_true_exps.shape[0]
-gnn_jaccard = 0.0
-for i in range(num_gnn_triples):
-    gnn_jaccard += utils.jaccard_score(gnn_true_exps[i],gnn_preds[i])
-gnn_jaccard /= num_gnn_triples
+    gnn_preds = gnn_data['preds']
 
-gnn_precision, gnn_recall = utils.precision_recall(gnn_true_exps,gnn_preds)
-gnn_f1 = utils.f1(gnn_precision,gnn_recall)
+    num_gnn_triples = gnn_true_exps.shape[0]
+    gnn_jaccard = 0.0
+    for i in range(num_gnn_triples):
+        gnn_jaccard += utils.jaccard_score(gnn_true_exps[i],gnn_preds[i])
+    gnn_jaccard /= num_gnn_triples
 
-print(f'{DATASET} {RULE} GnnExplainer')
-print(f'jaccard score: {round(gnn_jaccard,3)}')
-print(f'precision {round(gnn_precision,3)}')
-print(f'recall {round(gnn_recall,3)}')
-print(f'f1 {round(gnn_f1,3)}')
+    gnn_precision, gnn_recall = utils.precision_recall(gnn_true_exps,gnn_preds)
+    gnn_f1 = utils.f1(gnn_precision,gnn_recall)
+
+    print(f'{DATASET} {RULE} GnnExplainer')
+    print(f'precision {round(gnn_precision,3)}')
+    print(f'recall {round(gnn_recall,3)}')
+    print(f'f1 {round(gnn_f1,3)}')
+    print(f'jaccard score: {round(gnn_jaccard,3)}')
 
 ###################################################
 
@@ -73,10 +75,10 @@ explaine_precision, explaine_recall = utils.precision_recall(explaine_true_exps,
 explaine_f1 = utils.f1(explaine_precision,explaine_recall)
 
 print(f'{DATASET} {RULE} ExplaiNE')
-print(f'jaccard score: {round(explaine_jaccard,3)}')
 print(f'precision {round(explaine_precision,3)}')
 print(f'recall {round(explaine_recall,3)}')
 print(f'f1 {round(explaine_f1,3)}')
+print(f'jaccard score: {round(explaine_jaccard,3)}')
 
 
 # NUM_ENTITIES = len(entities)
