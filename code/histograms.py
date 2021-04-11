@@ -15,25 +15,22 @@ rn.seed(SEED)
 parser = argparse.ArgumentParser()
 
 parser.add_argument('dataset', type=str,
-    help='royalty_15k or royalty_20k')
-parser.add_argument('rule',type=str,
-    help='spouse,successor,...,full_data')
-parser.add_argument('trace_length',type=int)
+    help='royalty_20k or royalty_30k')
 parser.add_argument('method',type=str, help='gnn_explainer or explaine') 
 args = parser.parse_args()
 
 DATASET = args.dataset
-RULE = args.rule
-TRACE_LENGTH = args.trace_length
 METHOD = args.method
 
-if DATASET == 'royalty_15k':
+if DATASET == 'royalty_30k':
     d = {'spouse':1,'grandparent':2}
 elif DATASET == 'royalty_20k':
     d = {'spouse':1,'successor':1,
         'predecessor':1}
 
 for rule,trace_length in d.items():
+
+    data = np.load(os.path.join('..','data',DATASET+'.npz'))
     
     pred_data = np.load(
         os.path.join('..','data','preds',DATASET,METHOD+'_'+DATASET+'_'+rule+'_preds.npz'),
@@ -45,11 +42,11 @@ for rule,trace_length in d.items():
     pred_traces = pred_data['preds']
     
     true_triples = triples[pred_data['test_idx']]
-    true_traces = traces[pred_data['test_idx']][:,0:TRACE_LENGTH,:]
+    true_traces = traces[pred_data['test_idx']][:,0:trace_length,:]
     
     jaccard = []
     for i in range(pred_traces.shape[0]):
-        jaccard.append(utils.jaccard_score(pred_traces[i],true_traces[i]))
+        jaccard.append(utils.jaccard_score(true_traces[i],pred_traces[i]))
     error_idx = np.array(jaccard) < 1
     
     counts = {}

@@ -225,7 +225,7 @@ if __name__ == '__main__':
 
     parser = argparse.ArgumentParser()
     parser.add_argument('dataset', type=str,
-        help='royalty_15k or royalty_20k')
+        help='royalty_30k or royalty_20k')
     parser.add_argument('rule',type=str,
         help='spouse,successor,...,full_data')
     parser.add_argument('num_epochs',type=int)

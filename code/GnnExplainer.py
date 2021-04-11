@@ -75,13 +75,13 @@ def tf_jaccard(true_exp,pred_exp):
     
     return score
 
-def replica_step(head,rel,tail,explanation):
+def replica_step(head,rel,tail,explanation,num_relations):
     
-    comp_graph = get_computation_graph(head,rel,tail,K,ADJACENCY_DATA,NUM_RELATIONS)
+    comp_graph = get_computation_graph(head,rel,tail,K,ADJACENCY_DATA,num_relations)
 
-    adj_mats = utils.get_adj_mats(comp_graph, NUM_ENTITIES, NUM_RELATIONS)
+    adj_mats = utils.get_adj_mats(comp_graph, NUM_ENTITIES, num_relations)
 
-    true_subgraphs = utils.get_adj_mats(tf.squeeze(explanation,axis=0),NUM_ENTITIES,NUM_RELATIONS)
+    true_subgraphs = utils.get_adj_mats(tf.squeeze(explanation,axis=0),NUM_ENTITIES,num_relations)
 
     total_loss = 0.0
 
@@ -91,7 +91,7 @@ def replica_step(head,rel,tail,explanation):
 
             tape.watch(masks)
 
-            masked_adjs = [adj_mats[i] * tf.sigmoid(masks[i]) for i in range(NUM_RELATIONS)]
+            masked_adjs = [adj_mats[i] * tf.sigmoid(masks[i]) for i in range(num_relations)]
 
             before_pred = model([
                     ALL_INDICES,
@@ -127,7 +127,7 @@ def replica_step(head,rel,tail,explanation):
     current_preds = []
     total_jaccard = 0.0
 
-    for i in range(NUM_RELATIONS):
+    for i in range(num_relations):
 
         mask_i = adj_mats[i] * tf.nn.sigmoid(masks[i])
 
@@ -142,7 +142,7 @@ def replica_step(head,rel,tail,explanation):
 
         current_preds.append(pred[:,1:])
 
-    total_jaccard /= NUM_RELATIONS
+    total_jaccard /= num_relations
 
     #tf.print(f"per observation jaccard: {total_jaccard}")
 
@@ -151,9 +151,10 @@ def replica_step(head,rel,tail,explanation):
 
     return total_loss, total_jaccard, current_preds
 
-def distributed_replica_step(head,rel,tail,explanation):
+def distributed_replica_step(head,rel,tail,explanation,num_relations):
 
-    per_replica_losses, per_replica_jaccard, current_preds = strategy.run(replica_step, args=(head,rel,tail,explanation))
+    per_replica_losses, per_replica_jaccard, current_preds = strategy.run(replica_step,
+        args=(head,rel,tail,explanation,num_relations))
 
     reduce_loss = per_replica_losses / NUM_EPOCHS
 
@@ -178,7 +179,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
 
     parser.add_argument('dataset', type=str,
-        help='royalty_15k or royalty_20k')
+        help='royalty_30k or royalty_20k')
     parser.add_argument('rule',type=str,
         help='spouse,successor,...,full_data')
     parser.add_argument('num_epochs',type=int)
@@ -189,9 +190,9 @@ if __name__ == '__main__':
 
     DATASET = args.dataset
     RULE = args.rule
-    NUM_EPOCHS = args.num_epochs#10
-    EMBEDDING_DIM = args.embedding_dim#25
-    LEARNING_RATE = args.learning_rate#0.001#0.00001#.0001
+    NUM_EPOCHS = args.num_epochs
+    EMBEDDING_DIM = args.embedding_dim
+    LEARNING_RATE = args.learning_rate
 
     data = np.load(os.path.join('..','data',DATASET+'.npz'))
 
@@ -282,7 +283,7 @@ if __name__ == '__main__':
 
         for head,rel,tail,explanation in dist_dataset:
 
-            loss, jaccard, current_preds = distributed_replica_step(head,rel,tail,explanation)
+            loss, jaccard, current_preds = distributed_replica_step(head,rel,tail,explanation,NUM_RELATIONS)
     
             preds.append(current_preds)
 
@@ -298,10 +299,11 @@ if __name__ == '__main__':
 
     best_idx = np.argmax(cv_scores)
     best_test_indices = test_indices[best_idx]
+    best_preds = cv_preds[best_idx]
 
     best_preds = []
 
-    all_preds = np.array(cv_preds[best_idx])
+    all_preds = np.array(cv_preds[best_idx],dtype=object)
 
     for i in range(len(all_preds)):
 

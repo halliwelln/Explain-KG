@@ -10,7 +10,7 @@ import argparse
 parser = argparse.ArgumentParser()
 
 parser.add_argument('dataset', type=str,
-    help='royalty_15k or royalty_20k')
+    help='royalty_30k or royalty_20k')
 parser.add_argument('rule',type=str,
     help='spouse,successor,...,full_data')
 parser.add_argument('trace_length',type=int)
@@ -38,7 +38,7 @@ true_traces = traces[pred_data['test_idx']][:,0:TRACE_LENGTH,:]
 
 jaccard = []
 for i in range(pred_traces.shape[0]):
-    jaccard.append(utils.jaccard_score(pred_traces[i],true_traces[i]))
+    jaccard.append(utils.jaccard_score(true_traces[i],pred_traces[i]))
 error_idx = np.array(jaccard) < 1
 
 d = {}

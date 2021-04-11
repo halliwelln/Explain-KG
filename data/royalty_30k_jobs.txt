@@ -77,7 +77,7 @@ Precision:
 Recall:
 F1: 
 
-Job ID: 11331932
+Job ID: 11335560
 RULE = full_data
 EMBEDDING_DIM = 25
 Jaccard:
