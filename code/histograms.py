@@ -23,10 +23,10 @@ DATASET = args.dataset
 METHOD = args.method
 
 if DATASET == 'royalty_30k':
-    d = {'spouse':1,'grandparent':2}
+    d = {'grandparent':2,'full_data':2}
 elif DATASET == 'royalty_20k':
-    d = {'spouse':1,'successor':1,
-        'predecessor':1}
+    d = {'successor':1,
+        'predecessor':1,'full_data':2}
 
 for rule,trace_length in d.items():
 
@@ -61,9 +61,9 @@ for rule,trace_length in d.items():
     sorted_counts = sorted(counts.items(), key=lambda x:x[1],reverse=True)
     keys = [tup[0] for tup in sorted_counts]
     values = [tup[1] for tup in sorted_counts]
-    
+
     fig, ax = plt.subplots(figsize=(3,3))
     ax.bar(keys,values)
-    ax.set_xticklabels(labels=keys,rotation = (45), fontsize = 10)
-    
+    ax.set_xticklabels(labels=keys,rotation = (45), fontsize = 14)
+    #fig.tight_layout()
     plt.savefig(f"../data/plots/{DATASET}_{METHOD}_{rule}_counts.pdf",bbox_inches='tight')
