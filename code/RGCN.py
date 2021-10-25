@@ -215,6 +215,7 @@ if __name__ == '__main__':
     import os
     import utils
     import random as rn
+    from sklearn.model_selection import KFold
 
     SEED = 123
     os.environ['PYTHONHASHSEED'] = str(SEED)
@@ -307,19 +308,5 @@ if __name__ == '__main__':
 
     model.save_weights(os.path.join('..','data','weights',DATASET,DATASET + '_'+RULE+'.h5'))
 
-    preds = model.predict(
-        x=[
-            ALL_INDICES,
-            X_test[:,:,0],
-            X_test[:,:,1],
-            X_test[:,:,2],
-            adj_mats
-        ]
-    )
-
-    acc = (preds > .5).sum()/X_test.shape[1]
-
-    print(f'Num epochs: {NUM_EPOCHS}')
-    print(f'Embedding dim: {EMBEDDING_DIM}')
-    print(f'learning_rate: {LEARNING_RATE}')
-    print(f'{DATASET} {RULE} accuracy {round(acc,3)}')
+    print('Done.')
+ 
