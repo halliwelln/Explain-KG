@@ -266,12 +266,10 @@ if __name__ == '__main__':
     )
 
     X_train = full_data[idx_train]
-    X_test = full_data[idx_test]
 
     adj_mats = utils.get_adj_mats(X_train,NUM_ENTITIES,NUM_RELATIONS)
 
     X_train = np.expand_dims(X_train,axis=0)
-    X_test = np.expand_dims(X_test,axis=0)
 
     ALL_INDICES = np.arange(NUM_ENTITIES).reshape(1,-1)
 
