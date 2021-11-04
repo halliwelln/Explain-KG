@@ -1,3 +1,0 @@
-'royalty_30k' 'spouse' 10 25 0.001
-'royalty_30k' 'grandparent' 10 25 0.001
-'royalty_30k' 'full_data' 10 25 0.001

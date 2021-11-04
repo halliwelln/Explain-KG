@@ -1,4 +1,0 @@
-'royalty_20k' 'spouse' 200 25 1e-3
-'royalty_20k' 'successor' 2000 25 1e-3
-'royalty_20k' 'predecessor' 2000 25 1e-3
-'royalty_20k' 'full_data' 2000 25 1e-3

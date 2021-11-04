@@ -1,6 +1,0 @@
-'spouse' 1 'gnn_explainer'
-'uncle' 2 'gnn_explainer'
-'aunt' 2 'gnn_explainer'
-'successor' 1 'gnn_explainer'
-'predecessor' 1 'gnn_explainer'
-'grandparent' 2 'gnn_explainer'
