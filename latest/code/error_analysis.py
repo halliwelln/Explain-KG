@@ -6,6 +6,7 @@ import os
 import tensorflow as tf
 import joblib
 import argparse
+import random as rn
 
 SEED = 123
 os.environ['PYTHONHASHSEED'] = str(SEED)

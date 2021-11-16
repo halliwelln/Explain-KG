@@ -238,8 +238,8 @@ if __name__ == '__main__':
     DATASET = args.dataset
     RULE = args.rule
     NUM_EPOCHS = args.num_epochs
-    EMBEDDING_DIM = args.embedding_dim#25
-    LEARNING_RATE = args.learning_rate#1e-3
+    EMBEDDING_DIM = args.embedding_dim
+    LEARNING_RATE = args.learning_rate
     OUTPUT_DIM = EMBEDDING_DIM
 
     data = np.load(os.path.join('..','data',DATASET+'.npz'))

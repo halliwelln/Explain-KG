@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-    
+
 import os
 import utils
 import random as rn
