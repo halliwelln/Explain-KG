@@ -11,20 +11,39 @@ os.environ['PYTHONHASHSEED'] = str(SEED)
 np.random.seed(SEED)
 rn.seed(SEED)
 
+# rules = [
+#     'spouse', 'uncle',
+#     'aunt', 'brother','sister',
+#     'successor','predecessor', 'grandparent'
+# ]
+
+# MAX_PADDING = 3
+
 parser = argparse.ArgumentParser()
-parser.add_argument("list", nargs="+", 
-    help='grandparent spouse, or spouse successor predecessor')
+parser.add_argument('dataset', type=str,
+    help='royalty_30k or royalty_20k')
 args = parser.parse_args()
 
-MAX_PADDING = 2
 
-rules = args.list
+DATASET = args.dataset
+
+if DATASET == 'royalty_20k':
+
+    RULES = ['spouse','successor','predecessor']
+    MAX_PADDING = 1
+
+elif DATASET == 'royalty_30k':
+
+    RULES = ['grandparent', 'spouse']
+    MAX_PADDING = 2
+else:
+    raise Exception('Dataset not found.')
 
 data = dict()
 all_triples = []
 all_traces = []
 
-for rule in rules:
+for rule in RULES:
 
     if (rule == 'brother') or (rule == 'sister'):
         rule_file = 'brother_sister'
@@ -93,16 +112,11 @@ all_relations = np.unique(np.concatenate([all_triples[:,1], all_exp_relations],a
 
 data['all_entities'] = all_entities
 data['all_relations'] = all_relations
-data['rules'] = rules
+data['rules'] = RULES
 
 print('Saving numpy file...')
 
-if rules == ['grandparent', 'spouse']:
-    number = str(30)
-elif rules == ['spouse', 'successor', 'predecessor']:
-    number = str(20)
-
-np.savez(os.path.join('..','data',f'royalty_{number}k.npz'),**data)
+np.savez(os.path.join('..','data',f'{DATASET}.npz'),**data)
 
 print('Done')
 
