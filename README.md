@@ -31,7 +31,7 @@ only explanation for why `triples[0]` is a fact
 
 `relations` is a numpy array of all unique relations     
 
-# Linked Data Ground Truth for Quantitative and Qualitative Evaluation of Explanations for Relational Graph Convolutional Network Link Prediction on Knowledge Graphs
+## Linked Data Ground Truth for Quantitative and Qualitative Evaluation of Explanations for Relational Graph Convolutional Network Link Prediction on Knowledge Graphs
 
 To reproduce the results from this paper, navigate to the /reproduce_results/ directory, 
 
