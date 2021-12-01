@@ -1,3 +1,36 @@
+# Royalty-20k and Royalty-30k datasets
+
+Loading the data:
+
+```python
+import utils
+import numpy as np
+
+DATASET = 'royalty_30k'
+RULE = 'spouse'
+
+data = np.load(DATASET+'.npz')
+
+triples,traces,entities,relations = utils.get_data(data, RULE)
+```
+
+`DATASET` can be either `'royalty_30k' or 'royalty_20k'`
+
+For `Royalty-30k`, `RULE` can be `'spouse'`, `'successor'`, `'predecessor'` or `'full_data'`
+
+For `Royalty-20k`, `RULE` can be `'spouse'`, `'grandparent'` or `'full_data'`
+
+`triples` is a `(N,3)` numpy array containing the triples used for link prediction,  with `N` being the total number of triples  
+
+`traces` is a `(N,2,3)` numpy array containing the explanations for each triple in `triples`
+
+`triples[0]` is a triple we want an explanation for, `traces[0]` gives the 
+only explanation for why `triples[0]` is a fact  
+
+`entities` is a numpy array of all unique entities  
+
+`relations` is a numpy array of all unique relations     
+
 # Linked Data Ground Truth for Quantitative and Qualitative Evaluation of Explanations for Relational Graph Convolutional Network Link Prediction on Knowledge Graphs
 
 To reproduce the results from this paper, navigate to the /reproduce_results/ directory, 
