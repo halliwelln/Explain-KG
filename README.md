@@ -54,9 +54,9 @@ For the most recent benchmark results, navigate to the /latest/ directory
   MONTH = Dec,
   DOI = {10.1145/3486622.3493921},
   KEYWORDS = {link prediction ; Explainable AI ; knowledge graphs ; graph neural networks},
-  PDF = {https://hal.archives-ouvertes.fr/hal-03430113/file/WI_IAT_2021.pdf},
+  PDF = {https://hal.archives-ouvertes.fr/hal-03430113v2/file/WI_IAT.pdf},
   HAL_ID = {hal-03430113},
-  HAL_VERSION = {v1},
+  HAL_VERSION = {v2},
 }
 
 @misc{halliwell:hal-03339562,
