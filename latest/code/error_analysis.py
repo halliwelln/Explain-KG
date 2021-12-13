@@ -33,7 +33,7 @@ data = np.load(os.path.join('..','data',DATASET+'.npz'))
 triples,traces,entities,relations = utils.get_data(data,RULE)
 
 _, _, X_test_triples, X_test_traces = utils.train_test_split_no_unseen(
-    triples, traces, test_size=.3,seed=123)
+    triples, traces, test_size=.3,seed=SEED)
 
 pred_data = np.load(
     os.path.join('..','data','preds', DATASET,METHOD+'_'+DATASET+'_'+RULE+'_preds.npz'),

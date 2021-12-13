@@ -40,7 +40,7 @@ for rule,trace_length in d.items():
     triples,traces,entities,relations = utils.get_data(data,rule)
 
     _, _, X_test_triples, X_test_traces = utils.train_test_split_no_unseen(
-        triples, traces, test_size=.3,seed=123)
+        triples, traces, test_size=.3,seed=SEED)
     
     pred_traces = pred_data['preds']
     

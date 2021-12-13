@@ -96,88 +96,147 @@ def get_data(data,rule):
 
     return triples,traces,entities,relations
 
-def train_test_split_no_unseen(triples,traces,test_size=.3,seed=123):
+def train_test_split_no_unseen(
+    X,
+    E,
+    unk_ent_id='UNK_ENT',
+    unk_rel_id='UNK_REL',
+    test_size=.3,
+    seed=123,
+    allow_duplication=False):
 
-    train_triples = []
-    train_traces = []
-    test_triples = []
-    test_traces = []
+    test_size = int(len(X) * test_size)
 
-    seen_ents = {'UNK_ENT'}
-    seen_rels = {'UNK_REL'}
+    np.random.seed(seed)
 
-    for i in range(len(triples)):
+    X_train = None
+    X_train_exp = None
+    X_test_candidates = X
+    X_test_exp_candidates = E
+
+    exp_entities = np.array([
+        [E[:,i,j,0],E[:,i,j,2]] for i in range(LONGEST_TRACE) for j in range(MAX_PADDING)]).flatten()
+
+    exp_relations = np.array([
+        [E[:,i,j,1]] for i in range(LONGEST_TRACE) for j in range(MAX_PADDING)]).flatten()
+
+    entities, entity_cnt = np.unique(np.concatenate([
+                                triples[:,0], triples[:,2], exp_entities],axis=0),return_counts=True)
+    rels, rels_cnt = np.unique(np.concatenate([
+                                triples[:,1], exp_relations],axis=0),return_counts=True)
+    
+    dict_entities = dict(zip(entities, entity_cnt))
+    dict_rels = dict(zip(rels, rels_cnt))
+    idx_test = []
+    idx_train = []
+    
+    all_indices_shuffled = np.random.permutation(np.arange(X_test_candidates.shape[0]))
+
+    for i, idx in enumerate(all_indices_shuffled):
+        test_triple = X_test_candidates[idx]
+        test_exp = utils.remove_padding_np(X_test_exp_candidates[idx],unk_ent_id, unk_rel_id,axis=-1)
+                
+        # reduce the entity and rel count of triple
+        dict_entities[test_triple[0]] = dict_entities[test_triple[0]] - 1
+        dict_rels[test_triple[1]] = dict_rels[test_triple[1]] - 1
+        dict_entities[test_triple[2]] = dict_entities[test_triple[2]] - 1
         
-        triple = triples[i]
-        trace = traces[i]
+        exp_entities = np.concatenate([test_exp[:,0].flatten(),
+                                       test_exp[:,2].flatten()])
         
-        if trace.ndim == 2:
+        exp_rels = test_exp[:,1]
         
-            ents = np.unique(np.concatenate([[triple[0], triple[2]],trace[:,0],trace[:,2]]))
-            rels = np.unique(np.concatenate([[triple[1]],trace[:,1]]))
+        # reduce the entity and rel count of explanation
+        for exp_ent in exp_entities:
+            dict_entities[exp_ent] -= 1
             
-        elif trace.ndim == 3:
-            ents = np.unique(np.concatenate([
-                [triple[0], triple[2]],
-                trace[:,:,0].flatten(),
-                trace[:,:,2].flatten()
-            ]))
+        for exp_rel in exp_rels:
+            dict_rels[exp_rel] -= 1
             
-            rels = np.unique(np.concatenate([[triple[1]],trace[:,:,1].flatten()]))
+        ent_counts = []
+        for exp_ent in exp_entities:
+            count_i = dict_entities[exp_ent]
+            
+            if count_i > 0:
+                ent_counts.append(1)
+            else:
+                ent_counts.append(0)
+                
+        rel_counts = []
+        for exp_rel in exp_rels:
+            count_i = dict_rels[exp_rel]
+            
+            if count_i > 0:
+                rel_counts.append(1)
+            else:
+                rel_counts.append(0)
         
-        num_ents = len(ents)
-        num_rels = len(rels)
-        
-        ent_count = 0
-        for ent in ents:
-            if ent in seen_ents:
-                ent_count += 1
+        #compute sums and determine if counts > 0
 
-        rel_count = 0        
-        for rel in rels:
-            if rel in seen_rels:
-                rel_count += 1
-
-        if (num_ents == ent_count) and (num_rels == rel_count):
-            test_triples.append(triple)
-            test_traces.append(trace)
+        # test if the counts are > 0
+        if dict_entities[test_triple[0]] > 0 and \
+                dict_rels[test_triple[1]] > 0 and \
+                dict_entities[test_triple[2]] > 0 and \
+                sum(ent_counts) == len(ent_counts) and \
+                sum(rel_counts) == len(rel_counts):
+            
+            # Can safetly add the triple to test set
+            idx_test.append(idx)
+            if len(idx_test) == test_size:
+                # Since we found the requested test set of given size
+                # add all the remaining indices of candidates to training set
+                idx_train.extend(list(all_indices_shuffled[i + 1:]))
+                
+                # break out of the loop
+                break
+            
         else:
+            # since removing this triple results in unseen entities, add it to training
+            dict_entities[test_triple[0]] = dict_entities[test_triple[0]] + 1
+            dict_rels[test_triple[1]] = dict_rels[test_triple[1]] + 1
+            dict_entities[test_triple[2]] = dict_entities[test_triple[2]] + 1
             
-            train_triples.append(triple)
-            train_traces.append(trace)
+            for exp_ent in exp_entities:
+                dict_entities[exp_ent] += 1
             
-            seen_ents.update(ents)
-            seen_rels.update(rels)
+            for exp_rel in exp_rels:
+                dict_rels[exp_rel] += 1
+            
+            idx_train.append(idx)
+            
+    if len(idx_test) != test_size:
+        # if we cannot get the test set of required size that means we cannot get unique triples
+        # in the test set without creating unseen entities
+        if allow_duplication:
+            # if duplication is allowed, randomly choose from the existing test set and create duplicates
+            duplicate_idx = np.random.choice(idx_test, size=(test_size - len(idx_test))).tolist()
+            idx_test.extend(list(duplicate_idx))
+        else:
+            # throw an exception since we cannot get unique triples in the test set without creating 
+            # unseen entities
+            raise Exception("Cannot create a test split of the desired size. "
+                            "Some entities will not occur in both training and test set. "
+                            "Set allow_duplication=True," 
+                            "or set test_size to a smaller value.")
 
-    rnd = np.random.RandomState(seed)
-
-    train_triples = np.array(train_triples)
-    train_traces = np.array(train_traces)
-
-    test_triples = np.array(test_triples)
-    test_traces = np.array(test_traces)
-
-    idx = int(len(triples) * test_size)
-
-    out_test_triples = test_triples[0:idx]
-    out_test_traces = test_traces[0:idx]
-
-    to_train_triples = test_triples[idx:]
-    to_train_traces = test_traces[idx:]
-
-    out_train_triples = np.concatenate([train_triples,to_train_triples],axis=0)
-    out_train_traces = np.concatenate([train_traces,to_train_traces],axis=0)
-
-    train_indices = rnd.permutation(np.arange(len(out_train_triples)))
-    test_indices = rnd.permutation(np.arange(len(out_test_triples)))
-
-    X_train_triples = out_train_triples[train_indices]
-    X_train_traces = out_train_traces[train_indices]
-
-    X_test_triples = out_test_triples[test_indices]
-    X_test_traces = out_test_traces[test_indices]
-
-    return X_train_triples, X_train_traces, X_test_triples, X_test_traces
+    X_train = X_test_candidates[idx_train]
+    X_train_exp = X_test_exp_candidates[idx_train]
+    
+    X_test = X_test_candidates[idx_test]
+    X_test_exp = X_test_exp_candidates[idx_test]
+    
+    #shuffle data
+    
+    idx_train_shuffle = np.random.permutation(np.arange(len(idx_train)))
+    idx_test_shuffle = np.random.permutation(np.arange(len(idx_test)))
+    
+    X_train = X_train[idx_train_shuffle]
+    X_train_exp = X_train_exp[idx_train_shuffle]
+    
+    X_test = X_test[idx_test_shuffle]
+    X_test_exp = X_test_exp[idx_test_shuffle]
+    
+    return X_train, X_train_exp, X_test, X_test_exp
 
 def distinct(a):
     _a = np.unique(a,axis=0)
