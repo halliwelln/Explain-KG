@@ -243,12 +243,14 @@ if __name__ == '__main__':
     LEARNING_RATE = args.learning_rate
     OUTPUT_DIM = EMBEDDING_DIM
 
-    data = np.load(os.path.join('..','data',DATASET+'.npz'))
+    DATA = np.load(os.path.join('..','data',DATASET+'.npz'))
 
-    triples,traces,entities,relations = utils.get_data(data,RULE)
+    triples,traces,entities,relations = utils.get_data(DATA,RULE)
+    
+    MAX_PADDING, LONGEST_TRACE = utils.get_longest_trace(DATASET, RULE)
 
     X_train_triples, X_train_traces, _, _ = utils.train_test_split_no_unseen(
-        triples, traces, test_size=.3,seed=SEED)
+        triples, traces,longest_trace=LONGEST_TRACE,max_padding=MAX_PADDING,test_size=.3,seed=SEED)
 
     NUM_ENTITIES = len(entities)
     NUM_RELATIONS = len(relations)
@@ -297,10 +299,13 @@ if __name__ == '__main__':
         verbose=1
     )
 
-    #model.save_weights(os.path.join('..','data','weights',DATASET,DATASET + '_'+RULE+'.h5'))
+    model.save_weights(os.path.join('..','data','weights',DATASET,DATASET + '_'+RULE+'.h5'))
 
     print(f"{DATASET}")
     print(f"{RULE}")
+    print(f"NUM_EPOCHS: {NUM_EPOCHS}")
+    print(f"EMBEDDING_DIM: {EMBEDDING_DIM}")
+    print(f"LEARNING_RATE: {LEARNING_RATE}")
 
     print('Done.')
  

@@ -30,12 +30,14 @@ RULE = args.rule
 EMBEDDING_DIM = args.embedding_dim
 OUTPUT_DIM = EMBEDDING_DIM
 
-data = np.load(os.path.join('..','data',DATASET+'.npz'))
+DATA = np.load(os.path.join('..','data',DATASET+'.npz'))
 
-triples,traces,entities,relations = utils.get_data(data,RULE)
+triples,traces,entities,relations = utils.get_data(DATA,RULE)
+
+MAX_PADDING, LONGEST_TRACE = utils.get_longest_trace(DATASET, RULE)
 
 X_train_triples, X_train_traces, X_test_triples, X_test_traces = utils.train_test_split_no_unseen(
-    triples,traces,test_size=.3,seed=SEED)
+    triples,traces,longest_trace=LONGEST_TRACE,max_padding=MAX_PADDING,test_size=.3,seed=SEED)
 
 NUM_ENTITIES = len(entities)
 NUM_RELATIONS = len(relations)
@@ -58,7 +60,6 @@ model = RGCN.get_RGCN_Model(
 )
 
 model.load_weights(os.path.join('..','data','weights',DATASET,DATASET + '_'+RULE+'.h5'))
-
 
 train2idx = utils.array2idx(X_train_triples,ent2idx,rel2idx)
 trainexp2idx = utils.array2idx(X_train_traces,ent2idx,rel2idx)
