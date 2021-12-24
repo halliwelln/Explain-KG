@@ -164,7 +164,7 @@ def get_RGCN_Model(num_entities,num_relations,embedding_dim,output_dim,seed):
         output_dim=embedding_dim,
         name='entity_embeddings',
         embeddings_initializer=tf.keras.initializers.RandomUniform(
-            minval=-1,
+            minval=0,
             maxval=1,
             seed=seed
         )
@@ -216,7 +216,6 @@ if __name__ == '__main__':
     import os
     import utils
     import random as rn
-    from sklearn.model_selection import KFold
 
     SEED = 123
     os.environ['PYTHONHASHSEED'] = str(SEED)
@@ -250,7 +249,7 @@ if __name__ == '__main__':
     MAX_PADDING, LONGEST_TRACE = utils.get_longest_trace(DATASET, RULE)
 
     X_train_triples, X_train_traces, _, _ = utils.train_test_split_no_unseen(
-        triples, traces,longest_trace=LONGEST_TRACE,max_padding=MAX_PADDING,test_size=.3,seed=SEED)
+        triples, traces,longest_trace=LONGEST_TRACE,max_padding=MAX_PADDING,test_size=.25,seed=SEED)
 
     NUM_ENTITIES = len(entities)
     NUM_RELATIONS = len(relations)
@@ -259,6 +258,8 @@ if __name__ == '__main__':
     rel2idx = dict(zip(relations, range(NUM_RELATIONS)))
 
     X_train = np.concatenate([X_train_triples,X_train_traces.reshape(-1,3)],axis=0)
+
+    X_train = np.unique(X_train,axis=0)
 
     X_train = utils.array2idx(X_train,ent2idx,rel2idx)
 

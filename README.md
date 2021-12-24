@@ -22,10 +22,10 @@ For `Royalty-20k`, `RULE` can be `'spouse'`, `'grandparent'` or `'full_data'`
 
 `triples` is a `(N,3)` numpy array containing the triples used for link prediction,  with `N` being the total number of triples  
 
-`traces` is a `(N,M,3)` numpy array containing the explanations for each triple in `triples`, and `M` is either 1 or 2. 
+`traces` is a `(N,2,3)` numpy array containing the explanations for each triple in `triples`
 
 `triples[0]` is a triple we want an explanation for, `traces[0]` gives the 
-only explanation for why `triples[0]` is a fact  
+only explanation for why `triples[0]` is a fact. There can be more than one triple in the explanation, for these datasets, the maximum is 2. 
 
 `entities` is a numpy array of all unique entities  
 

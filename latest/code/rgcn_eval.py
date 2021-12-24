@@ -37,7 +37,7 @@ triples,traces,entities,relations = utils.get_data(DATA,RULE)
 MAX_PADDING, LONGEST_TRACE = utils.get_longest_trace(DATASET, RULE)
 
 X_train_triples, X_train_traces, X_test_triples, X_test_traces = utils.train_test_split_no_unseen(
-    triples,traces,longest_trace=LONGEST_TRACE,max_padding=MAX_PADDING,test_size=.3,seed=SEED)
+    triples,traces,longest_trace=LONGEST_TRACE,max_padding=MAX_PADDING,test_size=.25,seed=SEED)
 
 NUM_ENTITIES = len(entities)
 NUM_RELATIONS = len(relations)
