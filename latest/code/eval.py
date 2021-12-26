@@ -28,8 +28,12 @@ data = np.load(os.path.join('..','data',DATASET+'.npz'))
 
 triples,traces,entities,relations = utils.get_data(data,RULE)
 
+MAX_PADDING, LONGEST_TRACE = utils.get_longest_trace(DATASET, RULE)
+
 _, _, X_test_triples, X_test_traces = utils.train_test_split_no_unseen(
-        triples, traces, test_size=.3,seed=SEED)
+    triples,traces,longest_trace=LONGEST_TRACE,max_padding=MAX_PADDING,test_size=.25,seed=SEED)
+
+X_test_traces = X_test_traces[:,0:LONGEST_TRACE,:]
 
 ###################################################
 
@@ -69,6 +73,7 @@ for i in range(num_explaine_triples):
 explaine_jaccard /= num_explaine_triples
 
 explaine_precision, explaine_recall = utils.precision_recall(X_test_traces,explaine_preds)
+
 explaine_f1 = utils.f1(explaine_precision,explaine_recall)
 
 print(f'{DATASET} {RULE} ExplaiNE')

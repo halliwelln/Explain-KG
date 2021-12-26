@@ -19,21 +19,21 @@ parser.add_argument('dataset', type=str,
     help='royalty_30k or royalty_20k')
 parser.add_argument('rule',type=str,
     help='spouse,successor,...,full_data')
-parser.add_argument('trace_length',type=int)
 parser.add_argument('method',type=str, help='gnn_explainer or explaine') 
 args = parser.parse_args()
 
 DATASET = args.dataset
 RULE = args.rule
-TRACE_LENGTH = args.trace_length
 METHOD = args.method
 
 data = np.load(os.path.join('..','data',DATASET+'.npz'))
 
 triples,traces,entities,relations = utils.get_data(data,RULE)
 
+MAX_PADDING, LONGEST_TRACE = utils.get_longest_trace(DATASET, RULE)
+
 _, _, X_test_triples, X_test_traces = utils.train_test_split_no_unseen(
-    triples, traces, test_size=.3,seed=SEED)
+    triples,traces,longest_trace=LONGEST_TRACE,max_padding=MAX_PADDING,test_size=.25,seed=SEED)
 
 pred_data = np.load(
     os.path.join('..','data','preds', DATASET,METHOD+'_'+DATASET+'_'+RULE+'_preds.npz'),
@@ -42,7 +42,7 @@ pred_data = np.load(
 
 pred_traces = pred_data['preds']
 
-true_traces = X_test_traces[:,0:TRACE_LENGTH,:]
+true_traces = X_test_traces[:,0:LONGEST_TRACE,:]
 
 jaccard = []
 for i in range(pred_traces.shape[0]):

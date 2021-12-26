@@ -16,7 +16,7 @@ def get_neighbors(data_subset,node_idx):
     
     return neighbors
 
-def get_computation_graph(head,rel,tail,k,data,num_relations):
+def get_computation_graph(head,rel,tail,data,num_relations):
 
     '''Get 1 hop neighbors (may include duplicates)'''
 
@@ -47,9 +47,9 @@ def tf_jaccard(true_exp,pred_exp):
     
     return score
 
-def replica_step(head,rel,tail,explanation,num_entities, num_relations):
+def replica_step(head,rel,tail,explanation,num_entities,num_relations):
     
-    comp_graph = get_computation_graph(head,rel,tail,K,ADJACENCY_DATA,num_relations)
+    comp_graph = get_computation_graph(head,rel,tail,ADJACENCY_DATA,num_relations)
 
     adj_mats = utils.get_adj_mats(comp_graph, num_entities, num_relations)
 
@@ -96,36 +96,64 @@ def replica_step(head,rel,tail,explanation,num_entities, num_relations):
         grads = tape.gradient(loss,masks)
         optimizer.apply_gradients(zip(grads,masks))
 
-    current_preds = []
+    current_pred = []
 
+    current_scores = []
+
+    # for i in range(num_relations):
+
+    #     mask_i = adj_mats[i] * tf.nn.sigmoid(masks[i])
+
+    #     non_masked_indices = mask_i.indices[mask_i.values > THRESHOLD]
+
+    #     pred = non_masked_indices.numpy()
+
+    #     current_preds.append(pred[:,1:])
     for i in range(num_relations):
 
         mask_i = adj_mats[i] * tf.nn.sigmoid(masks[i])
 
-        non_masked_indices = mask_i.indices[mask_i.values > THRESHOLD]
+        mask_idx = mask_i.values > THRESHOLD
 
-        pred = non_masked_indices.numpy()
+        non_masked_indices = tf.gather(mask_i.indices[mask_idx],[1,2],axis=1)
 
-        current_preds.append(pred[:,1:])
+        if tf.reduce_sum(non_masked_indices) != 0:
+
+            rel_indices = tf.cast(tf.ones((non_masked_indices.shape[0],1)) * i,tf.int64)
+
+            triple = tf.concat([non_masked_indices,rel_indices],axis=1)
+            
+            triple = tf.gather(triple,[0,2,1],axis=1)
+
+            score_array = mask_i.values[mask_idx] 
+
+            current_pred.append(triple)
+            current_scores.append(score_array)
+
+    current_scores = tf.concat([array for array in current_scores],axis=0)
+    top_k_scores = tf.argsort(current_scores,direction='DESCENDING')[0:2]
+
+    pred_exp = tf.reshape(tf.concat([array for array in current_pred],axis=0),(-1,3))
+    pred_exp = tf.gather(pred_exp,top_k_scores,axis=0)
 
     for mask in masks:
         mask.assign(value=init_value)
 
-    return total_loss, current_preds
+    return total_loss, pred_exp
 
 def distributed_replica_step(head,rel,tail,explanation,num_entities,num_relations):
 
-    per_replica_losses, per_replica_jaccard, current_preds = strategy.run(replica_step,
+    per_replica_losses, current_preds = strategy.run(replica_step,
         args=(head,rel,tail,explanation,num_entities,num_relations))
 
     reduce_loss = per_replica_losses / NUM_EPOCHS
 
-    return reduce_loss,per_replica_jaccard, current_preds
+    return reduce_loss, current_preds
 
 if __name__ == '__main__':
 
     import argparse
-    from sklearn.model_selection import KFold
+    from IPython.core.debugger import set_trace
     import tensorflow as tf
 
     SEED = 123
@@ -157,8 +185,10 @@ if __name__ == '__main__':
 
     triples,traces,entities,relations = utils.get_data(data,RULE)
 
+    MAX_PADDING, LONGEST_TRACE = utils.get_longest_trace(DATASET, RULE)
+
     X_train_triples, X_train_traces, X_test_triples, X_test_traces = utils.train_test_split_no_unseen(
-        triples, traces, test_size=.3,seed=SEED)
+        triples,traces,longest_trace=LONGEST_TRACE,max_padding=MAX_PADDING,test_size=.25,seed=SEED)
 
     NUM_ENTITIES = len(entities)
     NUM_RELATIONS = len(relations)
@@ -204,9 +234,6 @@ if __name__ == '__main__':
             trainable=True) for i in range(NUM_RELATIONS)
         ]
 
-
-    preds = []
-
     train2idx = utils.array2idx(X_train_triples,ent2idx,rel2idx)
     trainexp2idx = utils.array2idx(X_train_traces,ent2idx,rel2idx)
     
@@ -231,32 +258,25 @@ if __name__ == '__main__':
 
     dist_dataset = strategy.experimental_distribute_dataset(tf_data)
 
+    preds = []
+
     for head,rel,tail,explanation in dist_dataset:
 
         loss, current_preds = distributed_replica_step(head,rel,tail,explanation,NUM_ENTITIES,NUM_RELATIONS)
 
         preds.append(current_preds)
 
-    best_preds = []
+    best_preds = [array.numpy() for array in preds]
 
-    all_preds = np.array(preds,dtype=object)
+    out_preds = []
 
-    for i in range(len(all_preds)):
+    for i in range(len(best_preds)):
 
-        preds_i = []
+        preds_i = utils.idx2array(best_preds[i],idx2ent,idx2rel)
 
-        for rel_idx in range(NUM_RELATIONS):
+        out_preds.append(preds_i)
 
-            triples_i = all_preds[i][rel_idx]
-
-            if triples_i.shape[0]:
-                rel_indices = (np.ones((triples_i.shape[0],1)) * rel_idx).astype(np.int64)
-                concat = np.concatenate([triples_i,rel_indices],axis=1)
-                preds_i.append(concat[:,[0,2,1]])
-        preds_i = np.concatenate(preds_i,axis=0)
-        best_preds.append(utils.idx2array(preds_i,idx2ent,idx2rel))
-
-    best_preds = np.array(best_preds,dtype=object)
+    out_preds = np.array(out_preds,dtype=object)
 
     print(f'Num epochs: {NUM_EPOCHS}')
     print(f'Embedding dim: {EMBEDDING_DIM}')

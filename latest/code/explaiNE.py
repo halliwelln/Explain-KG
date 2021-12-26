@@ -38,7 +38,6 @@ if __name__ == '__main__':
     import random as rn
     import RGCN
     import argparse
-    from sklearn.model_selection import KFold
 
     SEED = 123
     os.environ['PYTHONHASHSEED'] = str(SEED)
@@ -54,21 +53,21 @@ if __name__ == '__main__':
     parser.add_argument('rule',type=str,
         help='spouse,successor,...,full_data')
     parser.add_argument('embedding_dim',type=int)
-    parser.add_argument('trace_length',type=int)
 
     args = parser.parse_args()
 
     DATASET = args.dataset
     RULE = args.rule
     EMBEDDING_DIM = args.embedding_dim
-    TRACE_LENGTH = args.trace_length
 
     data = np.load(os.path.join('..','data',DATASET+'.npz'))
 
     triples,traces,entities,relations = utils.get_data(data,RULE)
 
+    MAX_PADDING, LONGEST_TRACE = utils.get_longest_trace(DATASET, RULE)
+
     X_train_triples, X_train_traces, X_test_triples, X_test_traces = utils.train_test_split_no_unseen(
-        triples, traces, test_size=.3,seed=SEED)
+        triples,traces,longest_trace=LONGEST_TRACE,max_padding=MAX_PADDING,test_size=.25,seed=SEED)
 
     NUM_ENTITIES = len(entities)
     NUM_RELATIONS = len(relations)
@@ -128,7 +127,7 @@ if __name__ == '__main__':
                 ]
             )
 
-        pred_exp = get_preds(adj_mats,NUM_RELATIONS,TRACE_LENGTH,tape,pred)
+        pred_exp = get_preds(adj_mats,NUM_RELATIONS,LONGEST_TRACE,tape,pred)
 
         pred_exps.append(pred_exp)
 

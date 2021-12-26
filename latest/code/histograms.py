@@ -39,12 +39,14 @@ for rule,trace_length in d.items():
     
     triples,traces,entities,relations = utils.get_data(data,rule)
 
+    MAX_PADDING, LONGEST_TRACE = utils.get_longest_trace(DATASET, RULE)
+
     _, _, X_test_triples, X_test_traces = utils.train_test_split_no_unseen(
-        triples, traces, test_size=.3,seed=SEED)
+        triples,traces,longest_trace=LONGEST_TRACE,max_padding=MAX_PADDING,test_size=.25,seed=SEED)
     
     pred_traces = pred_data['preds']
     
-    true_traces = X_test_traces[:,0:trace_length,:]
+    true_traces = X_test_traces[:,0:LONGEST_TRACE,:]
     
     jaccard = []
     for i in range(pred_traces.shape[0]):
