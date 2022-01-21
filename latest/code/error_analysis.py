@@ -42,6 +42,8 @@ pred_data = np.load(
 
 pred_traces = pred_data['preds']
 
+pred_traces = pred_traces[:,0:LONGEST_TRACE,:]
+
 true_traces = X_test_traces[:,0:LONGEST_TRACE,:]
 
 jaccard = []

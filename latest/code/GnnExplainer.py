@@ -153,7 +153,7 @@ def distributed_replica_step(head,rel,tail,explanation,num_entities,num_relation
 if __name__ == '__main__':
 
     import argparse
-    from IPython.core.debugger import set_trace
+    #from IPython.core.debugger import set_trace
     import tensorflow as tf
 
     SEED = 123
@@ -286,7 +286,7 @@ if __name__ == '__main__':
     print(f"{DATASET} {RULE}")
 
     np.savez(os.path.join('..','data','preds',DATASET,'gnn_explainer_'+DATASET+'_'+RULE+'_preds.npz'),
-        preds=best_preds
+        preds=out_preds
         )
 
     print('Done.')

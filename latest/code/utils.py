@@ -121,7 +121,7 @@ def train_test_split_no_unseen(
     max_padding,
     unk_ent_id='UNK_ENT',
     unk_rel_id='UNK_REL',
-    test_size=.3,
+    test_size=.25,
     seed=123,
     allow_duplication=False):
 

@@ -3,7 +3,7 @@
 import tensorflow as tf
 from tensorflow.keras.layers import Embedding, Lambda
 import utils
-from IPython.core.debugger import set_trace
+#from IPython.core.debugger import set_trace
 
 class RGCN_Layer(tf.keras.layers.Layer):
     def __init__(self,num_entities,num_relations,output_dim,seed,**kwargs):

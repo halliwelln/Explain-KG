@@ -43,6 +43,8 @@ gnn_data = np.load(
 
 gnn_preds = gnn_data['preds']
 
+gnn_preds=  gnn_preds[:,0:LONGEST_TRACE,:]
+
 num_gnn_triples = X_test_traces.shape[0]
 gnn_jaccard = 0.0
 for i in range(num_gnn_triples):
