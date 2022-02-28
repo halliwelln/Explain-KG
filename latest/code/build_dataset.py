@@ -5,6 +5,7 @@ import random as rn
 import os
 import utils
 import argparse
+import regex as re
 
 SEED = 123
 os.environ['PYTHONHASHSEED'] = str(SEED)
@@ -69,6 +70,14 @@ for rule in RULES:
 
     triples = triples[idx]
     traces = traces[idx]
+
+    triples[:,0] = np.array([re.sub(r'[<>]','',i) for i in triples[:,0].flatten()])
+    triples[:,2] = np.array([re.sub(r'[<>]','',i) for i in triples[:,2].flatten()])
+
+    traces[:,:,0] = np.array([
+        re.sub(r'[<>]','',i) for i in traces[:,:,0].flatten()]).reshape(-1,MAX_PADDING)
+    traces[:,:,2] = np.array([
+        re.sub(r'[<>]','',i) for i in traces[:,:,2].flatten()]).reshape(-1,MAX_PADDING)
 
     #replace male/female triples with unknown
     if rule_file == 'brother_sister':
